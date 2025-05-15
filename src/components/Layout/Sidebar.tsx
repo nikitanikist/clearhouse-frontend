@@ -9,14 +9,15 @@ const Sidebar = () => {
   const { user } = useAuth();
   const location = useLocation();
   
-  // Base navigation links - available to all
-  const navigation = [
+  // Base navigation links - available to preparers
+  const preparerLinks = [
     { name: 'Closeout Forms', href: '/dashboard/closeout-forms', icon: FileText },
-    { name: 'Email Management', href: '/dashboard/emails', icon: Mail },
   ];
 
-  // Additional links based on user role
+  // Links for admin and superadmin
   const adminLinks = [
+    { name: 'Closeout Forms', href: '/dashboard/closeout-forms', icon: FileText },
+    { name: 'Email Management', href: '/dashboard/emails', icon: Mail },
     { name: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
   ];
 
@@ -26,14 +27,14 @@ const Sidebar = () => {
   ];
 
   // Determine which links to show based on role
-  let navLinks = [...navigation];
+  let navLinks = [];
   
-  if (user?.role === 'admin' || user?.role === 'superadmin') {
-    navLinks = [...navLinks, ...adminLinks];
-  }
-  
-  if (user?.role === 'superadmin') {
-    navLinks = [...navLinks, ...superAdminLinks];
+  if (user?.role === 'preparer') {
+    navLinks = [...preparerLinks];
+  } else if (user?.role === 'admin') {
+    navLinks = [...adminLinks];
+  } else if (user?.role === 'superadmin') {
+    navLinks = [...adminLinks, ...superAdminLinks];
   }
 
   return (

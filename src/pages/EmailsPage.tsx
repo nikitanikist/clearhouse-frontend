@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -8,6 +7,7 @@ import EmailList from '@/components/EmailManagement/EmailList';
 import EmailView from '@/components/EmailManagement/EmailView';
 import EmailCreate from '@/components/EmailManagement/EmailCreate';
 import { Plus } from 'lucide-react';
+import { Navigate } from 'react-router-dom';
 
 const EmailsPage = () => {
   const { user } = useAuth();
@@ -19,16 +19,7 @@ const EmailsPage = () => {
   
   // Only admin and superadmin can access emails
   if (user?.role === 'preparer') {
-    return (
-      <div className="flex items-center justify-center h-[calc(100vh-200px)]">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold">Email Management</h2>
-          <p className="mt-2 text-muted-foreground">
-            You don't have permission to access this section.
-          </p>
-        </div>
-      </div>
-    );
+    return <Navigate to="/dashboard/closeout-forms" />;
   }
   
   // Filter emails based on status

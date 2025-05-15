@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useData, CloseoutForm, FormStatus } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,7 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { Check, Clock, FileCheck, X } from 'lucide-react';
+import { Check, Clock, FileCheck, X, Edit } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 
@@ -40,6 +41,7 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
   const canApprove = user?.role === 'admin' || user?.role === 'superadmin';
   const canReject = user?.role === 'admin' || user?.role === 'superadmin';
   const canComplete = (user?.role === 'admin' || user?.role === 'superadmin') && form.status === 'active';
+  const canEdit = user?.role === 'preparer' && form.status === 'rejected' && form.createdBy.id === user.id;
   
   const handleStatusChange = (status: FormStatus) => {
     if (formId) {
@@ -47,6 +49,14 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
       setComment('');
       onOpenChange(false);
     }
+  };
+
+  const handleEditForm = () => {
+    // Close the current dialog and implement form editing functionality
+    // In a real app, this would navigate to an edit form or open an edit modal
+    onOpenChange(false);
+    // You would add actual edit form navigation/handling here
+    console.log('Edit form clicked for form ID:', formId);
   };
   
   const getStatusBadge = (status: string) => {
@@ -218,6 +228,16 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
         )}
         
         <DialogFooter>
+          {canEdit && (
+            <Button 
+              onClick={handleEditForm}
+              className="bg-primary hover:bg-primary-600"
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Edit Form
+            </Button>
+          )}
+
           {form.status === 'pending' && canApprove && (
             <Button 
               onClick={() => handleStatusChange('active')}
