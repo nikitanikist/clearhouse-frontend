@@ -65,14 +65,14 @@ const CloseoutFormCreate = ({
     assignedTo: null,
   });
   
-  const [assignTo, setAssignTo] = useState<string>('');
-
   // Mock admin users for assignment
   const adminUsers = [
     { id: 'admin-1', name: 'Jordan Lee', role: 'admin' },
     { id: 'admin-2', name: 'Alex Johnson', role: 'admin' },
     { id: 'admin-3', name: 'Sam Taylor', role: 'admin' },
   ];
+
+  const [assignTo, setAssignTo] = useState<string>('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -497,23 +497,30 @@ const CloseoutFormCreate = ({
                     />
                     <Label htmlFor="installmentsRequired">Are installments required?</Label>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="assignTo">Assign to Admin</Label>
-                    <Select value={assignTo} onValueChange={value => setAssignTo(value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Admin" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {adminUsers.map(admin => (
-                          <SelectItem key={admin.id} value={admin.id}>
-                            {admin.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Assignment Section - Added this section */}
+            <div className="mt-6 border-t pt-4">
+              <h3 className="font-medium mb-4">Assign Closeout Form</h3>
+              <div className="space-y-2">
+                <Label htmlFor="assignTo">Assign to Admin Team Member</Label>
+                <Select value={assignTo} onValueChange={value => setAssignTo(value)}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select team member" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {adminUsers.map(admin => (
+                      <SelectItem key={admin.id} value={admin.id}>
+                        {admin.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Assign this form to an admin team member for review
+                </p>
               </div>
             </div>
           </div>
@@ -525,7 +532,7 @@ const CloseoutFormCreate = ({
           ) : (
             <>
               <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
-              <Button onClick={handleSubmit} disabled={!assignTo}>Create Form</Button>
+              <Button onClick={handleSubmit}>Create Form</Button>
             </>
           )}
         </DialogFooter>
