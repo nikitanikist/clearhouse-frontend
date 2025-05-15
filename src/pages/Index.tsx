@@ -1,13 +1,24 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import Login from './Login';
+import Dashboard from './Dashboard';
+import { DataProvider } from '@/contexts/DataContext';
 
 const Index = () => {
+  const { isAuthenticated } = useAuth();
+
+  // Determine what to render based on authentication state
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <>
+      {!isAuthenticated ? (
+        <Login />
+      ) : (
+        <DataProvider>
+          <Dashboard />
+        </DataProvider>
+      )}
+    </>
   );
 };
 
