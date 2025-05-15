@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useData, CloseoutForm, FormStatus } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -233,7 +232,7 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
             <Button 
               variant="destructive" 
               onClick={() => handleStatusChange('rejected')}
-              disabled={form.status === 'rejected' && comment === ''}
+              disabled={comment === ''}
             >
               <X className="mr-2 h-4 w-4" />
               Reject

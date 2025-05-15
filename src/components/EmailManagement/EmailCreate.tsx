@@ -149,12 +149,15 @@ ClearHouse Tax Consultancy`;
       });
     });
     
+    const now = new Date().toISOString();
+    
     const newThread = {
       clientName: selectedForm.clientName,
       clientEmail: selectedForm.signingEmail,
       subject,
       linkedFormId: selectedForm.id,
       status: 'pending' as const,
+      lastContactDate: now, // Added the missing property
       assignedTo: {
         id: user.id,
         name: user.name,
@@ -167,7 +170,7 @@ ClearHouse Tax Consultancy`;
           subject,
           content,
           attachments,
-          sentAt: new Date().toISOString(),
+          sentAt: now,
         },
       ],
     };
