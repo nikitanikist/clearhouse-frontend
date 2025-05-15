@@ -5,10 +5,13 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from '@/components/Layout/MainLayout';
 import CloseoutFormsPage from './CloseoutFormsPage';
 import EmailsPage from './EmailsPage';
+import CalendarPage from './CalendarPage';
+import SettingsPage from './SettingsPage';
+import UsersPage from './UsersPage';
 import NotFound from './NotFound';
 
 const Dashboard = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   if (!isAuthenticated) {
     return <Navigate to="/" />;
@@ -17,9 +20,23 @@ const Dashboard = () => {
   return (
     <MainLayout>
       <Routes>
-        <Route index element={<Navigate to="/closeout-forms" replace />} />
+        <Route path="/" element={<Navigate to="/dashboard/closeout-forms" replace />} />
         <Route path="/closeout-forms" element={<CloseoutFormsPage />} />
         <Route path="/emails" element={<EmailsPage />} />
+        
+        {/* Admin and Super Admin routes */}
+        {(user?.role === 'admin' || user?.role === 'superadmin') && (
+          <Route path="/calendar" element={<CalendarPage />} />
+        )}
+        
+        {/* Super Admin only routes */}
+        {user?.role === 'superadmin' && (
+          <>
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
+          </>
+        )}
+        
         <Route path="*" element={<NotFound />} />
       </Routes>
     </MainLayout>

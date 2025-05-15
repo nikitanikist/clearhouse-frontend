@@ -1,26 +1,28 @@
 
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { FileText, Mail, Settings, Archive, Calendar, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const Sidebar = () => {
   const { user } = useAuth();
+  const location = useLocation();
   
+  // Base navigation links - available to all
   const navigation = [
-    { name: 'Closeout Forms', href: '/closeout-forms', icon: FileText },
-    { name: 'Email Management', href: '/emails', icon: Mail },
+    { name: 'Closeout Forms', href: '/dashboard/closeout-forms', icon: FileText },
+    { name: 'Email Management', href: '/dashboard/emails', icon: Mail },
   ];
 
   // Additional links based on user role
   const adminLinks = [
-    { name: 'Calendar', href: '/calendar', icon: Calendar },
+    { name: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
   ];
 
   const superAdminLinks = [
-    { name: 'User Management', href: '/users', icon: Users },
-    { name: 'Settings', href: '/settings', icon: Settings },
+    { name: 'User Management', href: '/dashboard/users', icon: Users },
+    { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
 
   // Determine which links to show based on role
@@ -47,7 +49,7 @@ const Sidebar = () => {
       <div className="flex-1 overflow-y-auto py-4 px-3">
         <nav className="space-y-1">
           {navLinks.map((item) => {
-            const isActive = window.location.pathname === item.href;
+            const isActive = location.pathname === item.href;
             return (
               <Link
                 key={item.name}
