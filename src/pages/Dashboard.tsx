@@ -9,6 +9,7 @@ import CalendarPage from './CalendarPage';
 import SettingsPage from './SettingsPage';
 import UsersPage from './UsersPage';
 import NotFound from './NotFound';
+import { DataProvider } from '@/contexts/DataContext';
 
 const Dashboard = () => {
   const { isAuthenticated, user } = useAuth();
@@ -18,28 +19,30 @@ const Dashboard = () => {
   }
 
   return (
-    <MainLayout>
-      <Routes>
-        <Route path="/" element={<Navigate to="/dashboard/closeout-forms" replace />} />
-        <Route path="/closeout-forms" element={<CloseoutFormsPage />} />
-        <Route path="/emails" element={<EmailsPage />} />
-        
-        {/* Admin and Super Admin routes */}
-        {(user?.role === 'admin' || user?.role === 'superadmin') && (
-          <Route path="/calendar" element={<CalendarPage />} />
-        )}
-        
-        {/* Super Admin only routes */}
-        {user?.role === 'superadmin' && (
-          <>
-            <Route path="/users" element={<UsersPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-          </>
-        )}
-        
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </MainLayout>
+    <DataProvider>
+      <MainLayout>
+        <Routes>
+          <Route path="/" element={<Navigate to="/dashboard/closeout-forms" replace />} />
+          <Route path="/closeout-forms" element={<CloseoutFormsPage />} />
+          <Route path="/emails" element={<EmailsPage />} />
+          
+          {/* Admin and Super Admin routes */}
+          {(user?.role === 'admin' || user?.role === 'superadmin') && (
+            <Route path="/calendar" element={<CalendarPage />} />
+          )}
+          
+          {/* Super Admin only routes */}
+          {user?.role === 'superadmin' && (
+            <>
+              <Route path="/users" element={<UsersPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+            </>
+          )}
+          
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </MainLayout>
+    </DataProvider>
   );
 };
 
