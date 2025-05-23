@@ -27,11 +27,11 @@ const CloseoutFormGrid: React.FC<CloseoutFormGridProps> = ({
       case 'pending':
         return <Badge variant="outline" className="status-badge status-pending">Pending</Badge>;
       case 'active':
-        return <Badge variant="outline" className="status-badge status-active">Active</Badge>;
+        return <Badge variant="outline" className="status-badge status-active">Working</Badge>;
       case 'completed':
         return <Badge variant="outline" className="status-badge status-completed">Completed</Badge>;
       case 'rejected':
-        return <Badge variant="outline" className="status-badge status-rejected">Rejected</Badge>;
+        return <Badge variant="outline" className="status-badge status-rejected">Amendment</Badge>;
       default:
         return null;
     }

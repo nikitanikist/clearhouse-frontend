@@ -92,7 +92,7 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
       case 'pending':
         return <Badge variant="outline" className="status-badge status-pending">Pending</Badge>;
       case 'active':
-        return <Badge variant="outline" className="status-badge status-active">Active</Badge>;
+        return <Badge variant="outline" className="status-badge status-active">Working</Badge>;
       case 'completed':
         return <Badge variant="outline" className="status-badge status-completed">Completed</Badge>;
       case 'rejected':

@@ -72,7 +72,7 @@ const CloseoutFormsPage = () => {
           
           {user?.role !== 'preparer' && (
             <TabsTrigger value="active" className="relative">
-              Active
+              Working
               {getFilteredForms(activeForms).length > 0 && (
                 <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-xs flex items-center justify-center text-primary-foreground">
                   {getFilteredForms(activeForms).length}
@@ -83,7 +83,7 @@ const CloseoutFormsPage = () => {
           
           <TabsTrigger value="completed">Completed</TabsTrigger>
           <TabsTrigger value="rejected" className="relative">
-            Rejected
+            Amendment
             {getFilteredForms(rejectedForms).length > 0 && (
               <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-xs flex items-center justify-center text-destructive-foreground">
                 {getFilteredForms(rejectedForms).length}
@@ -105,9 +105,9 @@ const CloseoutFormsPage = () => {
         <TabsContent value="active">
           <CloseoutFormGrid
             forms={getFilteredForms(activeForms)}
-            title="Active Closeout Forms"
+            title="Working Closeout Forms"
             description="Forms that are currently being processed"
-            emptyMessage="No active forms found"
+            emptyMessage="No working forms found"
             onViewForm={handleViewForm}
           />
         </TabsContent>
@@ -125,9 +125,9 @@ const CloseoutFormsPage = () => {
         <TabsContent value="rejected">
           <CloseoutFormGrid
             forms={getFilteredForms(rejectedForms)}
-            title="Rejected Closeout Forms"
+            title="Amendment Closeout Forms"
             description="Forms that require revisions"
-            emptyMessage="No rejected forms found"
+            emptyMessage="No amendment forms found"
             onViewForm={handleViewForm}
           />
         </TabsContent>
