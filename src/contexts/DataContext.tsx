@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { toast } from 'sonner';
@@ -103,6 +102,7 @@ interface DataContextType {
   reassignEmail: (emailId: string, assigneeId: string, assigneeName: string) => void;
   getFormById: (formId: string) => CloseoutForm | undefined;
   getEmailById: (emailId: string) => EmailThread | undefined;
+  getPreviousYearForms: (clientName: string, currentFormId?: string) => CloseoutForm[];
 }
 
 // Sample form data
@@ -782,6 +782,23 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     toast.success(`Email reassigned to ${assigneeName}`);
   }, []);
 
+  const getPreviousYearForms = useCallback((clientName: string, currentFormId?: string) => {
+    // Get all forms for this client except the current one
+    let previousForms = forms.filter(form => 
+      form.clientName === clientName && 
+      form.id !== currentFormId
+    );
+    
+    // Special handling for Rohit Sharma - only show the most recent form
+    if (clientName === 'Rohit Sharma') {
+      previousForms = previousForms
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, 1);
+    }
+    
+    return previousForms.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [forms]);
+
   const getFormById = useCallback((formId: string) => {
     return forms.find(form => form.id === formId);
   }, [forms]);
@@ -803,6 +820,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       reassignEmail,
       getFormById,
       getEmailById,
+      getPreviousYearForms,
     }}>
       {children}
     </DataContext.Provider>
