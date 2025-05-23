@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useData, CloseoutForm, FormStatus } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,9 +12,16 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { Check, Clock, FileCheck, X, Edit } from 'lucide-react';
+import { Check, Clock, FileCheck, X, Edit, UserPlus } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import PreviousYearForms from './PreviousYearForms';
 
 interface CloseoutFormViewProps {
@@ -29,12 +35,21 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
   open,
   onOpenChange,
 }) => {
-  const { getFormById, updateFormStatus, getPreviousYearForms } = useData();
+  const { getFormById, updateFormStatus, getPreviousYearForms, assignForm } = useData();
   const { user } = useAuth();
   const [comment, setComment] = useState('');
+  const [selectedAssignee, setSelectedAssignee] = useState('');
   
   const form = formId ? getFormById(formId) : null;
   const previousForms = form ? getPreviousYearForms(form.clientName, form.id) : [];
+
+  // Mock data for available team members (in a real app, this would come from a users API)
+  const availableAssignees = [
+    { id: 'admin-1', name: 'Jordan Lee', role: 'admin' },
+    { id: 'admin-2', name: 'Alex Chen', role: 'admin' },
+    { id: 'admin-3', name: 'Morgan Davis', role: 'admin' },
+    { id: 'superadmin-1', name: 'Sam Wilson', role: 'superadmin' },
+  ];
 
   if (!form) {
     return null;
@@ -44,6 +59,7 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
   const canReject = user?.role === 'admin' || user?.role === 'superadmin';
   const canComplete = (user?.role === 'admin' || user?.role === 'superadmin') && form.status === 'active';
   const canEdit = user?.role === 'preparer' && form.status === 'rejected' && form.createdBy.id === user.id;
+  const canAssign = user?.role === 'admin' || user?.role === 'superadmin';
   
   const handleStatusChange = (status: FormStatus) => {
     if (formId) {
@@ -60,6 +76,16 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
     // You would add actual edit form navigation/handling here
     console.log('Edit form clicked for form ID:', formId);
   };
+
+  const handleAssignForm = () => {
+    if (formId && selectedAssignee) {
+      const assignee = availableAssignees.find(a => a.id === selectedAssignee);
+      if (assignee) {
+        assignForm(formId, assignee.id, assignee.name);
+        setSelectedAssignee('');
+      }
+    }
+  };
   
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -70,7 +96,7 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
       case 'completed':
         return <Badge variant="outline" className="status-badge status-completed">Completed</Badge>;
       case 'rejected':
-        return <Badge variant="outline" className="status-badge status-rejected">Rejected</Badge>;
+        return <Badge variant="outline" className="status-badge status-rejected">Amendment</Badge>;
       default:
         return null;
     }
@@ -218,7 +244,7 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
                 <div>
                   <h3 className="text-sm font-medium">Fix and Resubmit</h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    This form was rejected. You can approve it after the issues have been fixed.
+                    This form requires amendments. You can mark it as working after the issues have been fixed.
                   </p>
                 </div>
               </>
@@ -228,13 +254,49 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
               <>
                 <Separator />
                 <div className="space-y-2">
-                  <h3 className="text-sm font-medium">Rejection Reason</h3>
+                  <h3 className="text-sm font-medium">Amendment Reason</h3>
                   <Textarea 
-                    placeholder="Please provide a reason for rejection..." 
+                    placeholder="Please provide amendment reason..." 
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
                     className="resize-none"
                   />
+                </div>
+              </>
+            )}
+
+            {canAssign && (
+              <>
+                <Separator />
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium">Assign Form</h3>
+                  <div className="flex gap-2">
+                    <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select team member" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableAssignees.map((assignee) => (
+                          <SelectItem key={assignee.id} value={assignee.id}>
+                            {assignee.name} ({assignee.role})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button 
+                      onClick={handleAssignForm}
+                      disabled={!selectedAssignee}
+                      variant="outline"
+                    >
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Assign
+                    </Button>
+                  </div>
+                  {form.assignedTo && (
+                    <p className="text-sm text-muted-foreground">
+                      Currently assigned to: {form.assignedTo.name}
+                    </p>
+                  )}
                 </div>
               </>
             )}
@@ -268,7 +330,7 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
               className="bg-success hover:bg-success-600"
             >
               <Check className="mr-2 h-4 w-4" />
-              Approve
+              Working on it
             </Button>
           )}
           
@@ -279,7 +341,7 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
               disabled={comment === ''}
             >
               <X className="mr-2 h-4 w-4" />
-              Reject
+              Need Amendment
             </Button>
           )}
           
@@ -299,7 +361,7 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
               className="bg-success hover:bg-success-600"
             >
               <Clock className="mr-2 h-4 w-4" />
-              Approve After Fix
+              Working on it
             </Button>
           )}
           
