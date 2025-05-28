@@ -3,6 +3,7 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from '@/components/Layout/MainLayout';
+import DashboardHome from './DashboardHome';
 import CloseoutFormsPage from './CloseoutFormsPage';
 import EmailsPage from './EmailsPage';
 import CalendarPage from './CalendarPage';
@@ -22,7 +23,7 @@ const Dashboard = () => {
     <DataProvider>
       <MainLayout>
         <Routes>
-          <Route path="/" element={<Navigate to="/dashboard/closeout-forms" replace />} />
+          <Route path="/" element={<DashboardHome />} />
           <Route path="/closeout-forms" element={<CloseoutFormsPage />} />
           <Route path="/emails" element={<EmailsPage />} />
           

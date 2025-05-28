@@ -1,6 +1,6 @@
 
 import { useAuth } from '../../contexts/AuthContext';
-import { Bell, FileText, Mail } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +12,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import RoleSwitcher from './RoleSwitcher';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -42,7 +41,7 @@ const Navbar = () => {
     <header className="sticky top-0 z-10 bg-white border-b border-gray-200 py-4 px-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <RoleSwitcher />
+          <h1 className="text-xl font-semibold text-gray-800">ClearHouse CRM</h1>
           <Badge variant="outline" className={`rounded-full ${getRoleBadgeColor()} border-none`}>
             {user?.role === 'superadmin' ? 'Super Admin' : user?.role === 'admin' ? 'Admin' : 'Preparer'}
           </Badge>
