@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -5,11 +6,15 @@ import { FileText, AlertTriangle, CheckCircle, Plus } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import CloseoutFormCreate from '@/components/CloseoutForms/CloseoutFormCreate';
+import CloseoutFormsList from '@/components/CloseoutForms/CloseoutFormsList';
+
+type ViewMode = 'dashboard' | 'pending' | 'rejected' | 'completed';
 
 const DashboardCards = () => {
   const { forms } = useData();
   const { user } = useAuth();
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
 
   // Filter forms based on user role
   const getFilteredForms = (formsList: typeof forms) => {
@@ -25,6 +30,24 @@ const DashboardCards = () => {
   const pendingCount = getFilteredForms(forms.filter(form => form.status === 'pending')).length;
   const amendmentCount = getFilteredForms(forms.filter(form => form.status === 'rejected')).length;
   const completedCount = getFilteredForms(forms.filter(form => form.status === 'completed')).length;
+
+  const handleCardClick = (status: 'pending' | 'rejected' | 'completed') => {
+    setViewMode(status);
+  };
+
+  const handleBackToDashboard = () => {
+    setViewMode('dashboard');
+  };
+
+  // Show the table view when a specific status is selected
+  if (viewMode !== 'dashboard') {
+    return (
+      <CloseoutFormsList 
+        status={viewMode} 
+        onBack={handleBackToDashboard}
+      />
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -43,7 +66,10 @@ const DashboardCards = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Pending Closeouts Card */}
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group">
+        <Card 
+          className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group"
+          onClick={() => handleCardClick('pending')}
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300 shadow-lg">
@@ -57,7 +83,10 @@ const DashboardCards = () => {
         </Card>
 
         {/* Amendment Forms Card */}
-        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group">
+        <Card 
+          className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group"
+          onClick={() => handleCardClick('rejected')}
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="w-14 h-14 bg-orange-500 rounded-2xl flex items-center justify-center group-hover:bg-orange-600 transition-colors duration-300 shadow-lg">
@@ -71,7 +100,10 @@ const DashboardCards = () => {
         </Card>
 
         {/* Completed Closeouts Card */}
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group">
+        <Card 
+          className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group"
+          onClick={() => handleCardClick('completed')}
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="w-14 h-14 bg-green-500 rounded-2xl flex items-center justify-center group-hover:bg-green-600 transition-colors duration-300 shadow-lg">
