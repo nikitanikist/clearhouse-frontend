@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useAuth, UserRole } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Archive, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, FileText, Settings, User } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
@@ -56,22 +56,19 @@ const Login: React.FC = () => {
         return {
           title: 'Preparer',
           description: 'Create and manage closeout forms',
-          icon: 'P',
-          color: 'bg-blue-100 text-blue-700',
+          icon: FileText,
         };
       case 'admin':
         return {
           title: 'Admin',
           description: 'Approve forms and manage client communications',
-          icon: 'A',
-          color: 'bg-green-100 text-green-700',
+          icon: User,
         };
       case 'superadmin':
         return {
           title: 'Super Admin',
           description: 'Full system access and user management',
-          icon: 'SA',
-          color: 'bg-purple-100 text-purple-700',
+          icon: Settings,
         };
     }
   };
@@ -79,53 +76,41 @@ const Login: React.FC = () => {
   if (currentStep === 'role-selection') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-md w-full px-4">
-          <div className="text-center mb-8">
-            <div className="flex items-center justify-center mb-4">
-              <div className="h-12 w-12 rounded-lg bg-primary-500 flex items-center justify-center">
-                <Archive className="h-6 w-6 text-white" />
-              </div>
-            </div>
-            <h1 className="text-3xl font-bold">ClearHouse CRM</h1>
-            <p className="text-gray-500 mt-2">Please select your access role to continue</p>
+        <div className="max-w-4xl w-full px-8">
+          <div className="text-center mb-12">
+            <h1 className="text-4xl font-bold text-gray-800 mb-4">ClearHouse CRM</h1>
+            <p className="text-gray-600 text-lg">Please select your access role to continue</p>
           </div>
           
-          <Card className="animate-fade-in">
-            <CardHeader>
-              <CardTitle>Select Your Role</CardTitle>
-              <CardDescription>Choose your access level to proceed to login</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              {(['preparer', 'admin', 'superadmin'] as UserRole[]).map((role) => {
-                const roleInfo = getRoleInfo(role);
-                return (
-                  <Button 
-                    key={role}
-                    variant="outline" 
-                    className="flex justify-start items-center h-16 p-4"
-                    onClick={() => handleRoleSelect(role)}
-                  >
-                    <div className={`h-10 w-10 rounded-full ${roleInfo.color} flex items-center justify-center mr-4 text-sm font-semibold`}>
-                      {roleInfo.icon}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            {(['preparer', 'admin', 'superadmin'] as UserRole[]).map((role) => {
+              const roleInfo = getRoleInfo(role);
+              const IconComponent = roleInfo.icon;
+              return (
+                <Card key={role} className="text-center hover:shadow-lg transition-shadow cursor-pointer bg-white border border-gray-200">
+                  <CardContent className="pt-8 pb-6">
+                    <div className="flex justify-center mb-6">
+                      <div className="w-16 h-16 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <IconComponent className="w-8 h-8 text-orange-600" />
+                      </div>
                     </div>
-                    <div className="text-left flex-1">
-                      <div className="font-medium text-base">Continue as {roleInfo.title}</div>
-                      <div className="text-xs text-muted-foreground">{roleInfo.description}</div>
-                    </div>
-                  </Button>
-                );
-              })}
-            </CardContent>
-            <CardFooter>
-              <p className="text-xs text-muted-foreground w-full text-center">
-                This is a demo environment for ClearHouse CRM
-              </p>
-            </CardFooter>
-          </Card>
+                    <h3 className="text-xl font-semibold text-gray-800 mb-2">{roleInfo.title}</h3>
+                    <p className="text-gray-600 text-sm mb-6">{roleInfo.description}</p>
+                    <Button 
+                      onClick={() => handleRoleSelect(role)}
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      Continue as {roleInfo.title}
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
           
-          <p className="text-center text-xs text-muted-foreground mt-8">
-            © 2025 ClearHouse Tax Consultancy
-          </p>
+          <div className="text-center">
+            <p className="text-gray-500 text-sm">Version: v1.0.0</p>
+          </div>
         </div>
       </div>
     );
@@ -133,16 +118,12 @@ const Login: React.FC = () => {
 
   // Login form step
   const roleInfo = selectedRole ? getRoleInfo(selectedRole) : null;
+  const IconComponent = roleInfo?.icon;
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full px-4">
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <div className="h-12 w-12 rounded-lg bg-primary-500 flex items-center justify-center">
-              <Archive className="h-6 w-6 text-white" />
-            </div>
-          </div>
           <h1 className="text-3xl font-bold">ClearHouse CRM</h1>
           <p className="text-gray-500 mt-2">Login as {roleInfo?.title}</p>
         </div>
@@ -154,9 +135,11 @@ const Login: React.FC = () => {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               <div className="flex items-center gap-3">
-                <div className={`h-8 w-8 rounded-full ${roleInfo?.color} flex items-center justify-center text-xs font-semibold`}>
-                  {roleInfo?.icon}
-                </div>
+                {IconComponent && (
+                  <div className="h-8 w-8 bg-orange-100 rounded-full flex items-center justify-center">
+                    <IconComponent className="h-4 w-4 text-orange-600" />
+                  </div>
+                )}
                 <div>
                   <CardTitle>Login as {roleInfo?.title}</CardTitle>
                   <CardDescription>{roleInfo?.description}</CardDescription>
