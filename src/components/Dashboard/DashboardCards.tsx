@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FileText, Wrench, Check, Plus } from 'lucide-react';
+import { FileText, AlertTriangle, CheckCircle, Plus } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -29,50 +29,53 @@ const DashboardCards = () => {
     <div className="space-y-8">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Pending Closeouts Card */}
-        <Card className="bg-white border border-gray-200 hover:shadow-lg transition-shadow">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                <FileText className="w-6 h-6 text-gray-600" />
+              <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300 shadow-lg">
+                <FileText className="w-7 h-7 text-white" />
               </div>
             </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-1">Pending Closeouts</h3>
-            <div className="text-3xl font-bold text-blue-600">{pendingCount}</div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">Pending Closeouts</h3>
+            <div className="text-4xl font-bold text-blue-600 mb-2">{pendingCount}</div>
+            <p className="text-sm text-blue-600 font-medium">Click to view details</p>
           </CardContent>
         </Card>
 
         {/* Amendment Forms Card */}
-        <Card className="bg-white border border-gray-200 hover:shadow-lg transition-shadow">
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                <Wrench className="w-6 h-6 text-gray-600" />
+              <div className="w-14 h-14 bg-orange-500 rounded-2xl flex items-center justify-center group-hover:bg-orange-600 transition-colors duration-300 shadow-lg">
+                <AlertTriangle className="w-7 h-7 text-white" />
               </div>
             </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-1">Amendment Forms</h3>
-            <div className="text-3xl font-bold text-blue-600">{amendmentCount}</div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">Amendment Forms</h3>
+            <div className="text-4xl font-bold text-orange-600 mb-2">{amendmentCount}</div>
+            <p className="text-sm text-orange-600 font-medium">Click to view details</p>
           </CardContent>
         </Card>
 
         {/* Completed Closeouts Card */}
-        <Card className="bg-white border border-gray-200 hover:shadow-lg transition-shadow">
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                <Check className="w-6 h-6 text-green-600" />
+              <div className="w-14 h-14 bg-green-500 rounded-2xl flex items-center justify-center group-hover:bg-green-600 transition-colors duration-300 shadow-lg">
+                <CheckCircle className="w-7 h-7 text-white" />
               </div>
             </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-1">Completed Closeouts</h3>
-            <div className="text-3xl font-bold text-blue-600">{completedCount}</div>
+            <h3 className="text-lg font-semibold text-gray-800 mb-2">Completed Closeouts</h3>
+            <div className="text-4xl font-bold text-green-600 mb-2">{completedCount}</div>
+            <p className="text-sm text-green-600 font-medium">Click to view details</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Create New Form Button */}
       {user?.role === 'preparer' && (
-        <div className="flex justify-end">
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full">
-            <Plus className="mr-2 h-5 w-5" />
+        <div className="flex justify-center pt-4">
+          <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-12 py-4 rounded-2xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+            <Plus className="mr-3 h-6 w-6" />
             Create New Closeout Form
           </Button>
         </div>

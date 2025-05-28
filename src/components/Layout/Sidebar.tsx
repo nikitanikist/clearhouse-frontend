@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, FileText, Mail, Settings, Archive, Calendar, Users } from 'lucide-react';
+import { Home, Mail, Settings, Archive, Calendar, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const Sidebar = () => {
@@ -12,13 +11,11 @@ const Sidebar = () => {
   // Base navigation links - available to preparers
   const preparerLinks = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Closeout Forms', href: '/dashboard/closeout-forms', icon: FileText },
   ];
 
   // Links for admin and superadmin
   const adminLinks = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Closeout Forms', href: '/dashboard/closeout-forms', icon: FileText },
     { name: 'Email Management', href: '/dashboard/emails', icon: Mail },
     { name: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
   ];
