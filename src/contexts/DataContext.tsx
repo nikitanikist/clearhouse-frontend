@@ -95,6 +95,7 @@ interface DataContextType {
   emails: EmailThread[];
   createForm: (form: Omit<CloseoutForm, 'id' | 'createdAt' | 'updatedAt' | 'comments' | 'history'>) => void;
   updateFormStatus: (formId: string, status: FormStatus, comment?: string) => void;
+  updateForm: (formId: string, updatedForm: CloseoutForm) => void;
   assignForm: (formId: string, assigneeId: string, assigneeName: string) => void;
   createEmail: (email: Omit<EmailThread, 'id' | 'createdAt' | 'updatedAt' | 'messages' | 'notes'>) => void;
   addEmailReply: (emailId: string, message: { content: string }) => void;
@@ -574,12 +575,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [forms, setForms] = useState<CloseoutForm[]>(sampleForms);
   const [emails, setEmails] = useState<EmailThread[]>(sampleEmails);
 
-  const createForm = useCallback((formData: Omit<CloseoutForm, 'id' | 'createdAt' | 'updatedAt' | 'comments' | 'history'>) => {
+  const createForm = useCallback((form: Omit<CloseoutForm, 'id' | 'createdAt' | 'updatedAt' | 'comments' | 'history'>) => {
     if (!user) return;
     
     const now = new Date().toISOString();
     const newForm: CloseoutForm = {
-      ...formData,
+      ...form,
       id: `form-${Date.now()}`,
       createdAt: now,
       updatedAt: now,
@@ -640,6 +641,35 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
     
     toast.success(`Form status updated to ${status}`);
+  }, [user]);
+
+  const updateForm = useCallback((formId: string, updatedForm: CloseoutForm) => {
+    if (!user) return;
+    
+    const now = new Date().toISOString();
+    
+    setForms(prevForms => {
+      return prevForms.map(form => {
+        if (form.id === formId) {
+          return {
+            ...updatedForm,
+            updatedAt: now,
+            history: [
+              ...form.history,
+              {
+                id: `hist-${Date.now()}`,
+                action: 'Form updated',
+                performedBy: user.name,
+                timestamp: now,
+              }
+            ]
+          };
+        }
+        return form;
+      });
+    });
+    
+    toast.success('Form updated successfully');
   }, [user]);
 
   const assignForm = useCallback((formId: string, assigneeId: string, assigneeName: string) => {
@@ -813,6 +843,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       emails,
       createForm,
       updateFormStatus,
+      updateForm,
       assignForm,
       createEmail,
       addEmailReply,

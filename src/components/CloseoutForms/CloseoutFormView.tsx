@@ -45,7 +45,7 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
   open,
   onOpenChange,
 }) => {
-  const { getFormById, updateFormStatus, getPreviousYearForms, assignForm } = useData();
+  const { getFormById, updateFormStatus, getPreviousYearForms, assignForm, updateForm } = useData();
   const { user } = useAuth();
   const [comment, setComment] = useState('');
   const [selectedAssignee, setSelectedAssignee] = useState('');
@@ -62,7 +62,7 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
     }
   }, [form]);
 
-  // Mock data for available team members (in a real app, this would come from a users API)
+  // Mock data for available team members
   const availableAssignees = [
     { id: 'admin-1', name: 'Jordan Lee', role: 'admin' },
     { id: 'admin-2', name: 'Alex Chen', role: 'admin' },
@@ -90,13 +90,17 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
 
   const handleEditForm = () => {
     setIsEditing(!isEditing);
+    // Reset editedForm to original form data when canceling edit
+    if (isEditing) {
+      setEditedForm({ ...form });
+    }
   };
 
   const handleSaveForm = () => {
-    // In a real app, this would call an update API
-    console.log('Saving form changes:', editedForm);
-    setIsEditing(false);
-    // You would typically call a context method to update the form here
+    if (editedForm && updateForm) {
+      updateForm(editedForm.id, editedForm);
+      setIsEditing(false);
+    }
   };
 
   const handleAssignForm = () => {
@@ -110,7 +114,15 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
   };
 
   const updateFormField = (field: string, value: any) => {
-    setEditedForm(prev => prev ? { ...prev, [field]: value } : null);
+    setEditedForm(prev => {
+      if (!prev) return null;
+      
+      if (field === 'additionalEmails' && typeof value === 'string') {
+        return { ...prev, [field]: value.split(', ').filter(Boolean) };
+      }
+      
+      return { ...prev, [field]: value };
+    });
   };
   
   const getStatusBadge = (status: string) => {
@@ -265,7 +277,7 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
                     <TableCell className="font-medium bg-gray-50 text-left">Additional emails to send package</TableCell>
                     <EditableCell 
                       value={editedForm.additionalEmails.join(', ')} 
-                      onChange={(val) => updateFormField('additionalEmails', val.split(', ').filter(Boolean))}
+                      onChange={(val) => updateFormField('additionalEmails', val)}
                       className="text-center"
                     />
                   </TableRow>
