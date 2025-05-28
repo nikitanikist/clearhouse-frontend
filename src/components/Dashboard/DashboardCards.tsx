@@ -1,14 +1,15 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FileText, AlertTriangle, CheckCircle, Plus } from 'lucide-react';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
+import CloseoutFormCreate from '@/components/CloseoutForms/CloseoutFormCreate';
 
 const DashboardCards = () => {
   const { forms } = useData();
   const { user } = useAuth();
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   // Filter forms based on user role
   const getFilteredForms = (formsList: typeof forms) => {
@@ -30,7 +31,10 @@ const DashboardCards = () => {
       {/* Create New Form Button - positioned above cards */}
       {user?.role === 'preparer' && (
         <div className="flex justify-end">
-          <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-xl text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+          <Button 
+            onClick={() => setShowCreateForm(true)}
+            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-xl text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+          >
             <Plus className="mr-2 h-5 w-5" />
             Create New Closeout Form
           </Button>
@@ -80,6 +84,12 @@ const DashboardCards = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Create Form Dialog */}
+      <CloseoutFormCreate 
+        open={showCreateForm} 
+        onOpenChange={setShowCreateForm} 
+      />
     </div>
   );
 };
