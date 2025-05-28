@@ -22,6 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import PreviousYearForms from './PreviousYearForms';
 
 interface CloseoutFormViewProps {
@@ -70,10 +78,7 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
   };
 
   const handleEditForm = () => {
-    // Close the current dialog and implement form editing functionality
-    // In a real app, this would navigate to an edit form or open an edit modal
     onOpenChange(false);
-    // You would add actual edit form navigation/handling here
     console.log('Edit form clicked for form ID:', formId);
   };
 
@@ -108,6 +113,18 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
     return format(date, 'MMM d, yyyy');
   };
 
+  // Create mock family members data to match the screenshot format
+  const familyMembers = [
+    {
+      name: form.clientName,
+      signingPerson: form.signingPerson,
+      email: form.signingEmail,
+      additionalEmails: form.additionalEmails.join(', '),
+      personalTaxPayment: '-3,762.00',
+      hstPayment: '0'
+    }
+  ];
+
   // Create a mock client object for PreviousYearForms component
   const clientForPreviousForms = {
     id: form.clientName.toLowerCase().replace(/\s+/g, '-'),
@@ -117,10 +134,10 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex justify-between items-center">
-            <DialogTitle>Closeout Form</DialogTitle>
+            <DialogTitle>Closing Out Request - T1</DialogTitle>
             {getStatusBadge(form.status)}
           </div>
           <DialogDescription>
@@ -128,103 +145,261 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Current Form - Takes up 3/5 of the width */}
-          <div className="lg:col-span-3 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Client Information</h3>
-                  <div className="mt-2 space-y-2">
-                    <div className="text-sm">
-                      <span className="font-medium">Client Name:</span> {form.clientName}
-                    </div>
-                    <div className="text-sm">
-                      <span className="font-medium">File Path:</span> {form.filePath}
-                    </div>
-                    <div className="text-sm">
-                      <span className="font-medium">Signing Person:</span> {form.signingPerson}
-                    </div>
-                    <div className="text-sm">
-                      <span className="font-medium">Signing Email:</span> {form.signingEmail}
-                    </div>
-                    {form.additionalEmails.length > 0 && (
-                      <div className="text-sm">
-                        <span className="font-medium">Additional Emails:</span> {form.additionalEmails.join(', ')}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Tax Return Information</h3>
-                  <div className="mt-2 space-y-2">
-                    <div className="text-sm">
-                      <span className="font-medium">Partner:</span> {form.partner}
-                    </div>
-                    <div className="text-sm">
-                      <span className="font-medium">Manager:</span> {form.manager}
-                    </div>
-                    <div className="text-sm">
-                      <span className="font-medium">Year(s):</span> {form.years}
-                    </div>
-                    <div className="text-sm">
-                      <span className="font-medium">Job #:</span> {form.jobNumber}
-                    </div>
-                    <div className="text-sm">
-                      <span className="font-medium">Invoice Amount:</span> {form.invoiceAmount}
-                    </div>
-                    <div className="text-sm">
-                      <span className="font-medium">Bill Detail:</span> {form.billDetail}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-4">
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Processing Details</h3>
-                  <div className="mt-2 space-y-2">
-                    <div className="text-sm">
-                      <span className="font-medium">Payment Required Before Filing:</span> {form.paymentRequired ? 'Yes' : 'No'}
-                    </div>
-                    <div className="text-sm">
-                      <span className="font-medium">WIP Recovery:</span> {form.wipRecovery}
-                    </div>
-                    {form.recoveryReason && (
-                      <div className="text-sm">
-                        <span className="font-medium">Recovery Reason:</span> {form.recoveryReason}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Filing Types</h3>
-                  <div className="mt-2 space-y-2">
-                    <div className="text-sm">
-                      <span className="font-medium">T1:</span> {form.isT1 ? 'Yes' : 'No'}
-                    </div>
-                    <div className="text-sm">
-                      <span className="font-medium">S216:</span> {form.isS216 ? 'Yes' : 'No'}
-                    </div>
-                    <div className="text-sm">
-                      <span className="font-medium">S116:</span> {form.isS116 ? 'Yes' : 'No'}
-                    </div>
-                    <div className="text-sm">
-                      <span className="font-medium">Paper Filed:</span> {form.isPaperFiled ? 'Yes' : 'No'}
-                    </div>
-                    <div className="text-sm">
-                      <span className="font-medium">Installments Required:</span> {form.installmentsRequired ? 'Yes' : 'No'}
-                    </div>
-                  </div>
-                </div>
-              </div>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Closeout Form Table - Takes up 3/4 of the width */}
+          <div className="lg:col-span-3">
+            <div className="border rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-48 bg-gray-100 font-semibold">Field</TableHead>
+                    {familyMembers.map((member, index) => (
+                      <TableHead key={index} className="text-center bg-red-50 font-semibold text-red-600">
+                        {member.name}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Name of Client</TableCell>
+                    {familyMembers.map((member, index) => (
+                      <TableCell key={index} className="text-center text-red-600 font-medium">
+                        {member.name}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">File Path</TableCell>
+                    <TableCell className="text-sm">{form.filePath}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Name of person signing</TableCell>
+                    {familyMembers.map((member, index) => (
+                      <TableCell key={index} className="text-center">{member.signingPerson}</TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Email of person signing</TableCell>
+                    {familyMembers.map((member, index) => (
+                      <TableCell key={index} className="text-center text-blue-600 underline">
+                        {member.email}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Additional emails to send package</TableCell>
+                    {familyMembers.map((member, index) => (
+                      <TableCell key={index} className="text-center">{member.additionalEmails || ''}</TableCell>
+                    ))}
+                  </TableRow>
+                  
+                  {/* Partner & Manager Section */}
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Partner</TableCell>
+                    <TableCell>{form.partner}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Manager</TableCell>
+                    <TableCell>{form.manager}</TableCell>
+                  </TableRow>
+                  
+                  {/* Year & Job Details */}
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Year(s)</TableCell>
+                    <TableCell className="text-center">{form.years}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Job #</TableCell>
+                    <TableCell className="text-center">{form.jobNumber}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Invoice amount (+ disb, HST)</TableCell>
+                    <TableCell>{form.invoiceAmount}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Final Bill Detail</TableCell>
+                    <TableCell>{form.billDetail}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Payment required before filing? Yes/No</TableCell>
+                    <TableCell>{form.paymentRequired ? 'Yes' : 'No'}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">WIP recovery % (WIP + 20% Partner time)</TableCell>
+                    <TableCell>{form.wipRecovery}</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Reason for Recovery below 100% - discussed with Partner</TableCell>
+                    <TableCell>{form.recoveryReason || 'N/A'}</TableCell>
+                  </TableRow>
+                  
+                  {/* Tax Filing Types */}
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">T1</TableCell>
+                    {familyMembers.map((_, index) => (
+                      <TableCell key={index} className="text-center">{form.isT1 ? '✓' : ''}</TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">S216</TableCell>
+                    {familyMembers.map((_, index) => (
+                      <TableCell key={index} className="text-center">{form.isS216 ? '✓' : ''}</TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">S116</TableCell>
+                    {familyMembers.map((_, index) => (
+                      <TableCell key={index} className="text-center">{form.isS116 ? '✓' : ''}</TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">To be paper filed - CRA copy to be signed</TableCell>
+                    {familyMembers.map((_, index) => (
+                      <TableCell key={index} className="text-center">{form.isPaperFiled ? '✓' : ''}</TableCell>
+                    ))}
+                  </TableRow>
+                  
+                  {/* Installments */}
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Are installments required? (Yes/No)</TableCell>
+                    {familyMembers.map((_, index) => (
+                      <TableCell key={index} className="text-center">{form.installmentsRequired ? 'Yes' : 'No'}</TableCell>
+                    ))}
+                  </TableRow>
+                  
+                  {/* Yellow highlighted rows */}
+                  <TableRow className="bg-yellow-100">
+                    <TableCell className="font-medium">T2091 (Principle residence sale)</TableCell>
+                    {familyMembers.map((_, index) => (
+                      <TableCell key={index} className="text-center"></TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow className="bg-yellow-100">
+                    <TableCell className="font-medium">T1135 (Foreign Property)</TableCell>
+                    {familyMembers.map((_, index) => (
+                      <TableCell key={index} className="text-center"></TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow className="bg-yellow-100">
+                    <TableCell className="font-medium">T1032 (Pension Split)</TableCell>
+                    {familyMembers.map((_, index) => (
+                      <TableCell key={index} className="text-center"></TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow className="bg-yellow-100">
+                    <TableCell className="font-medium">HST (Indicate Draft or Final)</TableCell>
+                    {familyMembers.map((_, index) => (
+                      <TableCell key={index} className="text-center"></TableCell>
+                    ))}
+                  </TableRow>
+                  
+                  {/* Other notes */}
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Other notes</TableCell>
+                    <TableCell></TableCell>
+                  </TableRow>
+                  
+                  {/* Personal Tax Payment Section */}
+                  <TableRow>
+                    <TableCell className="text-center font-bold text-red-600 bg-gray-50" colSpan={familyMembers.length + 1}>
+                      Personal Tax Payment
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="text-center font-medium bg-red-50" colSpan={familyMembers.length + 1}>
+                      {familyMembers.map(member => member.name).join(' | ')}
+                    </TableCell>
+                  </TableRow>
+                  
+                  {/* Tax Payment Details */}
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Prior Periods Balance Outstanding</TableCell>
+                    {familyMembers.map((_, index) => (
+                      <TableCell key={index} className="text-center">-</TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Taxes Payable (Refundable)</TableCell>
+                    {familyMembers.map((member, index) => (
+                      <TableCell key={index} className="text-center">{member.personalTaxPayment}</TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Installments during Calendar YE</TableCell>
+                    {familyMembers.map((_, index) => (
+                      <TableCell key={index} className="text-center"></TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Installments made after Calendar YE</TableCell>
+                    {familyMembers.map((_, index) => (
+                      <TableCell key={index} className="text-center"></TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Amount owing (Refund)</TableCell>
+                    {familyMembers.map((member, index) => (
+                      <TableCell key={index} className="text-center">{member.personalTaxPayment}</TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Due date</TableCell>
+                    {familyMembers.map((_, index) => (
+                      <TableCell key={index} className="text-center"></TableCell>
+                    ))}
+                  </TableRow>
+                  
+                  {/* HST Payment Section */}
+                  <TableRow>
+                    <TableCell className="text-center font-bold text-red-600 bg-gray-50" colSpan={familyMembers.length + 1}>
+                      HST Payment (RT0001 Account)
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Prior Periods Balance Outstanding</TableCell>
+                    {familyMembers.map((_, index) => (
+                      <TableCell key={index} className="text-center">-</TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">HST Payable (Refund)</TableCell>
+                    {familyMembers.map((member, index) => (
+                      <TableCell key={index} className="text-center">{member.hstPayment}</TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Installments during period</TableCell>
+                    {familyMembers.map((_, index) => (
+                      <TableCell key={index} className="text-center"></TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Payments made after period</TableCell>
+                    {familyMembers.map((_, index) => (
+                      <TableCell key={index} className="text-center">-</TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Payment due (Refund) now</TableCell>
+                    {familyMembers.map((_, index) => (
+                      <TableCell key={index} className="text-center"></TableCell>
+                    ))}
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Due date</TableCell>
+                    {familyMembers.map((_, index) => (
+                      <TableCell key={index} className="text-center"></TableCell>
+                    ))}
+                  </TableRow>
+                </TableBody>
+              </Table>
             </div>
-            
+
+            {/* Comments Section */}
             {form.comments.length > 0 && (
               <>
-                <Separator />
+                <Separator className="my-4" />
                 <div className="space-y-2">
                   <h3 className="text-sm font-medium">Comments</h3>
                   {form.comments.map((comment) => (
@@ -238,9 +413,10 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
               </>
             )}
             
+            {/* Amendment Section */}
             {form.status === 'rejected' && canApprove && (
               <>
-                <Separator />
+                <Separator className="my-4" />
                 <div>
                   <h3 className="text-sm font-medium">Fix and Resubmit</h3>
                   <p className="text-sm text-muted-foreground mt-1">
@@ -252,7 +428,7 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
             
             {canReject && form.status === 'pending' && (
               <>
-                <Separator />
+                <Separator className="my-4" />
                 <div className="space-y-2">
                   <h3 className="text-sm font-medium">Amendment Reason</h3>
                   <Textarea 
@@ -267,7 +443,7 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
 
             {canAssign && (
               <>
-                <Separator />
+                <Separator className="my-4" />
                 <div className="space-y-2">
                   <h3 className="text-sm font-medium">Assign Form</h3>
                   <div className="flex gap-2">
@@ -302,8 +478,8 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
             )}
           </div>
 
-          {/* Previous Year Forms - Takes up 2/5 of the width */}
-          <div className="lg:col-span-2">
+          {/* Previous Year Forms - Takes up 1/4 of the width */}
+          <div className="lg:col-span-1">
             <div className="border rounded-lg p-4 h-full bg-muted/10">
               <PreviousYearForms 
                 client={clientForPreviousForms} 
