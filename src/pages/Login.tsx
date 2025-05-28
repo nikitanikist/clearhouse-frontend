@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth, UserRole } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -55,19 +54,16 @@ const Login: React.FC = () => {
       case 'preparer':
         return {
           title: 'Preparer',
-          description: 'Create and manage closeout forms',
           icon: FileText,
         };
       case 'admin':
         return {
           title: 'Admin',
-          description: 'Approve forms and manage client communications',
           icon: User,
         };
       case 'superadmin':
         return {
           title: 'Super Admin',
-          description: 'Full system access and user management',
           icon: Settings,
         };
     }
@@ -94,8 +90,7 @@ const Login: React.FC = () => {
                         <IconComponent className="w-8 h-8 text-orange-600" />
                       </div>
                     </div>
-                    <h3 className="text-xl font-semibold text-gray-800 mb-2">{roleInfo.title}</h3>
-                    <p className="text-gray-600 text-sm mb-6">{roleInfo.description}</p>
+                    <h3 className="text-xl font-semibold text-gray-800 mb-6">{roleInfo.title}</h3>
                     <Button 
                       onClick={() => handleRoleSelect(role)}
                       className="w-full bg-blue-600 hover:bg-blue-700 text-white"
@@ -142,7 +137,6 @@ const Login: React.FC = () => {
                 )}
                 <div>
                   <CardTitle>Login as {roleInfo?.title}</CardTitle>
-                  <CardDescription>{roleInfo?.description}</CardDescription>
                 </div>
               </div>
             </div>
