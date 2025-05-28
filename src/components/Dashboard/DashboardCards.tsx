@@ -27,6 +27,16 @@ const DashboardCards = () => {
 
   return (
     <div className="space-y-8">
+      {/* Create New Form Button - positioned above cards */}
+      {user?.role === 'preparer' && (
+        <div className="flex justify-end">
+          <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-xl text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+            <Plus className="mr-2 h-5 w-5" />
+            Create New Closeout Form
+          </Button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Pending Closeouts Card */}
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group">
@@ -70,16 +80,6 @@ const DashboardCards = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Create New Form Button */}
-      {user?.role === 'preparer' && (
-        <div className="flex justify-center pt-4">
-          <Button className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-12 py-4 rounded-2xl text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
-            <Plus className="mr-3 h-6 w-6" />
-            Create New Closeout Form
-          </Button>
-        </div>
-      )}
     </div>
   );
 };
