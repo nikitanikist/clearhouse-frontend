@@ -12,7 +12,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { Check, Clock, FileCheck, X, Edit, UserPlus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Check, Clock, FileCheck, X, Edit, UserPlus, Save } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import {
@@ -30,6 +31,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
 import PreviousYearForms from './PreviousYearForms';
 
 interface CloseoutFormViewProps {
@@ -47,9 +49,18 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
   const { user } = useAuth();
   const [comment, setComment] = useState('');
   const [selectedAssignee, setSelectedAssignee] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedForm, setEditedForm] = useState<CloseoutForm | null>(null);
   
   const form = formId ? getFormById(formId) : null;
   const previousForms = form ? getPreviousYearForms(form.clientName, form.id) : [];
+
+  // Initialize editedForm when form changes
+  React.useEffect(() => {
+    if (form) {
+      setEditedForm({ ...form });
+    }
+  }, [form]);
 
   // Mock data for available team members (in a real app, this would come from a users API)
   const availableAssignees = [
@@ -59,7 +70,7 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
     { id: 'superadmin-1', name: 'Sam Wilson', role: 'superadmin' },
   ];
 
-  if (!form) {
+  if (!form || !editedForm) {
     return null;
   }
 
@@ -78,8 +89,14 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
   };
 
   const handleEditForm = () => {
-    onOpenChange(false);
-    console.log('Edit form clicked for form ID:', formId);
+    setIsEditing(!isEditing);
+  };
+
+  const handleSaveForm = () => {
+    // In a real app, this would call an update API
+    console.log('Saving form changes:', editedForm);
+    setIsEditing(false);
+    // You would typically call a context method to update the form here
   };
 
   const handleAssignForm = () => {
@@ -90,6 +107,10 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
         setSelectedAssignee('');
       }
     }
+  };
+
+  const updateFormField = (field: string, value: any) => {
+    setEditedForm(prev => prev ? { ...prev, [field]: value } : null);
   };
   
   const getStatusBadge = (status: string) => {
@@ -116,10 +137,10 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
   // Create mock family members data to match the screenshot format
   const familyMembers = [
     {
-      name: form.clientName,
-      signingPerson: form.signingPerson,
-      email: form.signingEmail,
-      additionalEmails: form.additionalEmails.join(', '),
+      name: editedForm.clientName,
+      signingPerson: editedForm.signingPerson,
+      email: editedForm.signingEmail,
+      additionalEmails: editedForm.additionalEmails.join(', '),
       personalTaxPayment: '-3,762.00',
       hstPayment: '0'
     }
@@ -127,9 +148,44 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
 
   // Create a mock client object for PreviousYearForms component
   const clientForPreviousForms = {
-    id: form.clientName.toLowerCase().replace(/\s+/g, '-'),
-    name: form.clientName,
-    email: form.signingEmail
+    id: editedForm.clientName.toLowerCase().replace(/\s+/g, '-'),
+    name: editedForm.clientName,
+    email: editedForm.signingEmail
+  };
+
+  const EditableCell = ({ value, onChange, className = "text-center", type = "text" }: { 
+    value: string | boolean; 
+    onChange: (val: any) => void; 
+    className?: string;
+    type?: string;
+  }) => {
+    if (!isEditing) {
+      if (typeof value === 'boolean') {
+        return <TableCell className={className}>{value ? '✓' : ''}</TableCell>;
+      }
+      return <TableCell className={className}>{value}</TableCell>;
+    }
+
+    if (typeof value === 'boolean') {
+      return (
+        <TableCell className={className}>
+          <Checkbox 
+            checked={value} 
+            onCheckedChange={onChange}
+          />
+        </TableCell>
+      );
+    }
+
+    return (
+      <TableCell className={className}>
+        <Input 
+          value={value} 
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full border-0 bg-transparent p-1 text-inherit"
+        />
+      </TableCell>
+    );
   };
   
   return (
@@ -138,7 +194,19 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
         <DialogHeader>
           <div className="flex justify-between items-center">
             <DialogTitle>Closing Out Request - T1</DialogTitle>
-            {getStatusBadge(form.status)}
+            <div className="flex items-center gap-2">
+              {getStatusBadge(form.status)}
+              {(canEdit || canApprove) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={isEditing ? handleSaveForm : handleEditForm}
+                >
+                  {isEditing ? <Save className="mr-2 h-4 w-4" /> : <Edit className="mr-2 h-4 w-4" />}
+                  {isEditing ? 'Save' : 'Edit'}
+                </Button>
+              )}
+            </div>
           </div>
           <DialogDescription>
             Created on {formatDate(form.createdAt)} by {form.createdBy.name}
@@ -152,7 +220,7 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-48 bg-gray-100 font-semibold">Field</TableHead>
+                    <TableHead className="w-48 bg-gray-100 font-semibold text-left">Field</TableHead>
                     {familyMembers.map((member, index) => (
                       <TableHead key={index} className="text-center bg-red-50 font-semibold text-red-600">
                         {member.name}
@@ -162,142 +230,188 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
                 </TableHeader>
                 <TableBody>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Name of Client</TableCell>
-                    {familyMembers.map((member, index) => (
-                      <TableCell key={index} className="text-center text-red-600 font-medium">
-                        {member.name}
-                      </TableCell>
-                    ))}
+                    <TableCell className="font-medium bg-gray-50 text-left">Name of Client</TableCell>
+                    <EditableCell 
+                      value={editedForm.clientName} 
+                      onChange={(val) => updateFormField('clientName', val)}
+                      className="text-center text-red-600 font-medium"
+                    />
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">File Path</TableCell>
-                    <TableCell className="text-sm">{form.filePath}</TableCell>
+                    <TableCell className="font-medium bg-gray-50 text-left">File Path</TableCell>
+                    <EditableCell 
+                      value={editedForm.filePath} 
+                      onChange={(val) => updateFormField('filePath', val)}
+                      className="text-left text-sm"
+                    />
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Name of person signing</TableCell>
-                    {familyMembers.map((member, index) => (
-                      <TableCell key={index} className="text-center">{member.signingPerson}</TableCell>
-                    ))}
+                    <TableCell className="font-medium bg-gray-50 text-left">Name of person signing</TableCell>
+                    <EditableCell 
+                      value={editedForm.signingPerson} 
+                      onChange={(val) => updateFormField('signingPerson', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Email of person signing</TableCell>
-                    {familyMembers.map((member, index) => (
-                      <TableCell key={index} className="text-center text-blue-600 underline">
-                        {member.email}
-                      </TableCell>
-                    ))}
+                    <TableCell className="font-medium bg-gray-50 text-left">Email of person signing</TableCell>
+                    <EditableCell 
+                      value={editedForm.signingEmail} 
+                      onChange={(val) => updateFormField('signingEmail', val)}
+                      className="text-center text-blue-600 underline"
+                    />
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Additional emails to send package</TableCell>
-                    {familyMembers.map((member, index) => (
-                      <TableCell key={index} className="text-center">{member.additionalEmails || ''}</TableCell>
-                    ))}
+                    <TableCell className="font-medium bg-gray-50 text-left">Additional emails to send package</TableCell>
+                    <EditableCell 
+                      value={editedForm.additionalEmails.join(', ')} 
+                      onChange={(val) => updateFormField('additionalEmails', val.split(', ').filter(Boolean))}
+                      className="text-center"
+                    />
                   </TableRow>
                   
                   {/* Partner & Manager Section */}
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Partner</TableCell>
-                    <TableCell>{form.partner}</TableCell>
+                    <TableCell className="font-medium bg-gray-50 text-left">Partner</TableCell>
+                    <EditableCell 
+                      value={editedForm.partner} 
+                      onChange={(val) => updateFormField('partner', val)}
+                      className="text-left"
+                    />
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Manager</TableCell>
-                    <TableCell>{form.manager}</TableCell>
+                    <TableCell className="font-medium bg-gray-50 text-left">Manager</TableCell>
+                    <EditableCell 
+                      value={editedForm.manager} 
+                      onChange={(val) => updateFormField('manager', val)}
+                      className="text-left"
+                    />
                   </TableRow>
                   
                   {/* Year & Job Details */}
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Year(s)</TableCell>
-                    <TableCell className="text-center">{form.years}</TableCell>
+                    <TableCell className="font-medium bg-gray-50 text-left">Year(s)</TableCell>
+                    <EditableCell 
+                      value={editedForm.years} 
+                      onChange={(val) => updateFormField('years', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Job #</TableCell>
-                    <TableCell className="text-center">{form.jobNumber}</TableCell>
+                    <TableCell className="font-medium bg-gray-50 text-left">Job #</TableCell>
+                    <EditableCell 
+                      value={editedForm.jobNumber} 
+                      onChange={(val) => updateFormField('jobNumber', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Invoice amount (+ disb, HST)</TableCell>
-                    <TableCell>{form.invoiceAmount}</TableCell>
+                    <TableCell className="font-medium bg-gray-50 text-left">Invoice amount (+ disb, HST)</TableCell>
+                    <EditableCell 
+                      value={editedForm.invoiceAmount} 
+                      onChange={(val) => updateFormField('invoiceAmount', val)}
+                      className="text-left"
+                    />
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Final Bill Detail</TableCell>
-                    <TableCell>{form.billDetail}</TableCell>
+                    <TableCell className="font-medium bg-gray-50 text-left">Final Bill Detail</TableCell>
+                    <EditableCell 
+                      value={editedForm.billDetail} 
+                      onChange={(val) => updateFormField('billDetail', val)}
+                      className="text-left"
+                    />
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Payment required before filing? Yes/No</TableCell>
-                    <TableCell>{form.paymentRequired ? 'Yes' : 'No'}</TableCell>
+                    <TableCell className="font-medium bg-gray-50 text-left">Payment required before filing? Yes/No</TableCell>
+                    <EditableCell 
+                      value={editedForm.paymentRequired ? 'Yes' : 'No'} 
+                      onChange={(val) => updateFormField('paymentRequired', val === 'Yes')}
+                      className="text-left"
+                    />
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">WIP recovery % (WIP + 20% Partner time)</TableCell>
-                    <TableCell>{form.wipRecovery}</TableCell>
+                    <TableCell className="font-medium bg-gray-50 text-left">WIP recovery % (WIP + 20% Partner time)</TableCell>
+                    <EditableCell 
+                      value={editedForm.wipRecovery} 
+                      onChange={(val) => updateFormField('wipRecovery', val)}
+                      className="text-left"
+                    />
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Reason for Recovery below 100% - discussed with Partner</TableCell>
-                    <TableCell>{form.recoveryReason || 'N/A'}</TableCell>
+                    <TableCell className="font-medium bg-gray-50 text-left">Reason for Recovery below 100% - discussed with Partner</TableCell>
+                    <EditableCell 
+                      value={editedForm.recoveryReason || 'N/A'} 
+                      onChange={(val) => updateFormField('recoveryReason', val)}
+                      className="text-left"
+                    />
                   </TableRow>
                   
                   {/* Tax Filing Types */}
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">T1</TableCell>
-                    {familyMembers.map((_, index) => (
-                      <TableCell key={index} className="text-center">{form.isT1 ? '✓' : ''}</TableCell>
-                    ))}
+                    <TableCell className="font-medium bg-gray-50 text-left">T1</TableCell>
+                    <EditableCell 
+                      value={editedForm.isT1} 
+                      onChange={(val) => updateFormField('isT1', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">S216</TableCell>
-                    {familyMembers.map((_, index) => (
-                      <TableCell key={index} className="text-center">{form.isS216 ? '✓' : ''}</TableCell>
-                    ))}
+                    <TableCell className="font-medium bg-gray-50 text-left">S216</TableCell>
+                    <EditableCell 
+                      value={editedForm.isS216} 
+                      onChange={(val) => updateFormField('isS216', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">S116</TableCell>
-                    {familyMembers.map((_, index) => (
-                      <TableCell key={index} className="text-center">{form.isS116 ? '✓' : ''}</TableCell>
-                    ))}
+                    <TableCell className="font-medium bg-gray-50 text-left">S116</TableCell>
+                    <EditableCell 
+                      value={editedForm.isS116} 
+                      onChange={(val) => updateFormField('isS116', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">To be paper filed - CRA copy to be signed</TableCell>
-                    {familyMembers.map((_, index) => (
-                      <TableCell key={index} className="text-center">{form.isPaperFiled ? '✓' : ''}</TableCell>
-                    ))}
+                    <TableCell className="font-medium bg-gray-50 text-left">To be paper filed - CRA copy to be signed</TableCell>
+                    <EditableCell 
+                      value={editedForm.isPaperFiled} 
+                      onChange={(val) => updateFormField('isPaperFiled', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   
                   {/* Installments */}
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Are installments required? (Yes/No)</TableCell>
-                    {familyMembers.map((_, index) => (
-                      <TableCell key={index} className="text-center">{form.installmentsRequired ? 'Yes' : 'No'}</TableCell>
-                    ))}
+                    <TableCell className="font-medium bg-gray-50 text-left">Are installments required? (Yes/No)</TableCell>
+                    <EditableCell 
+                      value={editedForm.installmentsRequired ? 'Yes' : 'No'} 
+                      onChange={(val) => updateFormField('installmentsRequired', val === 'Yes')}
+                      className="text-center"
+                    />
                   </TableRow>
                   
                   {/* Yellow highlighted rows */}
                   <TableRow className="bg-yellow-100">
-                    <TableCell className="font-medium">T2091 (Principle residence sale)</TableCell>
-                    {familyMembers.map((_, index) => (
-                      <TableCell key={index} className="text-center"></TableCell>
-                    ))}
+                    <TableCell className="font-medium text-left">T2091 (Principle residence sale)</TableCell>
+                    <TableCell className="text-center"></TableCell>
                   </TableRow>
                   <TableRow className="bg-yellow-100">
-                    <TableCell className="font-medium">T1135 (Foreign Property)</TableCell>
-                    {familyMembers.map((_, index) => (
-                      <TableCell key={index} className="text-center"></TableCell>
-                    ))}
+                    <TableCell className="font-medium text-left">T1135 (Foreign Property)</TableCell>
+                    <TableCell className="text-center"></TableCell>
                   </TableRow>
                   <TableRow className="bg-yellow-100">
-                    <TableCell className="font-medium">T1032 (Pension Split)</TableCell>
-                    {familyMembers.map((_, index) => (
-                      <TableCell key={index} className="text-center"></TableCell>
-                    ))}
+                    <TableCell className="font-medium text-left">T1032 (Pension Split)</TableCell>
+                    <TableCell className="text-center"></TableCell>
                   </TableRow>
                   <TableRow className="bg-yellow-100">
-                    <TableCell className="font-medium">HST (Indicate Draft or Final)</TableCell>
-                    {familyMembers.map((_, index) => (
-                      <TableCell key={index} className="text-center"></TableCell>
-                    ))}
+                    <TableCell className="font-medium text-left">HST (Indicate Draft or Final)</TableCell>
+                    <TableCell className="text-center"></TableCell>
                   </TableRow>
                   
                   {/* Other notes */}
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Other notes</TableCell>
-                    <TableCell></TableCell>
+                    <TableCell className="font-medium bg-gray-50 text-left">Other notes</TableCell>
+                    <TableCell className="text-left"></TableCell>
                   </TableRow>
                   
                   {/* Personal Tax Payment Section */}
@@ -314,40 +428,32 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
                   
                   {/* Tax Payment Details */}
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Prior Periods Balance Outstanding</TableCell>
-                    {familyMembers.map((_, index) => (
-                      <TableCell key={index} className="text-center">-</TableCell>
-                    ))}
+                    <TableCell className="font-medium bg-gray-50 text-left">Prior Periods Balance Outstanding</TableCell>
+                    <TableCell className="text-center">-</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Taxes Payable (Refundable)</TableCell>
+                    <TableCell className="font-medium bg-gray-50 text-left">Taxes Payable (Refundable)</TableCell>
                     {familyMembers.map((member, index) => (
                       <TableCell key={index} className="text-center">{member.personalTaxPayment}</TableCell>
                     ))}
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Installments during Calendar YE</TableCell>
-                    {familyMembers.map((_, index) => (
-                      <TableCell key={index} className="text-center"></TableCell>
-                    ))}
+                    <TableCell className="font-medium bg-gray-50 text-left">Installments during Calendar YE</TableCell>
+                    <TableCell className="text-center"></TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Installments made after Calendar YE</TableCell>
-                    {familyMembers.map((_, index) => (
-                      <TableCell key={index} className="text-center"></TableCell>
-                    ))}
+                    <TableCell className="font-medium bg-gray-50 text-left">Installments made after Calendar YE</TableCell>
+                    <TableCell className="text-center"></TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Amount owing (Refund)</TableCell>
+                    <TableCell className="font-medium bg-gray-50 text-left">Amount owing (Refund)</TableCell>
                     {familyMembers.map((member, index) => (
                       <TableCell key={index} className="text-center">{member.personalTaxPayment}</TableCell>
                     ))}
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Due date</TableCell>
-                    {familyMembers.map((_, index) => (
-                      <TableCell key={index} className="text-center"></TableCell>
-                    ))}
+                    <TableCell className="font-medium bg-gray-50 text-left">Due date</TableCell>
+                    <TableCell className="text-center"></TableCell>
                   </TableRow>
                   
                   {/* HST Payment Section */}
@@ -357,40 +463,30 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
                     </TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Prior Periods Balance Outstanding</TableCell>
-                    {familyMembers.map((_, index) => (
-                      <TableCell key={index} className="text-center">-</TableCell>
-                    ))}
+                    <TableCell className="font-medium bg-gray-50 text-left">Prior Periods Balance Outstanding</TableCell>
+                    <TableCell className="text-center">-</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">HST Payable (Refund)</TableCell>
+                    <TableCell className="font-medium bg-gray-50 text-left">HST Payable (Refund)</TableCell>
                     {familyMembers.map((member, index) => (
                       <TableCell key={index} className="text-center">{member.hstPayment}</TableCell>
                     ))}
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Installments during period</TableCell>
-                    {familyMembers.map((_, index) => (
-                      <TableCell key={index} className="text-center"></TableCell>
-                    ))}
+                    <TableCell className="font-medium bg-gray-50 text-left">Installments during period</TableCell>
+                    <TableCell className="text-center"></TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Payments made after period</TableCell>
-                    {familyMembers.map((_, index) => (
-                      <TableCell key={index} className="text-center">-</TableCell>
-                    ))}
+                    <TableCell className="font-medium bg-gray-50 text-left">Payments made after period</TableCell>
+                    <TableCell className="text-center">-</TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Payment due (Refund) now</TableCell>
-                    {familyMembers.map((_, index) => (
-                      <TableCell key={index} className="text-center"></TableCell>
-                    ))}
+                    <TableCell className="font-medium bg-gray-50 text-left">Payment due (Refund) now</TableCell>
+                    <TableCell className="text-center"></TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Due date</TableCell>
-                    {familyMembers.map((_, index) => (
-                      <TableCell key={index} className="text-center"></TableCell>
-                    ))}
+                    <TableCell className="font-medium bg-gray-50 text-left">Due date</TableCell>
+                    <TableCell className="text-center"></TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
