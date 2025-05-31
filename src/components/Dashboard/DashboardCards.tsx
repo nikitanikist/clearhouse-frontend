@@ -1,127 +1,171 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { FileText, AlertTriangle, CheckCircle, Plus } from 'lucide-react';
-import { useData } from '@/contexts/DataContext';
+import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import CloseoutFormCreate from '@/components/CloseoutForms/CloseoutFormCreate';
-import CloseoutFormsList from '@/components/CloseoutForms/CloseoutFormsList';
-
-type ViewMode = 'dashboard' | 'pending' | 'rejected' | 'completed';
+import { useData } from '@/contexts/DataContext';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { FileText, Mail, Clock, CheckCircle, AlertCircle, Users } from 'lucide-react';
 
 const DashboardCards = () => {
-  const { forms } = useData();
   const { user } = useAuth();
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>('dashboard');
+  const { forms, emails } = useData();
+
+  console.log('Current user:', user);
+  console.log('All forms:', forms);
+  console.log('Forms count by status:', {
+    pending: forms.filter(f => f.status === 'pending').length,
+    active: forms.filter(f => f.status === 'active').length,
+    completed: forms.filter(f => f.status === 'completed').length,
+    rejected: forms.filter(f => f.status === 'rejected').length
+  });
 
   // Filter forms based on user role
-  const getFilteredForms = (formsList: typeof forms) => {
-    if (user?.role === 'superadmin') {
-      return formsList;
-    } else if (user?.role === 'admin') {
-      return formsList.filter(form => form.assignedTo && form.assignedTo.id === user.id);
-    } else {
-      return formsList.filter(form => form.createdBy.id === user.id);
+  const getFilteredForms = (status: string) => {
+    let filteredForms = forms.filter(form => form.status === status);
+    
+    if (user?.role === 'admin') {
+      filteredForms = filteredForms.filter(form => form.assignedTo && form.assignedTo.id === user.id);
+    } else if (user?.role === 'preparer') {
+      filteredForms = filteredForms.filter(form => form.createdBy.id === user.id);
     }
+    
+    return filteredForms;
   };
 
-  const pendingCount = getFilteredForms(forms.filter(form => form.status === 'pending')).length;
-  const amendmentCount = getFilteredForms(forms.filter(form => form.status === 'rejected')).length;
-  const completedCount = getFilteredForms(forms.filter(form => form.status === 'completed')).length;
+  const pendingForms = forms.filter(form => form.status === 'pending');
+  const activeForms = getFilteredForms('active');
+  const completedForms = getFilteredForms('completed');
+  const rejectedForms = getFilteredForms('rejected');
 
-  const handleCardClick = (status: 'pending' | 'rejected' | 'completed') => {
-    setViewMode(status);
+  console.log('Pending forms for admin:', pendingForms);
+  console.log('User role:', user?.role);
+
+  const getFormCards = () => {
+    if (user?.role === 'preparer') {
+      return (
+        <>
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Forms</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{activeForms.length}</div>
+              <p className="text-xs text-muted-foreground">Currently working on</p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Amendment Forms</CardTitle>
+              <AlertCircle className="h-4 w-4 text-orange-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{rejectedForms.length}</div>
+              <p className="text-xs text-muted-foreground">Require amendments</p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Completed Forms</CardTitle>
+              <CheckCircle className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{completedForms.length}</div>
+              <p className="text-xs text-muted-foreground">Successfully completed</p>
+            </CardContent>
+          </Card>
+        </>
+      );
+    }
+
+    if (user?.role === 'admin' || user?.role === 'superadmin') {
+      return (
+        <>
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Forms</CardTitle>
+              <Clock className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{pendingForms.length}</div>
+              <p className="text-xs text-muted-foreground">Awaiting review</p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Currently Working</CardTitle>
+              <FileText className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{activeForms.length}</div>
+              <p className="text-xs text-muted-foreground">Forms in progress</p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Amendment Required</CardTitle>
+              <AlertCircle className="h-4 w-4 text-orange-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{rejectedForms.length}</div>
+              <p className="text-xs text-muted-foreground">Need amendments</p>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Completed Forms</CardTitle>
+              <CheckCircle className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{completedForms.length}</div>
+              <p className="text-xs text-muted-foreground">Successfully completed</p>
+            </CardContent>
+          </Card>
+        </>
+      );
+    }
+
+    return null;
   };
 
-  const handleBackToDashboard = () => {
-    setViewMode('dashboard');
+  const emailStats = {
+    pending: emails.filter(e => e.status === 'pending').length,
+    replied: emails.filter(e => e.status === 'replied').length,
+    weReplied: emails.filter(e => e.status === 'we-replied').length,
   };
-
-  // Show the table view when a specific status is selected
-  if (viewMode !== 'dashboard') {
-    return (
-      <CloseoutFormsList 
-        status={viewMode} 
-        onBack={handleBackToDashboard}
-      />
-    );
-  }
 
   return (
-    <div className="space-y-8">
-      {/* Create New Form Button - positioned above cards */}
-      {user?.role === 'preparer' && (
-        <div className="flex justify-end">
-          <Button 
-            onClick={() => setShowCreateForm(true)}
-            className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white px-8 py-3 rounded-xl text-base font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-          >
-            <Plus className="mr-2 h-5 w-5" />
-            Create New Closeout Form
-          </Button>
-        </div>
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {getFormCards()}
+      
+      {(user?.role === 'admin' || user?.role === 'superadmin') && (
+        <Card className="hover:shadow-md transition-shadow cursor-pointer">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Email Threads</CardTitle>
+            <Mail className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{emails.length}</div>
+            <div className="flex gap-1 mt-1">
+              {emailStats.pending > 0 && (
+                <Badge variant="outline" className="text-xs">
+                  {emailStats.pending} pending
+                </Badge>
+              )}
+              {emailStats.replied > 0 && (
+                <Badge variant="outline" className="text-xs">
+                  {emailStats.replied} replied
+                </Badge>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       )}
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Pending Closeouts Card */}
-        <Card 
-          className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group"
-          onClick={() => handleCardClick('pending')}
-        >
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 bg-blue-500 rounded-2xl flex items-center justify-center group-hover:bg-blue-600 transition-colors duration-300 shadow-lg">
-                <FileText className="w-7 h-7 text-white" />
-              </div>
-            </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Pending Closeouts</h3>
-            <div className="text-4xl font-bold text-blue-600 mb-2">{pendingCount}</div>
-            <p className="text-sm text-blue-600 font-medium">Click to view details</p>
-          </CardContent>
-        </Card>
-
-        {/* Amendment Forms Card */}
-        <Card 
-          className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group"
-          onClick={() => handleCardClick('rejected')}
-        >
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 bg-orange-500 rounded-2xl flex items-center justify-center group-hover:bg-orange-600 transition-colors duration-300 shadow-lg">
-                <AlertTriangle className="w-7 h-7 text-white" />
-              </div>
-            </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Amendment Forms</h3>
-            <div className="text-4xl font-bold text-orange-600 mb-2">{amendmentCount}</div>
-            <p className="text-sm text-orange-600 font-medium">Click to view details</p>
-          </CardContent>
-        </Card>
-
-        {/* Completed Closeouts Card */}
-        <Card 
-          className="bg-gradient-to-br from-green-50 to-green-100 border-green-200 hover:shadow-xl hover:scale-105 transition-all duration-300 cursor-pointer group"
-          onClick={() => handleCardClick('completed')}
-        >
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-14 h-14 bg-green-500 rounded-2xl flex items-center justify-center group-hover:bg-green-600 transition-colors duration-300 shadow-lg">
-                <CheckCircle className="w-7 h-7 text-white" />
-              </div>
-            </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-2">Completed Closeouts</h3>
-            <div className="text-4xl font-bold text-green-600 mb-2">{completedCount}</div>
-            <p className="text-sm text-green-600 font-medium">Click to view details</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Create Form Dialog */}
-      <CloseoutFormCreate 
-        open={showCreateForm} 
-        onOpenChange={setShowCreateForm} 
-      />
     </div>
   );
 };

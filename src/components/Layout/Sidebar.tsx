@@ -2,12 +2,15 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Mail, Settings, Archive, Calendar, Users } from 'lucide-react';
+import { Home, Mail, Settings, Archive, Calendar, Users, Clock, FileText, AlertCircle, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const Sidebar = () => {
   const { user } = useAuth();
   const location = useLocation();
+  
+  console.log('Sidebar - Current user:', user);
+  console.log('Sidebar - User role:', user?.role);
   
   // Base navigation links - available to preparers
   const preparerLinks = [
@@ -17,6 +20,10 @@ const Sidebar = () => {
   // Links for admin and superadmin
   const adminLinks = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
+    { name: 'Pending Forms', href: '/dashboard/closeout-forms/pending', icon: Clock },
+    { name: 'Currently Working', href: '/dashboard/closeout-forms/active', icon: FileText },
+    { name: 'Amendment Forms', href: '/dashboard/closeout-forms/rejected', icon: AlertCircle },
+    { name: 'Completed Forms', href: '/dashboard/closeout-forms/completed', icon: CheckCircle },
     { name: 'Email Management', href: '/dashboard/emails', icon: Mail },
     { name: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
   ];
@@ -36,6 +43,8 @@ const Sidebar = () => {
   } else if (user?.role === 'superadmin') {
     navLinks = [...adminLinks, ...superAdminLinks];
   }
+
+  console.log('Sidebar - Navigation links:', navLinks);
 
   return (
     <div className="h-screen w-64 flex flex-col bg-sidebar border-r border-gray-200">
