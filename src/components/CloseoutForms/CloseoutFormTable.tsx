@@ -517,67 +517,70 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
           </Button>
         </div>
 
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border rounded-lg overflow-x-auto">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead className="w-48">Client Name</TableHead>
-                <TableHead className="w-48">Person Signing</TableHead>
-                <TableHead className="w-48">Email</TableHead>
-                <TableHead className="w-48">Additional Emails</TableHead>
-                <TableHead className="w-32">T1</TableHead>
-                <TableHead className="w-32">S216</TableHead>
-                <TableHead className="w-32">S116</TableHead>
-                <TableHead className="w-32">Paper Filed</TableHead>
-                <TableHead className="w-32">Installments</TableHead>
-                <TableHead className="w-32">Personal Tax Payment</TableHead>
-                <TableHead className="w-48">Installment Attachment</TableHead>
-                <TableHead className="w-20">Actions</TableHead>
+              <TableRow className="bg-gray-50">
+                <TableHead className="min-w-[200px] font-semibold">Client Name</TableHead>
+                <TableHead className="min-w-[200px] font-semibold">Person Signing</TableHead>
+                <TableHead className="min-w-[250px] font-semibold">Email</TableHead>
+                <TableHead className="min-w-[200px] font-semibold">Additional Emails</TableHead>
+                <TableHead className="min-w-[80px] text-center font-semibold">T1</TableHead>
+                <TableHead className="min-w-[80px] text-center font-semibold">S216</TableHead>
+                <TableHead className="min-w-[80px] text-center font-semibold">S116</TableHead>
+                <TableHead className="min-w-[100px] text-center font-semibold">Paper Filed</TableHead>
+                <TableHead className="min-w-[120px] text-center font-semibold">Installments</TableHead>
+                <TableHead className="min-w-[180px] font-semibold">Personal Tax Payment</TableHead>
+                <TableHead className="min-w-[200px] font-semibold">Installment Attachment</TableHead>
+                <TableHead className="min-w-[80px] text-center font-semibold">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {formData.familyMembers.map((member, index) => (
-                <TableRow key={member.id}>
-                  <TableCell>
+                <TableRow key={member.id} className="hover:bg-gray-50">
+                  <TableCell className="p-3">
                     <Input
                       value={member.clientName}
                       onChange={(e) => updateFamilyMember(member.id, 'clientName', e.target.value)}
                       placeholder={`${index + 1}ClientName`}
+                      className="w-full min-w-[180px]"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="p-3">
                     <Input
                       value={member.signingPerson}
                       onChange={(e) => updateFamilyMember(member.id, 'signingPerson', e.target.value)}
                       placeholder="Person signing"
+                      className="w-full min-w-[180px]"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="p-3">
                     <Input
                       value={member.signingEmail}
                       onChange={(e) => updateFamilyMember(member.id, 'signingEmail', e.target.value)}
                       placeholder="Email address"
                       type="email"
+                      className="w-full min-w-[220px]"
                     />
                   </TableCell>
-                  <TableCell>
-                    <div className="space-y-1">
+                  <TableCell className="p-3">
+                    <div className="space-y-2 min-w-[180px]">
                       {member.additionalEmails.map((email, emailIndex) => (
-                        <div key={emailIndex} className="flex gap-1">
+                        <div key={emailIndex} className="flex gap-2">
                           <Input
                             value={email}
                             onChange={(e) => updateMemberEmail(member.id, emailIndex, e.target.value)}
                             placeholder="Additional email"
                             type="email"
-                            className="text-xs"
+                            className="flex-1"
                           />
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => removeMemberEmail(member.id, emailIndex)}
-                            className="text-red-600 hover:text-red-700 px-1"
+                            className="text-red-600 hover:text-red-700 px-2"
                           >
-                            <Minus className="h-3 w-3" />
+                            <Minus className="h-4 w-4" />
                           </Button>
                         </div>
                       ))}
@@ -585,13 +588,14 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
                         variant="ghost"
                         size="sm"
                         onClick={() => addEmailToMember(member.id)}
-                        className="text-blue-600 hover:text-blue-700 px-1"
+                        className="text-blue-600 hover:text-blue-700 w-full justify-center"
                       >
-                        <Plus className="h-3 w-3" />
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add Email
                       </Button>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="p-3 text-center">
                     <div className="flex justify-center">
                       <Checkbox
                         checked={member.isT1}
@@ -599,7 +603,7 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
                       />
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="p-3 text-center">
                     <div className="flex justify-center">
                       <Checkbox
                         checked={member.isS216}
@@ -607,7 +611,7 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
                       />
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="p-3 text-center">
                     <div className="flex justify-center">
                       <Checkbox
                         checked={member.isS116}
@@ -615,7 +619,7 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
                       />
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="p-3 text-center">
                     <div className="flex justify-center">
                       <Checkbox
                         checked={member.isPaperFiled}
@@ -623,7 +627,7 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
                       />
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="p-3 text-center">
                     <div className="flex justify-center">
                       <Checkbox
                         checked={member.installmentsRequired}
@@ -631,16 +635,17 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
                       />
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="p-3">
                     <Input
                       value={member.personalTaxPayment}
                       onChange={(e) => updateFamilyMember(member.id, 'personalTaxPayment', e.target.value)}
                       placeholder="$0.00"
+                      className="w-full min-w-[150px]"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="p-3">
                     {member.installmentsRequired && (
-                      <div className="w-48">
+                      <div className="min-w-[180px]">
                         <InstallmentAttachmentUpload
                           attachment={member.installmentAttachment}
                           onAttachmentChange={(attachment) => updateFamilyMember(member.id, 'installmentAttachment', attachment)}
@@ -648,7 +653,7 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
                       </div>
                     )}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="p-3 text-center">
                     {formData.familyMembers.length > 1 && (
                       <Button
                         variant="ghost"
