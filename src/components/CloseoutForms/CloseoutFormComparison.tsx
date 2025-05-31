@@ -27,7 +27,7 @@ const CloseoutFormComparison = ({
   if (isMobile) {
     // Mobile layout - stacked vertically with natural page scroll
     return (
-      <div className="min-h-screen bg-gray-50 pb-24">
+      <div className="bg-gray-50">
         {/* Header */}
         <div className="bg-white border-b p-4">
           <h1 className="text-xl font-semibold">Form Comparison</h1>
@@ -72,8 +72,8 @@ const CloseoutFormComparison = ({
           </Card>
         </div>
 
-        {/* Fixed bottom buttons */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 flex gap-3 z-10">
+        {/* Bottom buttons - in normal document flow */}
+        <div className="bg-white border-t p-4 flex gap-3 mt-6">
           <Button variant="outline" onClick={onCancel} className="flex-1">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Cancel
@@ -89,7 +89,7 @@ const CloseoutFormComparison = ({
 
   // Desktop layout - side by side with natural page scroll
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
+    <div className="bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b p-6">
         <h1 className="text-2xl font-semibold text-gray-900">Form Comparison</h1>
@@ -140,8 +140,8 @@ const CloseoutFormComparison = ({
         </div>
       </div>
 
-      {/* Fixed bottom action buttons */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-6 flex justify-between items-center z-10">
+      {/* Bottom action buttons - in normal document flow */}
+      <div className="bg-white border-t p-6 flex justify-between items-center mt-6">
         <Button variant="outline" onClick={onCancel} className="flex items-center gap-2">
           <ArrowLeft className="h-4 w-4" />
           Cancel
