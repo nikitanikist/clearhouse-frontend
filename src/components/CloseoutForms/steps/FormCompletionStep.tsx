@@ -43,22 +43,32 @@ const FormCompletionStep = ({
 
   // Original view for new clients or when no previous data exists
   return (
-    <div className="space-y-6">
-      <div className="flex gap-6 max-h-[60vh] overflow-hidden">
+    <div className="h-full flex flex-col gap-6 p-6 bg-gray-50">
+      {/* Header for new client form */}
+      <div className="bg-white p-4 rounded-lg shadow-sm">
+        <h1 className="text-2xl font-semibold text-gray-900">Create New Closeout Form</h1>
+        <p className="text-sm text-gray-600 mt-1">
+          {isNewClient ? 'New client - no previous forms available' : 'Complete the form details below'}
+        </p>
+      </div>
+
+      <div className="flex-1 flex gap-6 overflow-hidden">
         {/* Left side - Form creation */}
-        <div className="flex-1 overflow-y-auto pr-2">
-          <CloseoutFormTable
-            initialData={extractedData}
-            onSubmit={onSubmit}
-            onCancel={onCancel}
-            showButtons={true}
-          />
+        <div className="flex-1 overflow-y-auto">
+          <div className="bg-white rounded-lg shadow-sm p-6">
+            <CloseoutFormTable
+              initialData={extractedData}
+              onSubmit={onSubmit}
+              onCancel={onCancel}
+              showButtons={true}
+            />
+          </div>
         </div>
 
         {/* Right side - Previous year forms (only for existing clients) */}
         {!isNewClient && selectedClient && 'name' in selectedClient && (
-          <div className="w-80 border-l pl-6">
-            <div className="sticky top-0 max-h-[60vh] overflow-y-auto">
+          <div className="w-80">
+            <div className="bg-white rounded-lg shadow-sm p-6 h-full overflow-y-auto">
               <PreviousYearForms 
                 client={selectedClient as Client} 
                 previousForms={previousForms} 
