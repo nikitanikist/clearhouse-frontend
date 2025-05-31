@@ -32,7 +32,6 @@ const FormCompletionStep = ({
             initialData={extractedData}
             onSubmit={onSubmit}
             onCancel={onCancel}
-            showButtons={false}
           />
         </div>
 
@@ -47,26 +46,6 @@ const FormCompletionStep = ({
             </div>
           </div>
         )}
-      </div>
-
-      {/* Bottom action buttons */}
-      <div className="flex justify-end gap-3 pt-4 border-t">
-        <Button variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button onClick={() => {
-          // Get the form data from CloseoutFormTable and submit
-          const formElement = document.querySelector('form');
-          if (formElement) {
-            const formData = new FormData(formElement);
-            // This is a simplified approach - in reality, you'd need to properly extract the form data
-            // For now, we'll trigger the form's submit handler
-            const submitEvent = new Event('submit', { bubbles: true, cancelable: true });
-            formElement.dispatchEvent(submitEvent);
-          }
-        }}>
-          Submit Closeout Form
-        </Button>
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -48,10 +49,15 @@ const CloseoutFormCreate = ({
   // If editing, pre-populate data
   React.useEffect(() => {
     if (editForm && open) {
-      // Pre-populate form with existing data
-      handleClientSelect({ name: editForm.clientName, email: editForm.signingEmail });
+      // Pre-populate form with existing data - add missing id property for Client
+      handleClientSelect({ 
+        id: editForm.id || 'temp-id', 
+        name: editForm.clientName, 
+        email: editForm.signingEmail 
+      });
+      // Use proper field names that exist in CloseoutFormTableData
       handleDataExtracted({
-        clientName: editForm.clientName,
+        filePath: editForm.filePath,
         partner: editForm.partner,
         manager: editForm.manager,
         years: editForm.years,
@@ -61,7 +67,37 @@ const CloseoutFormCreate = ({
         paymentRequired: editForm.paymentRequired,
         billDetail: editForm.billDetail,
         recoveryReason: editForm.recoveryReason,
-        // ... other fields
+        t2091PrincipalResidence: editForm.t2091PrincipalResidence,
+        t1135ForeignProperty: editForm.t1135ForeignProperty,
+        t1032PensionSplit: editForm.t1032PensionSplit,
+        hstDraftOrFinal: editForm.hstDraftOrFinal,
+        otherNotes: editForm.otherNotes,
+        priorPeriodsBalance: editForm.priorPeriodsBalance,
+        taxesPayable: editForm.taxesPayable,
+        installmentsDuringYear: editForm.installmentsDuringYear,
+        installmentsAfterYear: editForm.installmentsAfterYear,
+        amountOwing: editForm.amountOwing,
+        dueDate: editForm.dueDate,
+        hstPriorBalance: editForm.hstPriorBalance,
+        hstPayable: editForm.hstPayable,
+        hstInstallmentsDuring: editForm.hstInstallmentsDuring,
+        hstInstallmentsAfter: editForm.hstInstallmentsAfter,
+        hstPaymentDue: editForm.hstPaymentDue,
+        hstDueDate: editForm.hstDueDate,
+        familyMembers: editForm.familyMembers || [{
+          id: '1',
+          clientName: editForm.clientName,
+          signingPerson: editForm.signingPerson,
+          signingEmail: editForm.signingEmail,
+          additionalEmails: editForm.additionalEmails || [],
+          isT1: editForm.isT1,
+          isS216: editForm.isS216,
+          isS116: editForm.isS116,
+          isPaperFiled: editForm.isPaperFiled,
+          installmentsRequired: editForm.installmentsRequired,
+          personalTaxPayment: '$0.00',
+          installmentAttachment: editForm.installmentAttachment
+        }]
       });
       setStep(3); // Go directly to form completion step
     }
@@ -81,8 +117,13 @@ const CloseoutFormCreate = ({
     const mappedFormData = mapTableDataToCloseoutForm(formData, user);
     
     if (editForm) {
-      // Update existing form
-      updateForm(editForm.id, { ...mappedFormData, status: 'pending' });
+      // Update existing form - pass the complete form object with required properties
+      const updatedFormData = {
+        ...editForm,
+        ...mappedFormData,
+        status: 'pending' as const
+      };
+      updateForm(editForm.id, updatedFormData);
     } else {
       // Create new form
       createForm(mappedFormData);
