@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -80,9 +79,10 @@ interface CloseoutFormTableProps {
   initialData?: Partial<CloseoutFormTableData>;
   onSubmit: (data: CloseoutFormTableData) => void;
   onCancel: () => void;
+  showButtons?: boolean;
 }
 
-const CloseoutFormTable = ({ initialData, onSubmit, onCancel }: CloseoutFormTableProps) => {
+const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true }: CloseoutFormTableProps) => {
   const [formData, setFormData] = useState<CloseoutFormTableData>({
     filePath: initialData?.filePath || '\\\\Clearhouse\\Clients\\ClientName_2024\\T1',
     partner: initialData?.partner || 'Priya S.',
@@ -232,16 +232,18 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel }: CloseoutFormTabl
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Closeout Form</h2>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onCancel}>Cancel</Button>
-          <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700">
-            <Save className="mr-2 h-4 w-4" />
-            Submit Closeout Form
-          </Button>
+      {showButtons && (
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold">Closeout Form</h2>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={onCancel}>Cancel</Button>
+            <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700">
+              <Save className="mr-2 h-4 w-4" />
+              Submit Closeout Form
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* General Information Section */}
       <div className="space-y-4">
