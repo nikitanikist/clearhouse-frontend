@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -239,7 +240,7 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
             <Button variant="outline" onClick={onCancel}>Cancel</Button>
             <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700">
               <Save className="mr-2 h-4 w-4" />
-              Submit Closeout Form
+              Submit form
             </Button>
           </div>
         </div>
