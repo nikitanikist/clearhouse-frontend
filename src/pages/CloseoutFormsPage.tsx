@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import CloseoutFormGrid from '@/components/CloseoutForms/CloseoutFormGrid';
 import CloseoutFormView from '@/components/CloseoutForms/CloseoutFormView';
 import CloseoutFormCreate from '@/components/CloseoutForms/CloseoutFormCreate';
@@ -40,6 +41,8 @@ const CloseoutFormsPage = () => {
     setSelectedFormId(formId);
     setFormDialogOpen(true);
   };
+
+  const selectedForm = selectedFormId ? forms.find(form => form.id === selectedFormId) : null;
 
   return (
     <div className="space-y-6">
@@ -133,11 +136,15 @@ const CloseoutFormsPage = () => {
         </TabsContent>
       </Tabs>
       
-      <CloseoutFormView
-        formId={selectedFormId}
-        open={formDialogOpen}
-        onOpenChange={setFormDialogOpen}
-      />
+      {/* Closeout Form View Dialog */}
+      <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Closeout Form Details</DialogTitle>
+          </DialogHeader>
+          {selectedForm && <CloseoutFormView form={selectedForm} />}
+        </DialogContent>
+      </Dialog>
       
       <CloseoutFormCreate
         open={createDialogOpen}
