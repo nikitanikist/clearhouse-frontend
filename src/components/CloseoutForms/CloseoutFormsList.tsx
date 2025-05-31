@@ -14,7 +14,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Eye, Edit, ArrowLeft } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Eye, Edit, ArrowLeft, Play, FileX, X, UserPlus } from 'lucide-react';
 import { format } from 'date-fns';
 import CloseoutFormView from './CloseoutFormView';
 import CloseoutFormCreate from './CloseoutFormCreate';
@@ -25,12 +28,24 @@ interface CloseoutFormsListProps {
 }
 
 const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack }) => {
-  const { forms } = useData();
+  const { forms, updateFormStatus, assignForm } = useData();
   const { user } = useAuth();
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
   const [showFormView, setShowFormView] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editingForm, setEditingForm] = useState<any>(null);
+  const [showAmendmentDialog, setShowAmendmentDialog] = useState(false);
+  const [amendmentNote, setAmendmentNote] = useState('');
+  const [showAssignDialog, setShowAssignDialog] = useState(false);
+  const [selectedAssignee, setSelectedAssignee] = useState('');
+  const [actionFormId, setActionFormId] = useState<string | null>(null);
+
+  // Available admins for assignment
+  const availableAdmins = [
+    { id: 'admin-1', name: 'Jordan Lee' },
+    { id: 'admin-2', name: 'Sarah Chen' },
+    { id: 'admin-3', name: 'Mike Davis' },
+  ];
 
   // Filter forms based on user role and status
   const getFilteredForms = () => {
@@ -67,7 +82,7 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
       case 'pending':
         return 'Pending Closeout Forms';
       case 'active':
-        return 'Active Closeout Forms';
+        return 'Currently Working Forms';
       case 'completed':
         return 'Completed Closeout Forms';
       case 'rejected':
@@ -87,12 +102,128 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
     setShowEditForm(true);
   };
 
+  const handleStartWorking = (formId: string) => {
+    updateFormStatus(formId, 'active', 'Admin started working on this form');
+  };
+
+  const handleRequestAmendment = (formId: string) => {
+    setActionFormId(formId);
+    setShowAmendmentDialog(true);
+  };
+
+  const submitAmendment = () => {
+    if (actionFormId && amendmentNote.trim()) {
+      updateFormStatus(actionFormId, 'rejected', amendmentNote);
+      setShowAmendmentDialog(false);
+      setAmendmentNote('');
+      setActionFormId(null);
+    }
+  };
+
+  const handleAssignForm = (formId: string) => {
+    setActionFormId(formId);
+    setShowAssignDialog(true);
+  };
+
+  const submitAssignment = () => {
+    if (actionFormId && selectedAssignee) {
+      const assigneeName = availableAdmins.find(admin => admin.id === selectedAssignee)?.name || '';
+      assignForm(actionFormId, selectedAssignee, assigneeName);
+      setShowAssignDialog(false);
+      setSelectedAssignee('');
+      setActionFormId(null);
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     return format(date, 'MMM d, yyyy');
   };
 
   const selectedForm = selectedFormId ? forms.find(form => form.id === selectedFormId) : null;
+
+  const renderActionButtons = (form: any) => {
+    if (status === 'pending' && (user?.role === 'admin' || user?.role === 'superadmin')) {
+      return (
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleViewForm(form.id)}
+            className="flex items-center gap-2"
+          >
+            <Eye className="h-4 w-4" />
+            View
+          </Button>
+          <Button
+            variant="default"
+            size="sm"
+            onClick={() => handleStartWorking(form.id)}
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+          >
+            <Play className="h-4 w-4" />
+            Working on it
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleRequestAmendment(form.id)}
+            className="flex items-center gap-2 text-orange-600 border-orange-600 hover:bg-orange-50"
+          >
+            <FileX className="h-4 w-4" />
+            Need Amendment
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleAssignForm(form.id)}
+            className="flex items-center gap-2 text-blue-600 border-blue-600 hover:bg-blue-50"
+          >
+            <UserPlus className="h-4 w-4" />
+            Assign To
+          </Button>
+        </div>
+      );
+    }
+
+    if (status === 'rejected' && (user?.role === 'preparer')) {
+      return (
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleViewForm(form.id)}
+            className="flex items-center gap-2"
+          >
+            <Eye className="h-4 w-4" />
+            View
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleEditForm(form)}
+            className="flex items-center gap-2"
+          >
+            <Edit className="h-4 w-4" />
+            Edit
+          </Button>
+        </div>
+      );
+    }
+
+    // Default view button for other statuses
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => handleViewForm(form.id)}
+        className="flex items-center gap-2"
+      >
+        <Eye className="h-4 w-4" />
+        View
+      </Button>
+    );
+  };
 
   return (
     <>
@@ -150,28 +281,7 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
                       <TableCell>{getStatusBadge(form.status)}</TableCell>
                       <TableCell>{formatDate(form.createdAt)}</TableCell>
                       <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleViewForm(form.id)}
-                            className="flex items-center gap-2"
-                          >
-                            <Eye className="h-4 w-4" />
-                            View
-                          </Button>
-                          {status === 'rejected' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditForm(form)}
-                              className="flex items-center gap-2"
-                            >
-                              <Edit className="h-4 w-4" />
-                              Edit
-                            </Button>
-                          )}
-                        </div>
+                        {renderActionButtons(form)}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -198,6 +308,77 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
         onOpenChange={setShowEditForm}
         editForm={editingForm}
       />
+
+      {/* Amendment Request Dialog */}
+      <Dialog open={showAmendmentDialog} onOpenChange={setShowAmendmentDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Request Amendment</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="amendment-note">Amendment Note</Label>
+              <Textarea
+                id="amendment-note"
+                placeholder="Please describe what amendments are needed..."
+                value={amendmentNote}
+                onChange={(e) => setAmendmentNote(e.target.value)}
+                rows={4}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowAmendmentDialog(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={submitAmendment}
+                disabled={!amendmentNote.trim()}
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                Request Amendment
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Form Dialog */}
+      <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign Form to Admin</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="assignee">Select Admin</Label>
+              <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose an admin..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableAdmins.map((admin) => (
+                    <SelectItem key={admin.id} value={admin.id}>
+                      {admin.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowAssignDialog(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={submitAssignment}
+                disabled={!selectedAssignee}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Assign Form
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
