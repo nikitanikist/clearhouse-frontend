@@ -4,8 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from '@/components/Layout/MainLayout';
 import DashboardHome from './DashboardHome';
-import EmailsPage from './EmailsPage';
-import CalendarPage from './CalendarPage';
 import SettingsPage from './SettingsPage';
 import UsersPage from './UsersPage';
 import NotFound from './NotFound';
@@ -23,12 +21,6 @@ const Dashboard = () => {
       <MainLayout>
         <Routes>
           <Route path="/" element={<DashboardHome />} />
-          <Route path="/emails" element={<EmailsPage />} />
-          
-          {/* Admin and Super Admin routes */}
-          {(user?.role === 'admin' || user?.role === 'superadmin') && (
-            <Route path="/calendar" element={<CalendarPage />} />
-          )}
           
           {/* Super Admin only routes */}
           {user?.role === 'superadmin' && (

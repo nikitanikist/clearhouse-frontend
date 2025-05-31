@@ -2,7 +2,7 @@
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Mail, Settings, Archive, Calendar, Users, Clock, FileText, AlertCircle, CheckCircle } from 'lucide-react';
+import { Home, Settings, Users, Clock, FileText, AlertCircle, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const Sidebar = () => {
@@ -24,8 +24,6 @@ const Sidebar = () => {
     { name: 'Currently Working', href: '/dashboard/closeout-forms/active', icon: FileText },
     { name: 'Amendment Forms', href: '/dashboard/closeout-forms/rejected', icon: AlertCircle },
     { name: 'Completed Forms', href: '/dashboard/closeout-forms/completed', icon: CheckCircle },
-    { name: 'Email Management', href: '/dashboard/emails', icon: Mail },
-    { name: 'Calendar', href: '/dashboard/calendar', icon: Calendar },
   ];
 
   const superAdminLinks = [

@@ -3,12 +3,11 @@ import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { FileText, Mail, Clock, CheckCircle, AlertCircle, Users } from 'lucide-react';
+import { FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 
 const DashboardCards = () => {
   const { user } = useAuth();
-  const { forms, emails } = useData();
+  const { forms } = useData();
 
   console.log('Current user:', user);
   console.log('All forms:', forms);
@@ -133,39 +132,9 @@ const DashboardCards = () => {
     return null;
   };
 
-  const emailStats = {
-    pending: emails.filter(e => e.status === 'pending').length,
-    replied: emails.filter(e => e.status === 'replied').length,
-    weReplied: emails.filter(e => e.status === 'we-replied').length,
-  };
-
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {getFormCards()}
-      
-      {(user?.role === 'admin' || user?.role === 'superadmin') && (
-        <Card className="hover:shadow-md transition-shadow cursor-pointer">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Email Threads</CardTitle>
-            <Mail className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{emails.length}</div>
-            <div className="flex gap-1 mt-1">
-              {emailStats.pending > 0 && (
-                <Badge variant="outline" className="text-xs">
-                  {emailStats.pending} pending
-                </Badge>
-              )}
-              {emailStats.replied > 0 && (
-                <Badge variant="outline" className="text-xs">
-                  {emailStats.replied} replied
-                </Badge>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 };
