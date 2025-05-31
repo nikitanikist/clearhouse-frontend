@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -155,7 +154,7 @@ const CloseoutFormCreate = ({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className={
         shouldUseFullScreen
-          ? "w-screen h-screen max-w-none max-h-none m-0 rounded-none overflow-hidden"
+          ? "w-screen h-screen max-w-none max-h-none m-0 rounded-none overflow-y-auto"
           : step === 3 
           ? "sm:max-w-7xl max-h-[90vh] overflow-y-auto" 
           : "sm:max-w-2xl"
@@ -167,7 +166,7 @@ const CloseoutFormCreate = ({
           </DialogDescription>
         </DialogHeader>
         
-        <div className={shouldUseFullScreen ? "flex-1 overflow-hidden p-6" : ""}>
+        <div className={shouldUseFullScreen ? "flex-1" : ""}>
           {step === 1 && !editForm && (
             <ClientSearchStep 
               onClientSelect={handleClientSelect}
