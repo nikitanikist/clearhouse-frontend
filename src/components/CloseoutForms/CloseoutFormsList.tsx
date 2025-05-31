@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Eye, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import CloseoutFormView from './CloseoutFormView';
@@ -82,6 +83,8 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
     const date = new Date(dateStr);
     return format(date, 'MMM d, yyyy');
   };
+
+  const selectedForm = selectedFormId ? forms.find(form => form.id === selectedFormId) : null;
 
   return (
     <>
@@ -159,11 +162,14 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
       </Card>
 
       {/* Closeout Form View Dialog */}
-      <CloseoutFormView 
-        formId={selectedFormId}
-        open={showFormView}
-        onOpenChange={setShowFormView}
-      />
+      <Dialog open={showFormView} onOpenChange={setShowFormView}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Closeout Form Details</DialogTitle>
+          </DialogHeader>
+          {selectedForm && <CloseoutFormView form={selectedForm} />}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
