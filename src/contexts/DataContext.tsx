@@ -151,12 +151,85 @@ interface DataContextType {
   getPreviousYearForms: (clientName: string, currentFormId?: string) => CloseoutForm[];
 }
 
-// Sample form data
+// Enhanced sample form data with multiple years for Rohit Sharma
 const sampleForms: CloseoutForm[] = [
+  // Rohit Sharma - 2022 Tax Year (Previous Year - Completed)
   {
-    id: 'form-1',
+    id: 'form-rohit-2022',
     clientName: 'Rohit Sharma',
-    filePath: '\\\\Clearhouse\\Clients\\Rohit_2024\\T1',
+    filePath: '\\\\Clearhouse\\Clients\\Rohit_2022\\T1',
+    signingPerson: 'Rohit Sharma',
+    signingEmail: 'rohit.sharma@gmail.com',
+    additionalEmails: ['accountant@sharma.com'],
+    partner: 'Priya S.',
+    manager: 'Deepak Jain',
+    years: '2022',
+    jobNumber: '10152-T1',
+    invoiceAmount: '$295 CAD',
+    billDetail: 'Personal T1 + RRSP + Foreign Income',
+    paymentRequired: true,
+    wipRecovery: '100%',
+    recoveryReason: 'N/A',
+    isT1: true,
+    isS216: false,
+    isS116: false,
+    isPaperFiled: false,
+    installmentsRequired: false,
+    t2091PrincipalResidence: false,
+    t1135ForeignProperty: true,
+    t1032PensionSplit: false,
+    hstDraftOrFinal: 'Final',
+    otherNotes: 'Client moved to new address during tax year',
+    // T1 Summary fields
+    priorPeriodsBalance: '0',
+    taxesPayable: '-1,250.00',
+    installmentsDuringYear: '0',
+    installmentsAfterYear: '0',
+    amountOwing: '-1,250.00',
+    dueDate: 'April 30, 2023',
+    // HST Summary fields
+    hstPriorBalance: '0',
+    hstPayable: '0',
+    hstInstallmentsDuring: '0',
+    hstInstallmentsAfter: '0',
+    hstPaymentDue: '0',
+    hstDueDate: 'June 15, 2023',
+    // Installment attachment
+    installmentAttachment: null,
+    status: 'completed',
+    createdBy: {
+      id: 'preparer-1',
+      name: 'Taylor Smith',
+      role: 'preparer',
+    },
+    assignedTo: {
+      id: 'admin-1',
+      name: 'Jordan Lee',
+      role: 'admin',
+    },
+    createdAt: '2023-03-15T14:30:00Z',
+    updatedAt: '2023-04-20T16:45:00Z',
+    comments: [],
+    history: [
+      {
+        id: 'hist-rohit-2022-1',
+        action: 'Created form',
+        performedBy: 'Taylor Smith',
+        timestamp: '2023-03-15T14:30:00Z',
+      },
+      {
+        id: 'hist-rohit-2022-2',
+        action: 'Status changed to completed',
+        performedBy: 'Jordan Lee',
+        timestamp: '2023-04-20T16:45:00Z',
+      },
+    ],
+  },
+  // Rohit Sharma - 2023 Tax Year (Most Recent Previous Year - Completed)
+  {
+    id: 'form-rohit-2023',
+    clientName: 'Rohit Sharma',
+    filePath: '\\\\Clearhouse\\Clients\\Rohit_2023\\T1',
     signingPerson: 'Rohit Sharma',
     signingEmail: 'rohit.sharma@gmail.com',
     additionalEmails: ['accountant@sharma.com'],
@@ -174,7 +247,6 @@ const sampleForms: CloseoutForm[] = [
     isS116: false,
     isPaperFiled: false,
     installmentsRequired: true,
-    // New fields with default values
     t2091PrincipalResidence: false,
     t1135ForeignProperty: true,
     t1032PensionSplit: false,
@@ -198,9 +270,27 @@ const sampleForms: CloseoutForm[] = [
     installmentAttachment: {
       fileName: 'installment_schedule_2023.pdf',
       fileUrl: '#',
-      uploadedAt: '2025-05-10T14:30:00Z'
+      uploadedAt: '2024-05-10T14:30:00Z'
     },
-    status: 'pending',
+    familyMembers: [{
+      id: '1',
+      clientName: 'Rohit Sharma',
+      signingPerson: 'Rohit Sharma',
+      signingEmail: 'rohit.sharma@gmail.com',
+      additionalEmails: ['accountant@sharma.com'],
+      isT1: true,
+      isS216: false,
+      isS116: false,
+      isPaperFiled: false,
+      installmentsRequired: true,
+      personalTaxPayment: '$2,000.00',
+      installmentAttachment: {
+        fileName: 'installment_schedule_2023.pdf',
+        fileUrl: '#',
+        uploadedAt: '2024-05-10T14:30:00Z'
+      }
+    }],
+    status: 'completed',
     createdBy: {
       id: 'preparer-1',
       name: 'Taylor Smith',
@@ -211,24 +301,31 @@ const sampleForms: CloseoutForm[] = [
       name: 'Jordan Lee',
       role: 'admin',
     },
-    createdAt: '2025-05-10T14:30:00Z',
-    updatedAt: '2025-05-10T14:30:00Z',
+    createdAt: '2024-03-10T14:30:00Z',
+    updatedAt: '2024-04-25T14:30:00Z',
     comments: [],
     history: [
       {
-        id: 'hist-1',
+        id: 'hist-rohit-2023-1',
         action: 'Created form',
         performedBy: 'Taylor Smith',
-        timestamp: '2025-05-10T14:30:00Z',
+        timestamp: '2024-03-10T14:30:00Z',
       },
       {
-        id: 'hist-2',
+        id: 'hist-rohit-2023-2',
         action: 'Assigned to Jordan Lee',
         performedBy: 'Taylor Smith',
-        timestamp: '2025-05-10T14:35:00Z',
+        timestamp: '2024-03-10T14:35:00Z',
+      },
+      {
+        id: 'hist-rohit-2023-3',
+        action: 'Status changed to completed',
+        performedBy: 'Jordan Lee',
+        timestamp: '2024-04-25T14:30:00Z',
       },
     ],
   },
+  // Other existing clients with their forms...
   {
     id: 'form-2',
     clientName: 'Anita Patel',
@@ -250,27 +347,23 @@ const sampleForms: CloseoutForm[] = [
     isS116: false,
     isPaperFiled: false,
     installmentsRequired: true,
-    // New fields with default values
     t2091PrincipalResidence: false,
     t1135ForeignProperty: false,
     t1032PensionSplit: true,
     hstDraftOrFinal: 'Draft',
     otherNotes: 'Client prefers email communication only',
-    // T1 Summary fields
     priorPeriodsBalance: '150.00',
     taxesPayable: '2,450.00',
     installmentsDuringYear: '1,500.00',
     installmentsAfterYear: '300.00',
     amountOwing: '1,100.00',
     dueDate: 'May 31, 2024',
-    // HST Summary fields
     hstPriorBalance: '0',
     hstPayable: '650.00',
     hstInstallmentsDuring: '200.00',
     hstInstallmentsAfter: '0',
     hstPaymentDue: '450.00',
     hstDueDate: 'June 15, 2024',
-    // Installment attachment
     installmentAttachment: null,
     status: 'active',
     createdBy: {
@@ -307,6 +400,7 @@ const sampleForms: CloseoutForm[] = [
       },
     ],
   },
+  // ... keep existing code (other sample forms for Michael Johnson, Sarah Williams, etc.)
   {
     id: 'form-3',
     clientName: 'Michael Johnson',
@@ -328,27 +422,23 @@ const sampleForms: CloseoutForm[] = [
     isS116: false,
     isPaperFiled: true,
     installmentsRequired: true,
-    // New fields with default values
     t2091PrincipalResidence: true,
     t1135ForeignProperty: true,
     t1032PensionSplit: false,
     hstDraftOrFinal: 'Final',
     otherNotes: 'Complex foreign investment structure requires additional documentation',
-    // T1 Summary fields
     priorPeriodsBalance: '500.00',
     taxesPayable: '8,250.00',
     installmentsDuringYear: '3,000.00',
     installmentsAfterYear: '1,000.00',
     amountOwing: '4,750.00',
     dueDate: 'April 30, 2024',
-    // HST Summary fields
     hstPriorBalance: '0',
     hstPayable: '1,200.00',
     hstInstallmentsDuring: '400.00',
     hstInstallmentsAfter: '200.00',
     hstPaymentDue: '600.00',
     hstDueDate: 'June 15, 2024',
-    // Installment attachment
     installmentAttachment: null,
     status: 'rejected',
     createdBy: {
@@ -409,27 +499,23 @@ const sampleForms: CloseoutForm[] = [
     isS116: false,
     isPaperFiled: false,
     installmentsRequired: false,
-    // New fields with default values
     t2091PrincipalResidence: false,
     t1135ForeignProperty: false,
     t1032PensionSplit: false,
     hstDraftOrFinal: 'N/A',
     otherNotes: 'Simple return, student file',
-    // T1 Summary fields
     priorPeriodsBalance: '0',
     taxesPayable: '-875.00',
     installmentsDuringYear: '0',
     installmentsAfterYear: '0',
     amountOwing: '-875.00',
     dueDate: 'April 30, 2024',
-    // HST Summary fields
     hstPriorBalance: '0',
     hstPayable: '0',
     hstInstallmentsDuring: '0',
     hstInstallmentsAfter: '0',
     hstPaymentDue: '0',
     hstDueDate: 'N/A',
-    // Installment attachment
     installmentAttachment: null,
     status: 'completed',
     createdBy: {
@@ -540,7 +626,7 @@ ClearHouse Tax Consultancy`,
     clientName: 'Rohit Sharma',
     clientEmail: 'rohit.sharma@gmail.com',
     subject: 'Your 2023 Tax Return: Additional Information Needed',
-    linkedFormId: 'form-1',
+    linkedFormId: 'form-rohit-2023',
     status: 'replied',
     createdAt: '2025-05-10T15:45:00Z',
     updatedAt: '2025-05-11T09:20:00Z',
@@ -822,7 +908,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             assignedTo: {
               id: assigneeId,
               name: assigneeName,
-              role: 'admin', // Assuming we're assigning to admins
+              role: 'admin',
             },
             updatedAt: now,
             history: [
@@ -871,7 +957,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (email.id === emailId) {
           const lastMessage = email.messages[email.messages.length - 1];
           
-          // Determine if this is a reply from us or from client
           const isClientReply = lastMessage && lastMessage.from.includes('clearhouse.ca');
           const newStatus: EmailStatus = isClientReply ? 'replied' : 'we-replied';
           
@@ -950,15 +1035,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   const getPreviousYearForms = useCallback((clientName: string, currentFormId?: string) => {
-    // Get all forms for this client except the current one
     let previousForms = forms.filter(form => 
       form.clientName === clientName && 
       form.id !== currentFormId
     );
     
-    // Special handling for Rohit Sharma - only show the most recent form
+    // For Rohit Sharma, show the most recent completed form (2023) as reference
     if (clientName === 'Rohit Sharma') {
       previousForms = previousForms
+        .filter(form => form.status === 'completed')
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 1);
     }

@@ -12,14 +12,21 @@ interface EmailClientSearchProps {
   onNewClient: (email: string) => void;
 }
 
-// Mock client database - expanded with more emails
+// Enhanced mock client database with Rohit Sharma as demo client
 const mockClients: Client[] = [
   {
-    id: 'client-1',
+    id: 'client-rohit',
     name: 'Rohit Sharma',
-    email: 'rohit.sharma@gmail.com',
+    email: 'rohit@gmail.com', // Changed to match your request
     phone: '+1 (555) 123-4567',
-    lastYearForm: 'form-1'
+    lastYearForm: 'form-rohit-2023'
+  },
+  {
+    id: 'client-rohit-alt',
+    name: 'Rohit Sharma',
+    email: 'rohit.sharma@gmail.com', // Alternative email format
+    phone: '+1 (555) 123-4567',
+    lastYearForm: 'form-rohit-2023'
   },
   {
     id: 'client-2',
@@ -96,7 +103,7 @@ const EmailClientSearch = ({ onClientSelect, onNewClient }: EmailClientSearchPro
           <Input
             id="emailSearch"
             type="email"
-            placeholder="Enter client's email address..."
+            placeholder="Enter client's email address... (try: rohit@gmail.com)"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             onKeyPress={handleKeyPress}
@@ -105,6 +112,9 @@ const EmailClientSearch = ({ onClientSelect, onNewClient }: EmailClientSearchPro
             <Search className="h-4 w-4" />
           </Button>
         </div>
+        <p className="text-xs text-muted-foreground">
+          Demo: Try "rohit@gmail.com" to see existing client with previous year data
+        </p>
       </div>
 
       {hasSearched && (
@@ -115,20 +125,20 @@ const EmailClientSearch = ({ onClientSelect, onNewClient }: EmailClientSearchPro
                 Existing Client Found
               </h4>
               
-              <Card className="cursor-pointer hover:bg-secondary/50 transition-colors">
+              <Card className="cursor-pointer hover:bg-secondary/50 transition-colors border-green-200 bg-green-50">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3">
                     <div className="flex-shrink-0">
-                      <User className="h-10 w-10 text-muted-foreground" />
+                      <User className="h-10 w-10 text-green-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h5 className="font-medium">{searchResult.name}</h5>
-                      <p className="text-sm text-muted-foreground">{searchResult.email}</p>
+                      <h5 className="font-medium text-green-900">{searchResult.name}</h5>
+                      <p className="text-sm text-green-700">{searchResult.email}</p>
                       {searchResult.phone && (
-                        <p className="text-xs text-muted-foreground">{searchResult.phone}</p>
+                        <p className="text-xs text-green-600">{searchResult.phone}</p>
                       )}
                       {searchResult.lastYearForm && (
-                        <p className="text-xs text-blue-600">Has previous year forms</p>
+                        <p className="text-xs text-blue-600 font-medium">✓ Has previous year forms available</p>
                       )}
                     </div>
                     <div className="flex-shrink-0">
