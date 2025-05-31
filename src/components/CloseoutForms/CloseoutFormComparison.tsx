@@ -25,17 +25,17 @@ const CloseoutFormComparison = ({
   const isMobile = useIsMobile();
 
   if (isMobile) {
-    // Mobile layout - stacked vertically with page scroll
+    // Mobile layout - stacked vertically with natural page scroll
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 pb-24">
         {/* Header */}
         <div className="bg-white border-b p-4">
           <h1 className="text-xl font-semibold">Form Comparison</h1>
           <p className="text-sm text-gray-600 mt-1">Compare and edit your form using the reference data</p>
         </div>
 
-        {/* Content - Page scrollable */}
-        <div className="p-4 space-y-4 pb-24">
+        {/* Content - Natural page scroll */}
+        <div className="p-4 space-y-4">
           {/* Current form - editable */}
           <Card className="shadow-sm">
             <CardHeader className="pb-4 bg-blue-50">
@@ -87,20 +87,20 @@ const CloseoutFormComparison = ({
     );
   }
 
-  // Desktop layout - side by side with page scroll
+  // Desktop layout - side by side with natural page scroll
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-24">
       {/* Header */}
       <div className="bg-white border-b p-6">
         <h1 className="text-2xl font-semibold text-gray-900">Form Comparison</h1>
         <p className="text-sm text-gray-600 mt-1">Compare and edit your form using the reference data</p>
       </div>
 
-      {/* Main content - Page scrollable with side-by-side layout */}
-      <div className="p-6 pb-24">
-        <div className="grid grid-cols-2 gap-6 min-h-[calc(100vh-200px)]">
+      {/* Main content - Natural page scroll with side-by-side layout */}
+      <div className="p-6">
+        <div className="grid grid-cols-2 gap-6">
           {/* Left side - Current form (editable) */}
-          <Card className="shadow-sm h-fit">
+          <Card className="shadow-sm">
             <CardHeader className="pb-4 bg-blue-50 border-b">
               <CardTitle className="flex items-center justify-between text-xl">
                 <span className="flex items-center gap-2">
@@ -122,7 +122,7 @@ const CloseoutFormComparison = ({
           </Card>
 
           {/* Right side - Reference form */}
-          <Card className="shadow-sm h-fit">
+          <Card className="shadow-sm">
             <CardHeader className="pb-4 bg-gray-50 border-b">
               <CardTitle className="flex items-center justify-between text-xl">
                 <span className="flex items-center gap-2">
