@@ -3,8 +3,6 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { CloseoutForm } from '@/contexts/DataContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import CloseoutFormTable, { CloseoutFormTableData } from './CloseoutFormTable';
@@ -27,150 +25,133 @@ const CloseoutFormComparison = ({
   const isMobile = useIsMobile();
 
   if (isMobile) {
-    // Mobile layout - stacked vertically with clear sections
+    // Mobile layout - stacked vertically
     return (
-      <div className="h-full flex flex-col gap-6 p-4 bg-gray-50">
-        {/* Header with actions */}
-        <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm">
-          <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" onClick={onCancel}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <h1 className="text-xl font-semibold">Form Comparison</h1>
-          </div>
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b p-4 flex-shrink-0">
+          <h1 className="text-xl font-semibold">Form Comparison</h1>
+          <p className="text-sm text-gray-600 mt-1">Compare and edit your form using the reference data</p>
         </div>
 
-        {/* Current form - editable */}
-        <div className="flex-1 min-h-0">
-          <Card className="h-full flex flex-col shadow-sm">
-            <CardHeader className="pb-4 bg-blue-50 rounded-t-lg">
+        {/* Content - Full height with proper spacing */}
+        <div className="flex-1 p-4 space-y-4 pb-20">
+          {/* Current form - editable */}
+          <Card className="shadow-sm">
+            <CardHeader className="pb-4 bg-blue-50">
               <CardTitle className="flex items-center justify-between text-lg">
-                <span>📝 Current Form - {extractedData.years || 'Edit Mode'}</span>
+                <span>📝 Current Form</span>
                 <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
                   Editing
                 </Badge>
               </CardTitle>
-              <p className="text-sm text-gray-600">Make your changes below and resubmit when ready</p>
             </CardHeader>
-            <CardContent className="flex-1 overflow-hidden p-4">
-              <ScrollArea className="h-full">
-                <CloseoutFormTable
-                  initialData={extractedData}
-                  onSubmit={onSubmit}
-                  onCancel={onCancel}
-                  showButtons={true}
-                />
-              </ScrollArea>
+            <CardContent className="p-4">
+              <CloseoutFormTable
+                initialData={extractedData}
+                onSubmit={onSubmit}
+                onCancel={onCancel}
+                showButtons={false}
+              />
             </CardContent>
           </Card>
-        </div>
 
-        {/* Separator */}
-        <div className="flex items-center gap-4">
-          <div className="flex-1 h-px bg-gray-300"></div>
-          <span className="text-sm text-gray-500 font-medium">REFERENCE</span>
-          <div className="flex-1 h-px bg-gray-300"></div>
-        </div>
-
-        {/* Previous year data (read-only) */}
-        <div className="flex-1 min-h-0">
-          <Card className="h-full flex flex-col shadow-sm">
-            <CardHeader className="pb-4 bg-gray-50 rounded-t-lg">
+          {/* Previous year data (reference) */}
+          <Card className="shadow-sm">
+            <CardHeader className="pb-4 bg-gray-50">
               <CardTitle className="flex items-center justify-between text-lg">
-                <span>📋 Previous Year - {previousForm.years}</span>
+                <span>📋 Reference Form</span>
                 <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200">
-                  Reference Only
+                  Reference
                 </Badge>
               </CardTitle>
-              <p className="text-sm text-gray-600">Use this as reference for your current form</p>
             </CardHeader>
-            <CardContent className="flex-1 overflow-hidden p-4">
-              <ScrollArea className="h-full">
-                <CloseoutFormView form={previousForm} />
-              </ScrollArea>
+            <CardContent className="p-4">
+              <CloseoutFormView form={previousForm} />
             </CardContent>
           </Card>
+        </div>
+
+        {/* Fixed bottom buttons */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-4 flex gap-3 z-10">
+          <Button variant="outline" onClick={onCancel} className="flex-1">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Cancel
+          </Button>
+          <Button onClick={() => onSubmit(extractedData as CloseoutFormTableData)} className="flex-1 bg-green-600 hover:bg-green-700">
+            <Save className="h-4 w-4 mr-2" />
+            Submit Form
+          </Button>
         </div>
       </div>
     );
   }
 
-  // Desktop layout - side by side with improved spacing
+  // Desktop layout - side by side, full height
   return (
-    <div className="h-full flex flex-col gap-6 p-6 bg-gray-50">
-      {/* Header with clear actions */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-lg shadow-sm">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={onCancel} className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-2xl font-semibold text-gray-900">Form Comparison & Amendment</h1>
-            <p className="text-sm text-gray-600 mt-1">Compare with previous year and make necessary changes</p>
-          </div>
-        </div>
+    <div className="h-screen flex flex-col bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b p-6 flex-shrink-0">
+        <h1 className="text-2xl font-semibold text-gray-900">Form Comparison</h1>
+        <p className="text-sm text-gray-600 mt-1">Compare and edit your form using the reference data below</p>
       </div>
 
-      {/* Main content area */}
-      <div className="flex-1 flex gap-6 overflow-hidden">
-        {/* Left side - Current form (editable) */}
-        <div className="flex-1 min-w-0">
-          <Card className="h-full flex flex-col shadow-sm">
-            <CardHeader className="pb-4 bg-blue-50 border-b">
+      {/* Main content area - two columns, full height */}
+      <div className="flex-1 flex min-h-0 p-6 gap-6">
+        {/* Left side - Current form (editable) - 50% width */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <Card className="flex-1 flex flex-col shadow-sm">
+            <CardHeader className="pb-4 bg-blue-50 border-b flex-shrink-0">
               <CardTitle className="flex items-center justify-between text-xl">
                 <span className="flex items-center gap-2">
-                  📝 Current Form - {extractedData.years || 'Edit Mode'}
+                  📝 Current Form
                 </span>
                 <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
                   Editing
                 </Badge>
               </CardTitle>
-              <p className="text-sm text-gray-600 mt-2">Make your changes below and click "Resubmit Form" when ready</p>
             </CardHeader>
-            <CardContent className="flex-1 overflow-hidden p-6">
-              <ScrollArea className="h-full pr-4">
-                <CloseoutFormTable
-                  initialData={extractedData}
-                  onSubmit={onSubmit}
-                  onCancel={onCancel}
-                  showButtons={true}
-                />
-              </ScrollArea>
+            <CardContent className="flex-1 p-6 overflow-y-auto">
+              <CloseoutFormTable
+                initialData={extractedData}
+                onSubmit={onSubmit}
+                onCancel={onCancel}
+                showButtons={false}
+              />
             </CardContent>
           </Card>
         </div>
 
-        {/* Vertical separator with label */}
-        <div className="flex flex-col items-center justify-center w-12">
-          <div className="h-full w-px bg-gray-300"></div>
-          <div className="absolute bg-gray-50 px-3 py-1 rounded-full">
-            <span className="text-xs font-medium text-gray-500">VS</span>
-          </div>
-        </div>
-
-        {/* Right side - Previous year data (read-only) */}
-        <div className="flex-1 min-w-0">
-          <Card className="h-full flex flex-col shadow-sm">
-            <CardHeader className="pb-4 bg-gray-50 border-b">
+        {/* Right side - Previous year data (reference) - 50% width */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <Card className="flex-1 flex flex-col shadow-sm">
+            <CardHeader className="pb-4 bg-gray-50 border-b flex-shrink-0">
               <CardTitle className="flex items-center justify-between text-xl">
                 <span className="flex items-center gap-2">
-                  📋 Previous Year - {previousForm.years}
+                  📋 Reference Form
                 </span>
                 <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200">
-                  Reference Only
+                  Reference
                 </Badge>
               </CardTitle>
-              <p className="text-sm text-gray-600 mt-2">Use this as reference while editing your current form</p>
             </CardHeader>
-            <CardContent className="flex-1 overflow-hidden p-6">
-              <ScrollArea className="h-full pr-4">
-                <CloseoutFormView form={previousForm} />
-              </ScrollArea>
+            <CardContent className="flex-1 p-6 overflow-y-auto">
+              <CloseoutFormView form={previousForm} />
             </CardContent>
           </Card>
         </div>
+      </div>
+
+      {/* Bottom action buttons - outside the comparison area */}
+      <div className="bg-white border-t p-6 flex justify-between items-center flex-shrink-0">
+        <Button variant="outline" onClick={onCancel} className="flex items-center gap-2">
+          <ArrowLeft className="h-4 w-4" />
+          Cancel
+        </Button>
+        <Button onClick={() => onSubmit(extractedData as CloseoutFormTableData)} className="bg-green-600 hover:bg-green-700 flex items-center gap-2">
+          <Save className="h-4 w-4" />
+          Submit Form
+        </Button>
       </div>
     </div>
   );
