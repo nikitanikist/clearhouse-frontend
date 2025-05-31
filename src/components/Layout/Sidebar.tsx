@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
@@ -40,10 +41,11 @@ const Sidebar = () => {
     <div className="h-screen w-64 flex flex-col bg-sidebar border-r border-gray-200">
       <div className="p-4 flex items-center justify-center">
         <Link to="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-md bg-white flex items-center justify-center">
-            <Archive className="w-5 h-5 text-primary-500" />
-          </div>
-          <span className="text-lg font-bold text-white">ClearHouse</span>
+          <img 
+            src="/lovable-uploads/b6db7de0-12ec-47d6-9bfc-6d74cde4f183.png" 
+            alt="ClearHouse Logo" 
+            className="h-8 w-auto"
+          />
         </Link>
       </div>
       <div className="flex-1 overflow-y-auto py-4 px-3">
