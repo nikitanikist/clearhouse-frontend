@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -6,7 +5,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -22,14 +20,16 @@ import FormCompletionStep from './steps/FormCompletionStep';
 interface CloseoutFormCreateProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  editForm?: any; // For editing existing forms
 }
 
 const CloseoutFormCreate = ({
   open,
   onOpenChange,
+  editForm
 }: CloseoutFormCreateProps) => {
   const { user } = useAuth();
-  const { createForm, forms } = useData();
+  const { createForm, updateForm, forms } = useData();
   
   const {
     step,
@@ -45,6 +45,28 @@ const CloseoutFormCreate = ({
     getStepDescription,
   } = useFormSteps();
 
+  // If editing, pre-populate data
+  React.useEffect(() => {
+    if (editForm && open) {
+      // Pre-populate form with existing data
+      handleClientSelect({ name: editForm.clientName, email: editForm.signingEmail });
+      handleDataExtracted({
+        clientName: editForm.clientName,
+        partner: editForm.partner,
+        manager: editForm.manager,
+        years: editForm.years,
+        jobNumber: editForm.jobNumber,
+        invoiceAmount: editForm.invoiceAmount,
+        wipRecovery: editForm.wipRecovery,
+        paymentRequired: editForm.paymentRequired,
+        billDetail: editForm.billDetail,
+        recoveryReason: editForm.recoveryReason,
+        // ... other fields
+      });
+      setStep(3); // Go directly to form completion step
+    }
+  }, [editForm, open]);
+
   // Get previous year forms for selected client
   const getPreviousYearForms = () => {
     if (!selectedClient || !selectedClient.name) return [];
@@ -57,7 +79,14 @@ const CloseoutFormCreate = ({
     if (!user) return;
     
     const mappedFormData = mapTableDataToCloseoutForm(formData, user);
-    createForm(mappedFormData);
+    
+    if (editForm) {
+      // Update existing form
+      updateForm(editForm.id, { ...mappedFormData, status: 'pending' });
+    } else {
+      // Create new form
+      createForm(mappedFormData);
+    }
     
     // Reset form
     resetForm();
@@ -73,20 +102,20 @@ const CloseoutFormCreate = ({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className={step === 3 ? "sm:max-w-7xl max-h-[90vh] overflow-y-auto" : "sm:max-w-2xl"}>
         <DialogHeader>
-          <DialogTitle>{getStepTitle()}</DialogTitle>
+          <DialogTitle>{editForm ? 'Edit Closeout Form' : getStepTitle()}</DialogTitle>
           <DialogDescription>
-            {getStepDescription()}
+            {editForm ? 'Make changes to the closeout form and resubmit.' : getStepDescription()}
           </DialogDescription>
         </DialogHeader>
         
-        {step === 1 && (
+        {step === 1 && !editForm && (
           <ClientSearchStep 
             onClientSelect={handleClientSelect}
             onNewClient={handleNewClient}
           />
         )}
 
-        {step === 2 && selectedClient && (
+        {step === 2 && selectedClient && !editForm && (
           <DocumentUploadStep 
             selectedClient={selectedClient}
             onDataExtracted={handleDataExtracted}
@@ -100,25 +129,23 @@ const CloseoutFormCreate = ({
             isNewClient={isNewClient}
             previousForms={getPreviousYearForms()}
             onSubmit={handleFormSubmit}
-            onCancel={() => setStep(2)}
+            onCancel={() => editForm ? handleClose() : setStep(2)}
           />
         )}
         
-        <DialogFooter>
-          {step === 1 ? (
-            <Button variant="outline" onClick={handleClose}>Cancel</Button>
-          ) : step === 2 ? (
-            <>
-              <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
+        {/* Only show footer for non-completion steps */}
+        {step !== 3 && (
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            {step === 1 ? (
               <Button variant="outline" onClick={handleClose}>Cancel</Button>
-            </>
-          ) : (
-            <>
-              <Button variant="outline" onClick={() => setStep(2)}>Back to Upload</Button>
-              <Button variant="outline" onClick={handleClose}>Cancel</Button>
-            </>
-          )}
-        </DialogFooter>
+            ) : step === 2 ? (
+              <>
+                <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
+                <Button variant="outline" onClick={handleClose}>Cancel</Button>
+              </>
+            ) : null}
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

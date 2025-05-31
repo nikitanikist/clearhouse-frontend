@@ -14,9 +14,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Eye, ArrowLeft } from 'lucide-react';
+import { Eye, Edit, ArrowLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import CloseoutFormView from './CloseoutFormView';
+import CloseoutFormCreate from './CloseoutFormCreate';
 
 interface CloseoutFormsListProps {
   status: 'pending' | 'active' | 'completed' | 'rejected';
@@ -28,6 +29,8 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
   const { user } = useAuth();
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
   const [showFormView, setShowFormView] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editingForm, setEditingForm] = useState<any>(null);
 
   // Filter forms based on user role and status
   const getFilteredForms = () => {
@@ -77,6 +80,11 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
   const handleViewForm = (formId: string) => {
     setSelectedFormId(formId);
     setShowFormView(true);
+  };
+
+  const handleEditForm = (form: any) => {
+    setEditingForm(form);
+    setShowEditForm(true);
   };
 
   const formatDate = (dateStr: string) => {
@@ -142,15 +150,28 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
                       <TableCell>{getStatusBadge(form.status)}</TableCell>
                       <TableCell>{formatDate(form.createdAt)}</TableCell>
                       <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleViewForm(form.id)}
-                          className="flex items-center gap-2"
-                        >
-                          <Eye className="h-4 w-4" />
-                          View Closeout Form
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleViewForm(form.id)}
+                            className="flex items-center gap-2"
+                          >
+                            <Eye className="h-4 w-4" />
+                            View
+                          </Button>
+                          {status === 'rejected' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditForm(form)}
+                              className="flex items-center gap-2"
+                            >
+                              <Edit className="h-4 w-4" />
+                              Edit
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -170,6 +191,13 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
           {selectedForm && <CloseoutFormView form={selectedForm} />}
         </DialogContent>
       </Dialog>
+
+      {/* Edit Form Dialog */}
+      <CloseoutFormCreate
+        open={showEditForm}
+        onOpenChange={setShowEditForm}
+        editForm={editingForm}
+      />
     </>
   );
 };
