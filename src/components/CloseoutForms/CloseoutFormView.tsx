@@ -33,6 +33,7 @@ import {
 } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import PreviousYearForms from './PreviousYearForms';
+import InstallmentAttachmentUpload from './InstallmentAttachmentUpload';
 
 interface CloseoutFormViewProps {
   formId: string | null;
@@ -153,8 +154,8 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
       signingPerson: editedForm.signingPerson,
       email: editedForm.signingEmail,
       additionalEmails: editedForm.additionalEmails.join(', '),
-      personalTaxPayment: '-3,762.00',
-      hstPayment: '0'
+      personalTaxPayment: editedForm.taxesPayable,
+      hstPayment: editedForm.hstPayable
     }
   ];
 
@@ -195,6 +196,26 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
           value={value} 
           onChange={(e) => onChange(e.target.value)}
           className="w-full border-0 bg-transparent p-1 text-inherit"
+        />
+      </TableCell>
+    );
+  };
+
+  const EditableTextAreaCell = ({ value, onChange, className = "text-left" }: { 
+    value: string; 
+    onChange: (val: string) => void; 
+    className?: string;
+  }) => {
+    if (!isEditing) {
+      return <TableCell className={className}>{value}</TableCell>;
+    }
+
+    return (
+      <TableCell className={className}>
+        <Textarea 
+          value={value} 
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full border-0 bg-transparent p-1 text-inherit min-h-[60px]"
         />
       </TableCell>
     );
@@ -392,7 +413,7 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
                     />
                   </TableRow>
                   
-                  {/* Installments */}
+                  {/* Installments with conditional upload */}
                   <TableRow>
                     <TableCell className="font-medium bg-gray-50 text-left">Are installments required? (Yes/No)</TableCell>
                     <EditableCell 
@@ -402,28 +423,62 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
                     />
                   </TableRow>
                   
-                  {/* Yellow highlighted rows */}
+                  {/* Conditional Installment Attachment Upload */}
+                  {editedForm.installmentsRequired && (
+                    <TableRow>
+                      <TableCell className="font-medium bg-gray-50 text-left">Upload Installment Attachment</TableCell>
+                      <TableCell className="text-left">
+                        <InstallmentAttachmentUpload
+                          attachment={editedForm.installmentAttachment}
+                          onAttachmentChange={(attachment) => updateFormField('installmentAttachment', attachment)}
+                          disabled={!isEditing}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  
+                  {/* Yellow highlighted rows - now editable */}
                   <TableRow className="bg-yellow-100">
-                    <TableCell className="font-medium text-left">T2091 (Principle residence sale)</TableCell>
-                    <TableCell className="text-center"></TableCell>
+                    <TableCell className="font-medium text-left">T2091 (Principal residence sale)</TableCell>
+                    <EditableCell 
+                      value={editedForm.t2091PrincipalResidence} 
+                      onChange={(val) => updateFormField('t2091PrincipalResidence', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   <TableRow className="bg-yellow-100">
                     <TableCell className="font-medium text-left">T1135 (Foreign Property)</TableCell>
-                    <TableCell className="text-center"></TableCell>
+                    <EditableCell 
+                      value={editedForm.t1135ForeignProperty} 
+                      onChange={(val) => updateFormField('t1135ForeignProperty', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   <TableRow className="bg-yellow-100">
                     <TableCell className="font-medium text-left">T1032 (Pension Split)</TableCell>
-                    <TableCell className="text-center"></TableCell>
+                    <EditableCell 
+                      value={editedForm.t1032PensionSplit} 
+                      onChange={(val) => updateFormField('t1032PensionSplit', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   <TableRow className="bg-yellow-100">
                     <TableCell className="font-medium text-left">HST (Indicate Draft or Final)</TableCell>
-                    <TableCell className="text-center"></TableCell>
+                    <EditableCell 
+                      value={editedForm.hstDraftOrFinal} 
+                      onChange={(val) => updateFormField('hstDraftOrFinal', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   
-                  {/* Other notes */}
+                  {/* Other notes - now editable textarea */}
                   <TableRow>
                     <TableCell className="font-medium bg-gray-50 text-left">Other notes</TableCell>
-                    <TableCell className="text-left"></TableCell>
+                    <EditableTextAreaCell 
+                      value={editedForm.otherNotes} 
+                      onChange={(val) => updateFormField('otherNotes', val)}
+                      className="text-left"
+                    />
                   </TableRow>
                   
                   {/* Personal Tax Payment Section */}
@@ -438,34 +493,54 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
                     </TableCell>
                   </TableRow>
                   
-                  {/* Tax Payment Details */}
+                  {/* T1 Summary Details - now editable */}
                   <TableRow>
                     <TableCell className="font-medium bg-gray-50 text-left">Prior Periods Balance Outstanding</TableCell>
-                    <TableCell className="text-center">-</TableCell>
+                    <EditableCell 
+                      value={editedForm.priorPeriodsBalance} 
+                      onChange={(val) => updateFormField('priorPeriodsBalance', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium bg-gray-50 text-left">Taxes Payable (Refundable)</TableCell>
-                    {familyMembers.map((member, index) => (
-                      <TableCell key={index} className="text-center">{member.personalTaxPayment}</TableCell>
-                    ))}
+                    <EditableCell 
+                      value={editedForm.taxesPayable} 
+                      onChange={(val) => updateFormField('taxesPayable', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium bg-gray-50 text-left">Installments during Calendar YE</TableCell>
-                    <TableCell className="text-center"></TableCell>
+                    <EditableCell 
+                      value={editedForm.installmentsDuringYear} 
+                      onChange={(val) => updateFormField('installmentsDuringYear', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium bg-gray-50 text-left">Installments made after Calendar YE</TableCell>
-                    <TableCell className="text-center"></TableCell>
+                    <EditableCell 
+                      value={editedForm.installmentsAfterYear} 
+                      onChange={(val) => updateFormField('installmentsAfterYear', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium bg-gray-50 text-left">Amount owing (Refund)</TableCell>
-                    {familyMembers.map((member, index) => (
-                      <TableCell key={index} className="text-center">{member.personalTaxPayment}</TableCell>
-                    ))}
+                    <EditableCell 
+                      value={editedForm.amountOwing} 
+                      onChange={(val) => updateFormField('amountOwing', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium bg-gray-50 text-left">Due date</TableCell>
-                    <TableCell className="text-center"></TableCell>
+                    <EditableCell 
+                      value={editedForm.dueDate} 
+                      onChange={(val) => updateFormField('dueDate', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   
                   {/* HST Payment Section */}
@@ -476,29 +551,51 @@ const CloseoutFormView: React.FC<CloseoutFormViewProps> = ({
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium bg-gray-50 text-left">Prior Periods Balance Outstanding</TableCell>
-                    <TableCell className="text-center">-</TableCell>
+                    <EditableCell 
+                      value={editedForm.hstPriorBalance} 
+                      onChange={(val) => updateFormField('hstPriorBalance', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium bg-gray-50 text-left">HST Payable (Refund)</TableCell>
-                    {familyMembers.map((member, index) => (
-                      <TableCell key={index} className="text-center">{member.hstPayment}</TableCell>
-                    ))}
+                    <EditableCell 
+                      value={editedForm.hstPayable} 
+                      onChange={(val) => updateFormField('hstPayable', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium bg-gray-50 text-left">Installments during period</TableCell>
-                    <TableCell className="text-center"></TableCell>
+                    <EditableCell 
+                      value={editedForm.hstInstallmentsDuring} 
+                      onChange={(val) => updateFormField('hstInstallmentsDuring', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium bg-gray-50 text-left">Payments made after period</TableCell>
-                    <TableCell className="text-center">-</TableCell>
+                    <EditableCell 
+                      value={editedForm.hstInstallmentsAfter} 
+                      onChange={(val) => updateFormField('hstInstallmentsAfter', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium bg-gray-50 text-left">Payment due (Refund) now</TableCell>
-                    <TableCell className="text-center"></TableCell>
+                    <EditableCell 
+                      value={editedForm.hstPaymentDue} 
+                      onChange={(val) => updateFormField('hstPaymentDue', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium bg-gray-50 text-left">Due date</TableCell>
-                    <TableCell className="text-center"></TableCell>
+                    <EditableCell 
+                      value={editedForm.hstDueDate} 
+                      onChange={(val) => updateFormField('hstDueDate', val)}
+                      className="text-center"
+                    />
                   </TableRow>
                 </TableBody>
               </Table>

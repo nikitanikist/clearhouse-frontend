@@ -26,6 +26,32 @@ export interface CloseoutForm {
   isS116: boolean;
   isPaperFiled: boolean;
   installmentsRequired: boolean;
+  // New fields for missing sections
+  t2091PrincipalResidence: boolean;
+  t1135ForeignProperty: boolean;
+  t1032PensionSplit: boolean;
+  hstDraftOrFinal: string;
+  otherNotes: string;
+  // T1 Summary fields
+  priorPeriodsBalance: string;
+  taxesPayable: string;
+  installmentsDuringYear: string;
+  installmentsAfterYear: string;
+  amountOwing: string;
+  dueDate: string;
+  // HST Summary fields
+  hstPriorBalance: string;
+  hstPayable: string;
+  hstInstallmentsDuring: string;
+  hstInstallmentsAfter: string;
+  hstPaymentDue: string;
+  hstDueDate: string;
+  // Installment attachment
+  installmentAttachment: {
+    fileName: string;
+    fileUrl: string;
+    uploadedAt: string;
+  } | null;
   status: FormStatus;
   createdBy: {
     id: string;
@@ -129,6 +155,32 @@ const sampleForms: CloseoutForm[] = [
     isS116: false,
     isPaperFiled: false,
     installmentsRequired: true,
+    // New fields with default values
+    t2091PrincipalResidence: false,
+    t1135ForeignProperty: true,
+    t1032PensionSplit: false,
+    hstDraftOrFinal: 'Final',
+    otherNotes: 'Client requires electronic filing confirmation',
+    // T1 Summary fields
+    priorPeriodsBalance: '0',
+    taxesPayable: '-3,762.00',
+    installmentsDuringYear: '2,000.00',
+    installmentsAfterYear: '0',
+    amountOwing: '-3,762.00',
+    dueDate: 'April 30, 2024',
+    // HST Summary fields
+    hstPriorBalance: '0',
+    hstPayable: '0',
+    hstInstallmentsDuring: '0',
+    hstInstallmentsAfter: '0',
+    hstPaymentDue: '0',
+    hstDueDate: 'June 15, 2024',
+    // Installment attachment
+    installmentAttachment: {
+      fileName: 'installment_schedule_2023.pdf',
+      fileUrl: '#',
+      uploadedAt: '2025-05-10T14:30:00Z'
+    },
     status: 'pending',
     createdBy: {
       id: 'preparer-1',
@@ -179,6 +231,28 @@ const sampleForms: CloseoutForm[] = [
     isS116: false,
     isPaperFiled: false,
     installmentsRequired: true,
+    // New fields with default values
+    t2091PrincipalResidence: false,
+    t1135ForeignProperty: false,
+    t1032PensionSplit: true,
+    hstDraftOrFinal: 'Draft',
+    otherNotes: 'Client prefers email communication only',
+    // T1 Summary fields
+    priorPeriodsBalance: '150.00',
+    taxesPayable: '2,450.00',
+    installmentsDuringYear: '1,500.00',
+    installmentsAfterYear: '300.00',
+    amountOwing: '1,100.00',
+    dueDate: 'May 31, 2024',
+    // HST Summary fields
+    hstPriorBalance: '0',
+    hstPayable: '650.00',
+    hstInstallmentsDuring: '200.00',
+    hstInstallmentsAfter: '0',
+    hstPaymentDue: '450.00',
+    hstDueDate: 'June 15, 2024',
+    // Installment attachment
+    installmentAttachment: null,
     status: 'active',
     createdBy: {
       id: 'preparer-1',
@@ -235,6 +309,28 @@ const sampleForms: CloseoutForm[] = [
     isS116: false,
     isPaperFiled: true,
     installmentsRequired: true,
+    // New fields with default values
+    t2091PrincipalResidence: true,
+    t1135ForeignProperty: true,
+    t1032PensionSplit: false,
+    hstDraftOrFinal: 'Final',
+    otherNotes: 'Complex foreign investment structure requires additional documentation',
+    // T1 Summary fields
+    priorPeriodsBalance: '500.00',
+    taxesPayable: '8,250.00',
+    installmentsDuringYear: '3,000.00',
+    installmentsAfterYear: '1,000.00',
+    amountOwing: '4,750.00',
+    dueDate: 'April 30, 2024',
+    // HST Summary fields
+    hstPriorBalance: '0',
+    hstPayable: '1,200.00',
+    hstInstallmentsDuring: '400.00',
+    hstInstallmentsAfter: '200.00',
+    hstPaymentDue: '600.00',
+    hstDueDate: 'June 15, 2024',
+    // Installment attachment
+    installmentAttachment: null,
     status: 'rejected',
     createdBy: {
       id: 'preparer-1',
@@ -294,6 +390,28 @@ const sampleForms: CloseoutForm[] = [
     isS116: false,
     isPaperFiled: false,
     installmentsRequired: false,
+    // New fields with default values
+    t2091PrincipalResidence: false,
+    t1135ForeignProperty: false,
+    t1032PensionSplit: false,
+    hstDraftOrFinal: 'N/A',
+    otherNotes: 'Simple return, student file',
+    // T1 Summary fields
+    priorPeriodsBalance: '0',
+    taxesPayable: '-875.00',
+    installmentsDuringYear: '0',
+    installmentsAfterYear: '0',
+    amountOwing: '-875.00',
+    dueDate: 'April 30, 2024',
+    // HST Summary fields
+    hstPriorBalance: '0',
+    hstPayable: '0',
+    hstInstallmentsDuring: '0',
+    hstInstallmentsAfter: '0',
+    hstPaymentDue: '0',
+    hstDueDate: 'N/A',
+    // Installment attachment
+    installmentAttachment: null,
     status: 'completed',
     createdBy: {
       id: 'preparer-1',
