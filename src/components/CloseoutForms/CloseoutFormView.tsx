@@ -208,7 +208,7 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
                         <TableCell className="font-medium bg-gray-50">Personal Tax Payment</TableCell>
                         <TableCell>{member.personalTaxPayment}</TableCell>
                       </TableRow>
-                      {member.additionalEmails.length > 0 && (
+                      {member.additionalEmails && member.additionalEmails.length > 0 && (
                         <TableRow>
                           <TableCell className="font-medium bg-gray-50">Additional Emails</TableCell>
                           <TableCell colSpan={3}>
@@ -268,7 +268,7 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
               ))}
             </div>
           ) : (
-            // Fallback to legacy single member display in table format
+            // Fallback to legacy single member display
             <Table>
               <TableBody>
                 <TableRow>
@@ -277,10 +277,22 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
                   <TableCell className="font-medium w-1/4 bg-gray-50">Signing Email</TableCell>
                   <TableCell className="w-1/4">{form.signingEmail}</TableCell>
                 </TableRow>
+                {form.additionalEmails && form.additionalEmails.length > 0 && (
+                  <TableRow>
+                    <TableCell className="font-medium bg-gray-50">Additional Emails</TableCell>
+                    <TableCell colSpan={3}>
+                      <div className="flex flex-wrap gap-2">
+                        {form.additionalEmails.map((email, emailIndex) => (
+                          <Badge key={emailIndex} variant="outline">{email}</Badge>
+                        ))}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
                 <TableRow>
                   <TableCell className="font-medium bg-gray-50">Tax Forms</TableCell>
                   <TableCell colSpan={3}>
-                    <div className="grid grid-cols-4 gap-4">
+                    <div className="grid grid-cols-5 gap-4">
                       <div className="flex items-center space-x-2">
                         {form.isT1 ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
                         <span className="text-sm">T1</span>
@@ -297,10 +309,14 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
                         {form.isPaperFiled ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
                         <span className="text-sm">Paper Filed</span>
                       </div>
+                      <div className="flex items-center space-x-2">
+                        {form.installmentsRequired ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                        <span className="text-sm">Installments Required</span>
+                      </div>
                     </div>
                   </TableCell>
                 </TableRow>
-                {form.installmentAttachment && (
+                {form.installmentsRequired && form.installmentAttachment && (
                   <TableRow>
                     <TableCell className="font-medium bg-gray-50">Installment Attachment</TableCell>
                     <TableCell colSpan={3}>
