@@ -81,7 +81,12 @@ const MultiPDFUpload = ({ client, onDataExtracted }: MultiPDFUploadProps) => {
             isS116: false,
             isPaperFiled: false,
             installmentsRequired: Math.random() > 0.5,
-            personalTaxPayment: `$${Math.floor(Math.random() * 2000 + 500)}.00`
+            personalTaxPayment: `$${Math.floor(Math.random() * 2000 + 500)}.00`,
+            installmentAttachment: Math.random() > 0.7 ? {
+              fileName: 'installment_schedule_2024.pdf',
+              fileUrl: '#',
+              uploadedAt: new Date().toISOString()
+            } : null
           }
         ],
         // Include all new fields with realistic extracted values
@@ -103,9 +108,7 @@ const MultiPDFUpload = ({ client, onDataExtracted }: MultiPDFUploadProps) => {
         hstInstallmentsDuring: Math.random() > 0.5 ? `${Math.floor(Math.random() * 800)}` : '0',
         hstInstallmentsAfter: Math.random() > 0.8 ? `${Math.floor(Math.random() * 300)}` : '0',
         hstPaymentDue: Math.random() > 0.6 ? `${Math.floor(Math.random() * 1000)}` : '0',
-        hstDueDate: Math.random() > 0.6 ? 'June 15, 2025' : 'N/A',
-        // Installment attachment (null initially, will be uploaded if needed)
-        installmentAttachment: null
+        hstDueDate: Math.random() > 0.6 ? 'June 15, 2025' : 'N/A'
       };
       
       setIsExtracting(false);

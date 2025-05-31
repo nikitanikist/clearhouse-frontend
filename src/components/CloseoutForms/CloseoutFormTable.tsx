@@ -35,6 +35,11 @@ export interface FamilyMember {
   isPaperFiled: boolean;
   installmentsRequired: boolean;
   personalTaxPayment: string;
+  installmentAttachment: {
+    fileName: string;
+    fileUrl: string;
+    uploadedAt: string;
+  } | null;
 }
 
 export interface CloseoutFormTableData {
@@ -69,12 +74,6 @@ export interface CloseoutFormTableData {
   hstInstallmentsAfter: string;
   hstPaymentDue: string;
   hstDueDate: string;
-  // Installment attachment
-  installmentAttachment: {
-    fileName: string;
-    fileUrl: string;
-    uploadedAt: string;
-  } | null;
 }
 
 interface CloseoutFormTableProps {
@@ -107,7 +106,8 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel }: CloseoutFormTabl
         isS116: false,
         isPaperFiled: false,
         installmentsRequired: true,
-        personalTaxPayment: '$1,250.00'
+        personalTaxPayment: '$1,250.00',
+        installmentAttachment: null
       }
     ],
     // Initialize new fields with defaults or from initialData
@@ -129,9 +129,7 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel }: CloseoutFormTabl
     hstInstallmentsDuring: initialData?.hstInstallmentsDuring || '0',
     hstInstallmentsAfter: initialData?.hstInstallmentsAfter || '0',
     hstPaymentDue: initialData?.hstPaymentDue || '0',
-    hstDueDate: initialData?.hstDueDate || '',
-    // Installment attachment
-    installmentAttachment: initialData?.installmentAttachment || null
+    hstDueDate: initialData?.hstDueDate || ''
   });
 
   const addFamilyMember = () => {
@@ -146,7 +144,8 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel }: CloseoutFormTabl
       isS116: false,
       isPaperFiled: false,
       installmentsRequired: false,
-      personalTaxPayment: '$0.00'
+      personalTaxPayment: '$0.00',
+      installmentAttachment: null
     };
     setFormData(prev => ({
       ...prev,
@@ -172,11 +171,7 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel }: CloseoutFormTabl
           
           // If installments checkbox is unchecked, clear the attachment
           if (field === 'installmentsRequired' && !value) {
-            // Clear attachment when installments are not required
-            setFormData(prevForm => ({
-              ...prevForm,
-              installmentAttachment: null
-            }));
+            updatedMember.installmentAttachment = null;
           }
           
           return updatedMember;
@@ -193,8 +188,6 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel }: CloseoutFormTabl
   const handleSubmit = () => {
     onSubmit(formData);
   };
-
-  const hasInstallmentsRequired = formData.familyMembers.some(member => member.installmentsRequired);
 
   const addEmailToMember = (memberId: string) => {
     setFormData(prev => ({
@@ -512,19 +505,6 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel }: CloseoutFormTabl
         </div>
       </div>
 
-      {/* Installment Attachment Section */}
-      {hasInstallmentsRequired && (
-        <div className="space-y-4">
-          <h3 className="text-xl font-semibold">Installment Attachment</h3>
-          <div className="p-4 bg-purple-50 rounded-lg">
-            <InstallmentAttachmentUpload
-              attachment={formData.installmentAttachment}
-              onAttachmentChange={(attachment) => updateFormField('installmentAttachment', attachment)}
-            />
-          </div>
-        </div>
-      )}
-
       {/* Family Members Table */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
@@ -549,6 +529,7 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel }: CloseoutFormTabl
                 <TableHead className="w-32">Paper Filed</TableHead>
                 <TableHead className="w-32">Installments</TableHead>
                 <TableHead className="w-32">Personal Tax Payment</TableHead>
+                <TableHead className="w-48">Installment Attachment</TableHead>
                 <TableHead className="w-20">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -654,6 +635,16 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel }: CloseoutFormTabl
                       onChange={(e) => updateFamilyMember(member.id, 'personalTaxPayment', e.target.value)}
                       placeholder="$0.00"
                     />
+                  </TableCell>
+                  <TableCell>
+                    {member.installmentsRequired && (
+                      <div className="w-48">
+                        <InstallmentAttachmentUpload
+                          attachment={member.installmentAttachment}
+                          onAttachmentChange={(attachment) => updateFamilyMember(member.id, 'installmentAttachment', attachment)}
+                        />
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell>
                     {formData.familyMembers.length > 1 && (

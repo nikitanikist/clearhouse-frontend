@@ -55,10 +55,12 @@ export const mapTableDataToCloseoutForm = (
     hstInstallmentsAfter: formData.hstInstallmentsAfter,
     hstPaymentDue: formData.hstPaymentDue,
     hstDueDate: formData.hstDueDate,
-    // Installment attachment
-    installmentAttachment: formData.installmentAttachment,
+    // Installment attachment from primary member
+    installmentAttachment: primaryMember.installmentAttachment,
     status: 'pending' as const,
     assignedTo: null,
     createdBy: createdByInfo,
+    // Store family members data for later use
+    familyMembers: formData.familyMembers,
   };
 };

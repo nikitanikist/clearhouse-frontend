@@ -46,12 +46,31 @@ export interface CloseoutForm {
   hstInstallmentsAfter: string;
   hstPaymentDue: string;
   hstDueDate: string;
-  // Installment attachment
+  // Installment attachment (from primary member)
   installmentAttachment: {
     fileName: string;
     fileUrl: string;
     uploadedAt: string;
   } | null;
+  // Family members data (for displaying all members in view)
+  familyMembers?: {
+    id: string;
+    clientName: string;
+    signingPerson: string;
+    signingEmail: string;
+    additionalEmails: string[];
+    isT1: boolean;
+    isS216: boolean;
+    isS116: boolean;
+    isPaperFiled: boolean;
+    installmentsRequired: boolean;
+    personalTaxPayment: string;
+    installmentAttachment: {
+      fileName: string;
+      fileUrl: string;
+      uploadedAt: string;
+    } | null;
+  }[];
   status: FormStatus;
   createdBy: {
     id: string;
