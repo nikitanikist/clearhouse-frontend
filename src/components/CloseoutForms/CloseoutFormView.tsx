@@ -247,18 +247,38 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
                           </div>
                         </TableCell>
                       </TableRow>
-                      {member.installmentsRequired && member.installmentAttachment && (
+                      {member.installmentsRequired && (
                         <TableRow>
                           <TableCell className="font-medium bg-gray-50">Installment Attachment</TableCell>
                           <TableCell colSpan={3}>
-                            <div className="flex items-center space-x-2 p-2 bg-purple-50 rounded">
-                              <FileText className="h-4 w-4 text-purple-600" />
-                              <span className="text-sm">{member.installmentAttachment.fileName}</span>
-                              <Badge variant="outline" className="text-xs">
-                                Uploaded {new Date(member.installmentAttachment.uploadedAt).toLocaleDateString()}
-                              </Badge>
-                              <Download className="h-4 w-4 text-gray-500 cursor-pointer hover:text-gray-700" />
-                            </div>
+                            {member.installmentAttachment ? (
+                              <div className="flex items-center space-x-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                <FileText className="h-5 w-5 text-blue-600" />
+                                <div className="flex-1">
+                                  <div className="font-medium text-blue-900">{member.installmentAttachment.fileName}</div>
+                                  <div className="text-sm text-blue-700">
+                                    Uploaded {new Date(member.installmentAttachment.uploadedAt).toLocaleDateString()}
+                                  </div>
+                                </div>
+                                <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
+                                  Attached
+                                </Badge>
+                                <button 
+                                  className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+                                  onClick={() => window.open(member.installmentAttachment?.fileUrl, '_blank')}
+                                >
+                                  <Download className="h-4 w-4" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center space-x-2 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                                <FileText className="h-5 w-5 text-amber-600" />
+                                <span className="text-amber-800 font-medium">No attachment uploaded</span>
+                                <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">
+                                  Missing
+                                </Badge>
+                              </div>
+                            )}
                           </TableCell>
                         </TableRow>
                       )}
@@ -316,18 +336,38 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
                     </div>
                   </TableCell>
                 </TableRow>
-                {form.installmentsRequired && form.installmentAttachment && (
+                {form.installmentsRequired && (
                   <TableRow>
                     <TableCell className="font-medium bg-gray-50">Installment Attachment</TableCell>
                     <TableCell colSpan={3}>
-                      <div className="flex items-center space-x-2 p-2 bg-purple-50 rounded">
-                        <FileText className="h-4 w-4 text-purple-600" />
-                        <span className="text-sm">{form.installmentAttachment.fileName}</span>
-                        <Badge variant="outline" className="text-xs">
-                          Uploaded {new Date(form.installmentAttachment.uploadedAt).toLocaleDateString()}
-                        </Badge>
-                        <Download className="h-4 w-4 text-gray-500 cursor-pointer hover:text-gray-700" />
-                      </div>
+                      {form.installmentAttachment ? (
+                        <div className="flex items-center space-x-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                          <FileText className="h-5 w-5 text-blue-600" />
+                          <div className="flex-1">
+                            <div className="font-medium text-blue-900">{form.installmentAttachment.fileName}</div>
+                            <div className="text-sm text-blue-700">
+                              Uploaded {new Date(form.installmentAttachment.uploadedAt).toLocaleDateString()}
+                            </div>
+                          </div>
+                          <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">
+                            Attached
+                          </Badge>
+                          <button 
+                            className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded transition-colors"
+                            onClick={() => window.open(form.installmentAttachment?.fileUrl, '_blank')}
+                          >
+                            <Download className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center space-x-2 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                          <FileText className="h-5 w-5 text-amber-600" />
+                          <span className="text-amber-800 font-medium">No attachment uploaded</span>
+                          <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">
+                            Missing
+                          </Badge>
+                        </div>
+                      )}
                     </TableCell>
                   </TableRow>
                 )}
