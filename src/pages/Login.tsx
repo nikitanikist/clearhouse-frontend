@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth, UserRole } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -74,6 +75,13 @@ const Login: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="max-w-4xl w-full px-8">
           <div className="text-center mb-12">
+            <div className="flex justify-center mb-6">
+              <img 
+                src="/lovable-uploads/b6db7de0-12ec-47d6-9bfc-6d74cde4f183.png" 
+                alt="ClearHouse Logo" 
+                className="h-16 w-auto"
+              />
+            </div>
             <h1 className="text-4xl font-bold text-gray-800 mb-4">ClearHouse CRM</h1>
             <p className="text-gray-600 text-lg">Please select your access role to continue</p>
           </div>
@@ -119,6 +127,13 @@ const Login: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full px-4">
         <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <img 
+              src="/lovable-uploads/b6db7de0-12ec-47d6-9bfc-6d74cde4f183.png" 
+              alt="ClearHouse Logo" 
+              className="h-12 w-auto"
+            />
+          </div>
           <h1 className="text-3xl font-bold">ClearHouse CRM</h1>
           <p className="text-gray-500 mt-2">Login as {roleInfo?.title}</p>
         </div>
