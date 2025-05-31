@@ -57,7 +57,7 @@ const MultiPDFUpload = ({ client, onDataExtracted }: MultiPDFUploadProps) => {
         prev.map(f => ({ ...f, status: 'processed' }))
       );
       
-      // Generate realistic extracted data based on client
+      // Generate realistic extracted data based on client with all required fields
       const extractedData = {
         filePath: `\\\\Clearhouse\\Clients\\${client.name?.replace(' ', '_') || 'NewClient'}_2024\\T1`,
         partner: 'Priya S.',
@@ -83,7 +83,29 @@ const MultiPDFUpload = ({ client, onDataExtracted }: MultiPDFUploadProps) => {
             installmentsRequired: Math.random() > 0.5,
             personalTaxPayment: `$${Math.floor(Math.random() * 2000 + 500)}.00`
           }
-        ]
+        ],
+        // Include all new fields with realistic extracted values
+        t2091PrincipalResidence: Math.random() > 0.7,
+        t1135ForeignProperty: Math.random() > 0.6,
+        t1032PensionSplit: Math.random() > 0.8,
+        hstDraftOrFinal: Math.random() > 0.5 ? 'Final' : 'Draft',
+        otherNotes: 'Extracted from uploaded documents - please review and update as needed',
+        // T1 Summary fields with realistic values
+        priorPeriodsBalance: Math.random() > 0.5 ? `${Math.floor(Math.random() * 1000)}` : '0',
+        taxesPayable: `${Math.floor(Math.random() * 5000 - 2000)}`,
+        installmentsDuringYear: `${Math.floor(Math.random() * 3000)}`,
+        installmentsAfterYear: `${Math.floor(Math.random() * 1000)}`,
+        amountOwing: `${Math.floor(Math.random() * 3000 - 1000)}`,
+        dueDate: 'April 30, 2025',
+        // HST Summary fields
+        hstPriorBalance: Math.random() > 0.7 ? `${Math.floor(Math.random() * 500)}` : '0',
+        hstPayable: Math.random() > 0.6 ? `${Math.floor(Math.random() * 1500)}` : '0',
+        hstInstallmentsDuring: Math.random() > 0.5 ? `${Math.floor(Math.random() * 800)}` : '0',
+        hstInstallmentsAfter: Math.random() > 0.8 ? `${Math.floor(Math.random() * 300)}` : '0',
+        hstPaymentDue: Math.random() > 0.6 ? `${Math.floor(Math.random() * 1000)}` : '0',
+        hstDueDate: Math.random() > 0.6 ? 'June 15, 2025' : 'N/A',
+        // Installment attachment (null initially, will be uploaded if needed)
+        installmentAttachment: null
       };
       
       setIsExtracting(false);
