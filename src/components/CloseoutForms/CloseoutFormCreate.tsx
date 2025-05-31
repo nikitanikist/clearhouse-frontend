@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -111,6 +110,12 @@ const CloseoutFormCreate = ({
     );
   };
 
+  // Check if we should show comparison view
+  const shouldShowComparison = () => {
+    const previousForms = getPreviousYearForms();
+    return !isNewClient && previousForms.length > 0;
+  };
+
   const handleFormSubmit = (formData: CloseoutFormTableData) => {
     if (!user) return;
     
@@ -141,7 +146,13 @@ const CloseoutFormCreate = ({
   
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className={step === 3 ? "sm:max-w-7xl max-h-[90vh] overflow-y-auto" : "sm:max-w-2xl"}>
+      <DialogContent className={
+        step === 3 && shouldShowComparison() 
+          ? "sm:max-w-[95vw] max-h-[95vh] overflow-hidden" 
+          : step === 3 
+          ? "sm:max-w-7xl max-h-[90vh] overflow-y-auto" 
+          : "sm:max-w-2xl"
+      }>
         <DialogHeader>
           <DialogTitle>{editForm ? 'Edit Closeout Form' : getStepTitle()}</DialogTitle>
           <DialogDescription>

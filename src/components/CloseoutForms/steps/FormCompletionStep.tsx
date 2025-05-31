@@ -2,9 +2,9 @@
 import React from 'react';
 import CloseoutFormTable, { CloseoutFormTableData } from '../CloseoutFormTable';
 import PreviousYearForms from '../PreviousYearForms';
+import CloseoutFormComparison from '../CloseoutFormComparison';
 import { Client } from '../ClientSearch';
 import { CloseoutForm } from '@/contexts/DataContext';
-import { Button } from '@/components/ui/button';
 
 interface FormCompletionStepProps {
   extractedData: Partial<CloseoutFormTableData>;
@@ -23,6 +23,25 @@ const FormCompletionStep = ({
   onSubmit, 
   onCancel 
 }: FormCompletionStepProps) => {
+  // Check if we have previous year data for comparison
+  const hasPreviousYearData = !isNewClient && previousForms.length > 0;
+  const mostRecentPreviousForm = hasPreviousYearData ? 
+    previousForms.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] : 
+    null;
+
+  // If we have previous year data, show the comparison view
+  if (hasPreviousYearData && mostRecentPreviousForm) {
+    return (
+      <CloseoutFormComparison
+        extractedData={extractedData}
+        previousForm={mostRecentPreviousForm}
+        onSubmit={onSubmit}
+        onCancel={onCancel}
+      />
+    );
+  }
+
+  // Original view for new clients or when no previous data exists
   return (
     <div className="space-y-6">
       <div className="flex gap-6 max-h-[60vh] overflow-hidden">
@@ -32,6 +51,7 @@ const FormCompletionStep = ({
             initialData={extractedData}
             onSubmit={onSubmit}
             onCancel={onCancel}
+            showButtons={true}
           />
         </div>
 
