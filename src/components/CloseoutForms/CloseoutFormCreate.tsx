@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import {
@@ -11,11 +11,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import EmailClientSearch from './EmailClientSearch';
-import MultiPDFUpload from './MultiPDFUpload';
-import CloseoutFormTable, { CloseoutFormTableData } from './CloseoutFormTable';
-import PreviousYearForms from './PreviousYearForms';
+import { CloseoutFormTableData } from './CloseoutFormTable';
 import { Client } from './ClientSearch';
+import { useFormSteps } from './hooks/useFormSteps';
+import { mapTableDataToCloseoutForm } from './utils/formDataMapper';
+import ClientSearchStep from './steps/ClientSearchStep';
+import DocumentUploadStep from './steps/DocumentUploadStep';
+import FormCompletionStep from './steps/FormCompletionStep';
 
 interface CloseoutFormCreateProps {
   open: boolean;
@@ -29,10 +31,19 @@ const CloseoutFormCreate = ({
   const { user } = useAuth();
   const { createForm, forms } = useData();
   
-  const [step, setStep] = useState(1);
-  const [selectedClient, setSelectedClient] = useState<Client | { email: string; name?: string } | null>(null);
-  const [extractedData, setExtractedData] = useState<Partial<CloseoutFormTableData> | null>(null);
-  const [isNewClient, setIsNewClient] = useState(false);
+  const {
+    step,
+    setStep,
+    selectedClient,
+    extractedData,
+    isNewClient,
+    handleClientSelect,
+    handleNewClient,
+    handleDataExtracted,
+    resetForm,
+    getStepTitle,
+    getStepDescription,
+  } = useFormSteps();
 
   // Get previous year forms for selected client
   const getPreviousYearForms = () => {
@@ -42,115 +53,20 @@ const CloseoutFormCreate = ({
     );
   };
 
-  const handleClientSelect = (client: Client) => {
-    setSelectedClient(client);
-    setIsNewClient(false);
-    setStep(2);
-  };
-
-  const handleNewClient = (email: string) => {
-    setSelectedClient({ email, name: 'New Client' });
-    setIsNewClient(true);
-    setStep(2);
-  };
-
-  const handleDataExtracted = (data: Partial<CloseoutFormTableData>) => {
-    setExtractedData(data);
-    setStep(3);
-  };
-
   const handleFormSubmit = (formData: CloseoutFormTableData) => {
     if (!user) return;
     
-    const createdByInfo = {
-      id: user.id,
-      name: user.name,
-      role: user.role,
-    };
-    
-    // Convert the table format to the original CloseoutForm format using the first family member
-    const primaryMember = formData.familyMembers[0];
-    
-    createForm({
-      clientName: primaryMember.clientName,
-      filePath: formData.filePath,
-      signingPerson: primaryMember.signingPerson,
-      signingEmail: primaryMember.signingEmail,
-      additionalEmails: primaryMember.additionalEmails,
-      partner: formData.partner,
-      manager: formData.manager,
-      years: formData.years,
-      jobNumber: formData.jobNumber,
-      invoiceAmount: formData.invoiceAmount,
-      billDetail: formData.billDetail,
-      paymentRequired: formData.paymentRequired,
-      wipRecovery: formData.wipRecovery,
-      recoveryReason: formData.recoveryReason,
-      isT1: primaryMember.isT1,
-      isS216: primaryMember.isS216,
-      isS116: primaryMember.isS116,
-      isPaperFiled: primaryMember.isPaperFiled,
-      installmentsRequired: primaryMember.installmentsRequired,
-      // Add all the new required fields with default values
-      t2091PrincipalResidence: false,
-      t1135ForeignProperty: false,
-      t1032PensionSplit: false,
-      hstDraftOrFinal: 'N/A',
-      otherNotes: '',
-      // T1 Summary fields with default values
-      priorPeriodsBalance: '0',
-      taxesPayable: '0',
-      installmentsDuringYear: '0',
-      installmentsAfterYear: '0',
-      amountOwing: '0',
-      dueDate: '',
-      // HST Summary fields with default values
-      hstPriorBalance: '0',
-      hstPayable: '0',
-      hstInstallmentsDuring: '0',
-      hstInstallmentsAfter: '0',
-      hstPaymentDue: '0',
-      hstDueDate: '',
-      // Installment attachment
-      installmentAttachment: null,
-      status: 'pending',
-      assignedTo: null,
-      createdBy: createdByInfo,
-    });
+    const mappedFormData = mapTableDataToCloseoutForm(formData, user);
+    createForm(mappedFormData);
     
     // Reset form
     resetForm();
     onOpenChange(false);
   };
 
-  const resetForm = () => {
-    setStep(1);
-    setSelectedClient(null);
-    setExtractedData(null);
-    setIsNewClient(false);
-  };
-
   const handleClose = () => {
     resetForm();
     onOpenChange(false);
-  };
-
-  const getStepTitle = () => {
-    switch (step) {
-      case 1: return 'Find Client';
-      case 2: return 'Upload Documents';
-      case 3: return 'Create Closeout Form';
-      default: return 'Create Closeout Form';
-    }
-  };
-
-  const getStepDescription = () => {
-    switch (step) {
-      case 1: return 'Enter client email to search for existing clients or add new ones';
-      case 2: return `Upload PDF documents for ${selectedClient?.name || selectedClient?.email}`;
-      case 3: return 'Review and complete the closeout form details';
-      default: return '';
-    }
   };
   
   return (
@@ -164,46 +80,28 @@ const CloseoutFormCreate = ({
         </DialogHeader>
         
         {step === 1 && (
-          <div className="py-4">
-            <EmailClientSearch 
-              onClientSelect={handleClientSelect}
-              onNewClient={handleNewClient}
-            />
-          </div>
+          <ClientSearchStep 
+            onClientSelect={handleClientSelect}
+            onNewClient={handleNewClient}
+          />
         )}
 
         {step === 2 && selectedClient && (
-          <div className="py-4">
-            <MultiPDFUpload 
-              client={selectedClient}
-              onDataExtracted={handleDataExtracted}
-            />
-          </div>
+          <DocumentUploadStep 
+            selectedClient={selectedClient}
+            onDataExtracted={handleDataExtracted}
+          />
         )}
         
         {step === 3 && extractedData && (
-          <div className="flex gap-6 max-h-[70vh] overflow-hidden">
-            {/* Left side - Form creation */}
-            <div className="flex-1 overflow-y-auto pr-2">
-              <CloseoutFormTable
-                initialData={extractedData}
-                onSubmit={handleFormSubmit}
-                onCancel={() => setStep(2)}
-              />
-            </div>
-
-            {/* Right side - Previous year forms (only for existing clients) */}
-            {!isNewClient && selectedClient && 'name' in selectedClient && (
-              <div className="w-80 border-l pl-6">
-                <div className="sticky top-0 max-h-[70vh] overflow-y-auto">
-                  <PreviousYearForms 
-                    client={selectedClient as Client} 
-                    previousForms={getPreviousYearForms()} 
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+          <FormCompletionStep 
+            extractedData={extractedData}
+            selectedClient={selectedClient!}
+            isNewClient={isNewClient}
+            previousForms={getPreviousYearForms()}
+            onSubmit={handleFormSubmit}
+            onCancel={() => setStep(2)}
+          />
         )}
         
         <DialogFooter>
