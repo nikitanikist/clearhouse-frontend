@@ -91,6 +91,28 @@ const CloseoutFormCreate = ({
       isS116: primaryMember.isS116,
       isPaperFiled: primaryMember.isPaperFiled,
       installmentsRequired: primaryMember.installmentsRequired,
+      // Add all the new required fields with default values
+      t2091PrincipalResidence: false,
+      t1135ForeignProperty: false,
+      t1032PensionSplit: false,
+      hstDraftOrFinal: 'N/A',
+      otherNotes: '',
+      // T1 Summary fields with default values
+      priorPeriodsBalance: '0',
+      taxesPayable: '0',
+      installmentsDuringYear: '0',
+      installmentsAfterYear: '0',
+      amountOwing: '0',
+      dueDate: '',
+      // HST Summary fields with default values
+      hstPriorBalance: '0',
+      hstPayable: '0',
+      hstInstallmentsDuring: '0',
+      hstInstallmentsAfter: '0',
+      hstPaymentDue: '0',
+      hstDueDate: '',
+      // Installment attachment
+      installmentAttachment: null,
       status: 'pending',
       assignedTo: null,
       createdBy: createdByInfo,
