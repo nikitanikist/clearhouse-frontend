@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -13,6 +14,7 @@ import { CloseoutFormTableData } from './CloseoutFormTable';
 import { Client } from './ClientSearch';
 import { useFormSteps } from './hooks/useFormSteps';
 import { mapTableDataToCloseoutForm } from './utils/formDataMapper';
+import { useIsMobile } from '@/hooks/use-mobile';
 import ClientSearchStep from './steps/ClientSearchStep';
 import DocumentUploadStep from './steps/DocumentUploadStep';
 import FormCompletionStep from './steps/FormCompletionStep';
@@ -30,6 +32,7 @@ const CloseoutFormCreate = ({
 }: CloseoutFormCreateProps) => {
   const { user } = useAuth();
   const { createForm, updateForm, forms } = useData();
+  const isMobile = useIsMobile();
   
   const {
     step,
@@ -143,47 +146,53 @@ const CloseoutFormCreate = ({
     resetForm();
     onOpenChange(false);
   };
+
+  // Determine if we should use full screen mode
+  const isComparisonView = step === 3 && shouldShowComparison();
+  const shouldUseFullScreen = isComparisonView;
   
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className={
-        step === 3 && shouldShowComparison() 
-          ? "sm:max-w-[95vw] max-h-[95vh] overflow-hidden" 
+        shouldUseFullScreen
+          ? "w-screen h-screen max-w-none max-h-none m-0 rounded-none overflow-hidden"
           : step === 3 
           ? "sm:max-w-7xl max-h-[90vh] overflow-y-auto" 
           : "sm:max-w-2xl"
       }>
-        <DialogHeader>
+        <DialogHeader className={shouldUseFullScreen ? "p-6 border-b" : ""}>
           <DialogTitle>{editForm ? 'Edit Closeout Form' : getStepTitle()}</DialogTitle>
           <DialogDescription>
             {editForm ? 'Make changes to the closeout form and resubmit.' : getStepDescription()}
           </DialogDescription>
         </DialogHeader>
         
-        {step === 1 && !editForm && (
-          <ClientSearchStep 
-            onClientSelect={handleClientSelect}
-            onNewClient={handleNewClient}
-          />
-        )}
+        <div className={shouldUseFullScreen ? "flex-1 overflow-hidden p-6" : ""}>
+          {step === 1 && !editForm && (
+            <ClientSearchStep 
+              onClientSelect={handleClientSelect}
+              onNewClient={handleNewClient}
+            />
+          )}
 
-        {step === 2 && selectedClient && !editForm && (
-          <DocumentUploadStep 
-            selectedClient={selectedClient}
-            onDataExtracted={handleDataExtracted}
-          />
-        )}
-        
-        {step === 3 && extractedData && (
-          <FormCompletionStep 
-            extractedData={extractedData}
-            selectedClient={selectedClient!}
-            isNewClient={isNewClient}
-            previousForms={getPreviousYearForms()}
-            onSubmit={handleFormSubmit}
-            onCancel={() => editForm ? handleClose() : setStep(2)}
-          />
-        )}
+          {step === 2 && selectedClient && !editForm && (
+            <DocumentUploadStep 
+              selectedClient={selectedClient}
+              onDataExtracted={handleDataExtracted}
+            />
+          )}
+          
+          {step === 3 && extractedData && (
+            <FormCompletionStep 
+              extractedData={extractedData}
+              selectedClient={selectedClient!}
+              isNewClient={isNewClient}
+              previousForms={getPreviousYearForms()}
+              onSubmit={handleFormSubmit}
+              onCancel={() => editForm ? handleClose() : setStep(2)}
+            />
+          )}
+        </div>
         
         {/* Only show footer for non-completion steps */}
         {step !== 3 && (
