@@ -3,6 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { CloseoutForm } from '@/contexts/DataContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import CloseoutFormTable, { CloseoutFormTableData } from './CloseoutFormTable';
@@ -25,7 +26,7 @@ const CloseoutFormComparison = ({
   const isMobile = useIsMobile();
 
   if (isMobile) {
-    // Mobile layout - stacked vertically
+    // Mobile layout - stacked vertically with scrolling
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
         {/* Header */}
@@ -35,7 +36,7 @@ const CloseoutFormComparison = ({
         </div>
 
         {/* Content - Full height with proper spacing */}
-        <div className="flex-1 p-4 space-y-4 pb-20">
+        <div className="flex-1 p-4 space-y-4 pb-20 overflow-y-auto">
           {/* Current form - editable */}
           <Card className="shadow-sm">
             <CardHeader className="pb-4 bg-blue-50">
@@ -56,7 +57,7 @@ const CloseoutFormComparison = ({
             </CardContent>
           </Card>
 
-          {/* Previous year data (reference) */}
+          {/* Previous form (reference) */}
           <Card className="shadow-sm">
             <CardHeader className="pb-4 bg-gray-50">
               <CardTitle className="flex items-center justify-between text-lg">
@@ -87,20 +88,20 @@ const CloseoutFormComparison = ({
     );
   }
 
-  // Desktop layout - side by side, full height
+  // Desktop layout - side by side with scrollable content areas
   return (
     <div className="h-screen flex flex-col bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b p-6 flex-shrink-0">
         <h1 className="text-2xl font-semibold text-gray-900">Form Comparison</h1>
-        <p className="text-sm text-gray-600 mt-1">Compare and edit your form using the reference data below</p>
+        <p className="text-sm text-gray-600 mt-1">Compare and edit your form using the reference data</p>
       </div>
 
-      {/* Main content area - two columns, full height */}
+      {/* Main content area - two columns with scrollable content */}
       <div className="flex-1 flex min-h-0 p-6 gap-6">
-        {/* Left side - Current form (editable) - 50% width */}
+        {/* Left side - Current form (editable) */}
         <div className="flex-1 flex flex-col min-w-0">
-          <Card className="flex-1 flex flex-col shadow-sm">
+          <Card className="flex-1 flex flex-col shadow-sm h-full">
             <CardHeader className="pb-4 bg-blue-50 border-b flex-shrink-0">
               <CardTitle className="flex items-center justify-between text-xl">
                 <span className="flex items-center gap-2">
@@ -111,20 +112,24 @@ const CloseoutFormComparison = ({
                 </Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 p-6 overflow-y-auto">
-              <CloseoutFormTable
-                initialData={extractedData}
-                onSubmit={onSubmit}
-                onCancel={onCancel}
-                showButtons={false}
-              />
+            <CardContent className="flex-1 p-0 overflow-hidden">
+              <ScrollArea className="h-full">
+                <div className="p-6">
+                  <CloseoutFormTable
+                    initialData={extractedData}
+                    onSubmit={onSubmit}
+                    onCancel={onCancel}
+                    showButtons={false}
+                  />
+                </div>
+              </ScrollArea>
             </CardContent>
           </Card>
         </div>
 
-        {/* Right side - Previous year data (reference) - 50% width */}
+        {/* Right side - Reference form */}
         <div className="flex-1 flex flex-col min-w-0">
-          <Card className="flex-1 flex flex-col shadow-sm">
+          <Card className="flex-1 flex flex-col shadow-sm h-full">
             <CardHeader className="pb-4 bg-gray-50 border-b flex-shrink-0">
               <CardTitle className="flex items-center justify-between text-xl">
                 <span className="flex items-center gap-2">
@@ -135,14 +140,18 @@ const CloseoutFormComparison = ({
                 </Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 p-6 overflow-y-auto">
-              <CloseoutFormView form={previousForm} />
+            <CardContent className="flex-1 p-0 overflow-hidden">
+              <ScrollArea className="h-full">
+                <div className="p-6">
+                  <CloseoutFormView form={previousForm} />
+                </div>
+              </ScrollArea>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* Bottom action buttons - outside the comparison area */}
+      {/* Bottom action buttons */}
       <div className="bg-white border-t p-6 flex justify-between items-center flex-shrink-0">
         <Button variant="outline" onClick={onCancel} className="flex items-center gap-2">
           <ArrowLeft className="h-4 w-4" />
