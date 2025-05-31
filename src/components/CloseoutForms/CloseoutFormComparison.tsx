@@ -3,7 +3,6 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { CloseoutForm } from '@/contexts/DataContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import CloseoutFormTable, { CloseoutFormTableData } from './CloseoutFormTable';
@@ -26,17 +25,17 @@ const CloseoutFormComparison = ({
   const isMobile = useIsMobile();
 
   if (isMobile) {
-    // Mobile layout - stacked vertically with scrolling
+    // Mobile layout - stacked vertically with page scroll
     return (
-      <div className="min-h-screen flex flex-col bg-gray-50">
+      <div className="min-h-screen bg-gray-50">
         {/* Header */}
-        <div className="bg-white border-b p-4 flex-shrink-0">
+        <div className="bg-white border-b p-4">
           <h1 className="text-xl font-semibold">Form Comparison</h1>
           <p className="text-sm text-gray-600 mt-1">Compare and edit your form using the reference data</p>
         </div>
 
-        {/* Content - Full height with proper spacing */}
-        <div className="flex-1 p-4 space-y-4 pb-20 overflow-y-auto">
+        {/* Content - Page scrollable */}
+        <div className="p-4 space-y-4 pb-24">
           {/* Current form - editable */}
           <Card className="shadow-sm">
             <CardHeader className="pb-4 bg-blue-50">
@@ -57,7 +56,7 @@ const CloseoutFormComparison = ({
             </CardContent>
           </Card>
 
-          {/* Previous form (reference) */}
+          {/* Reference form */}
           <Card className="shadow-sm">
             <CardHeader className="pb-4 bg-gray-50">
               <CardTitle className="flex items-center justify-between text-lg">
@@ -81,28 +80,28 @@ const CloseoutFormComparison = ({
           </Button>
           <Button onClick={() => onSubmit(extractedData as CloseoutFormTableData)} className="flex-1 bg-green-600 hover:bg-green-700">
             <Save className="h-4 w-4 mr-2" />
-            Submit Form
+            Resubmit Form
           </Button>
         </div>
       </div>
     );
   }
 
-  // Desktop layout - side by side with scrollable content areas
+  // Desktop layout - side by side with page scroll
   return (
-    <div className="h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b p-6 flex-shrink-0">
+      <div className="bg-white border-b p-6">
         <h1 className="text-2xl font-semibold text-gray-900">Form Comparison</h1>
         <p className="text-sm text-gray-600 mt-1">Compare and edit your form using the reference data</p>
       </div>
 
-      {/* Main content area - two columns with scrollable content */}
-      <div className="flex-1 flex min-h-0 p-6 gap-6">
-        {/* Left side - Current form (editable) */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <Card className="flex-1 flex flex-col shadow-sm h-full">
-            <CardHeader className="pb-4 bg-blue-50 border-b flex-shrink-0">
+      {/* Main content - Page scrollable with side-by-side layout */}
+      <div className="p-6 pb-24">
+        <div className="grid grid-cols-2 gap-6 min-h-[calc(100vh-200px)]">
+          {/* Left side - Current form (editable) */}
+          <Card className="shadow-sm h-fit">
+            <CardHeader className="pb-4 bg-blue-50 border-b">
               <CardTitle className="flex items-center justify-between text-xl">
                 <span className="flex items-center gap-2">
                   📝 Current Form
@@ -112,25 +111,19 @@ const CloseoutFormComparison = ({
                 </Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 p-0 overflow-hidden">
-              <ScrollArea className="h-full">
-                <div className="p-6">
-                  <CloseoutFormTable
-                    initialData={extractedData}
-                    onSubmit={onSubmit}
-                    onCancel={onCancel}
-                    showButtons={false}
-                  />
-                </div>
-              </ScrollArea>
+            <CardContent className="p-6">
+              <CloseoutFormTable
+                initialData={extractedData}
+                onSubmit={onSubmit}
+                onCancel={onCancel}
+                showButtons={false}
+              />
             </CardContent>
           </Card>
-        </div>
 
-        {/* Right side - Reference form */}
-        <div className="flex-1 flex flex-col min-w-0">
-          <Card className="flex-1 flex flex-col shadow-sm h-full">
-            <CardHeader className="pb-4 bg-gray-50 border-b flex-shrink-0">
+          {/* Right side - Reference form */}
+          <Card className="shadow-sm h-fit">
+            <CardHeader className="pb-4 bg-gray-50 border-b">
               <CardTitle className="flex items-center justify-between text-xl">
                 <span className="flex items-center gap-2">
                   📋 Reference Form
@@ -140,26 +133,22 @@ const CloseoutFormComparison = ({
                 </Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 p-0 overflow-hidden">
-              <ScrollArea className="h-full">
-                <div className="p-6">
-                  <CloseoutFormView form={previousForm} />
-                </div>
-              </ScrollArea>
+            <CardContent className="p-6">
+              <CloseoutFormView form={previousForm} />
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* Bottom action buttons */}
-      <div className="bg-white border-t p-6 flex justify-between items-center flex-shrink-0">
+      {/* Fixed bottom action buttons */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-6 flex justify-between items-center z-10">
         <Button variant="outline" onClick={onCancel} className="flex items-center gap-2">
           <ArrowLeft className="h-4 w-4" />
           Cancel
         </Button>
         <Button onClick={() => onSubmit(extractedData as CloseoutFormTableData)} className="bg-green-600 hover:bg-green-700 flex items-center gap-2">
           <Save className="h-4 w-4" />
-          Submit Form
+          Resubmit Form
         </Button>
       </div>
     </div>
