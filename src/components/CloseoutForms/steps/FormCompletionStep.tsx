@@ -41,42 +41,47 @@ const FormCompletionStep = ({
     );
   }
 
-  // Original view for new clients or when no previous data exists
+  // Clean, user-friendly view for new clients or when no previous data exists
   return (
-    <div className="h-full flex flex-col gap-6 p-6 bg-gray-50">
+    <div className="max-w-5xl mx-auto p-6 space-y-6">
       {/* Header for new client form */}
-      <div className="bg-white p-4 rounded-lg shadow-sm">
-        <h1 className="text-2xl font-semibold text-gray-900">Create New Closeout Form</h1>
-        <p className="text-sm text-gray-600 mt-1">
+      <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <h1 className="text-2xl font-semibold text-gray-900 mb-2">Create New Closeout Form</h1>
+        <p className="text-sm text-gray-600">
           {isNewClient ? 'New client - no previous forms available' : 'Complete the form details below'}
         </p>
+        <div className="mt-4 flex items-center gap-4 text-sm">
+          <span className="text-gray-600">Client:</span>
+          <span className="font-medium text-gray-900">
+            {selectedClient && 'name' in selectedClient ? selectedClient.name : selectedClient?.email}
+          </span>
+          <span className="text-gray-400">•</span>
+          <span className="text-gray-600">{selectedClient?.email}</span>
+        </div>
       </div>
 
-      <div className="flex-1 flex gap-6 overflow-hidden">
-        {/* Left side - Form creation */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="bg-white rounded-lg shadow-sm p-6">
-            <CloseoutFormTable
-              initialData={extractedData}
-              onSubmit={onSubmit}
-              onCancel={onCancel}
-              showButtons={true}
+      {/* Main form content - single column, no horizontal scrolling */}
+      <div className="bg-white rounded-lg shadow-sm border">
+        <CloseoutFormTable
+          initialData={extractedData}
+          onSubmit={onSubmit}
+          onCancel={onCancel}
+          showButtons={true}
+        />
+      </div>
+
+      {/* Optional: Previous year forms reference for existing clients without recent data */}
+      {!isNewClient && selectedClient && 'name' in selectedClient && previousForms.length > 0 && (
+        <div className="bg-gray-50 rounded-lg p-6 border">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Previous Forms Reference</h3>
+          <div className="max-h-60 overflow-y-auto">
+            <PreviousYearForms 
+              client={selectedClient as Client} 
+              previousForms={previousForms} 
             />
           </div>
         </div>
-
-        {/* Right side - Previous year forms (only for existing clients) */}
-        {!isNewClient && selectedClient && 'name' in selectedClient && (
-          <div className="w-80">
-            <div className="bg-white rounded-lg shadow-sm p-6 h-full overflow-y-auto">
-              <PreviousYearForms 
-                client={selectedClient as Client} 
-                previousForms={previousForms} 
-              />
-            </div>
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 };
