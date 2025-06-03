@@ -24,13 +24,16 @@ const CloseoutFormsPage = () => {
   console.log('CloseoutFormsPage - Current location pathname:', location.pathname);
   console.log('CloseoutFormsPage - User role:', user?.role);
 
-  // Simply validate that status is one of the allowed values
-  const validateStatus = (statusParam: string | undefined): 'pending' | 'active' | 'completed' | 'rejected' => {
+  // Validate that we have a proper status parameter
+  const validateStatus = (statusParam: string | undefined) => {
     const validStatuses = ['pending', 'active', 'completed', 'rejected'] as const;
     
+    console.log('CloseoutFormsPage - Validating status:', statusParam);
+    
     if (!statusParam || !validStatuses.includes(statusParam as any)) {
-      console.log('CloseoutFormsPage - Invalid or missing status, defaulting to pending');
-      return 'pending';
+      console.error('CloseoutFormsPage - Invalid status, redirecting to dashboard');
+      navigate('/dashboard');
+      return null;
     }
     
     console.log('CloseoutFormsPage - Valid status confirmed:', statusParam);
@@ -38,6 +41,11 @@ const CloseoutFormsPage = () => {
   };
 
   const formStatus = validateStatus(status);
+
+  // If we don't have a valid status, don't render anything
+  if (!formStatus) {
+    return <div>Redirecting to dashboard...</div>;
+  }
 
   useEffect(() => {
     // Reset selected form when the status route changes
