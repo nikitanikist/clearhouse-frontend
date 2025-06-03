@@ -224,12 +224,21 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
               }
             />
             <TableRow 
-              label="Yes - attach FED schedule from T2." 
-              value={form.fedScheduleAttached ? 'Yes- attached' : '-'}
+              label="Attach FED Schedule from T2 (Yes/No)" 
+              value={
+                <div className="flex items-center space-x-4">
+                  <CheckboxDisplay checked={form.fedScheduleAttached || false} label="Yes" />
+                  <CheckboxDisplay checked={!(form.fedScheduleAttached || false)} label="No" />
+                </div>
+              }
             />
             <TableRow 
               label="HST - indicate draft or filed and attach pdf" 
-              value={form.hstDraftOrFinal || 'Draft attached'}
+              value={
+                form.hstDraftOrFinal ? 
+                  `${form.hstDraftOrFinal}${form.hstAttachmentUploaded ? ' - Uploaded' : ' - No file uploaded'}` : 
+                  'Draft - No file uploaded'
+              }
             />
             <TableRow 
               label="Are HST installments required? (Yes/No)" 
@@ -260,6 +269,53 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
             <TableRow 
               label="T Slips" 
               value={<CheckboxDisplay checked={form.tSlips || false} label="" />}
+            />
+          </tbody>
+        </table>
+      </div>
+
+      {/* 10. Family Members & Installment Attachments Section */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-bold border-b border-gray-300 pb-2">FAMILY MEMBERS & INSTALLMENT ATTACHMENTS</h2>
+        <table className="w-full border-collapse">
+          <tbody>
+            <TableRow 
+              label="Signing Person" 
+              value={form.familySigningPerson || form.signingPerson || '-'} 
+            />
+            <TableRow 
+              label="Signing Email" 
+              value={
+                form.familySigningEmail || form.signingEmail ? 
+                  <a href={`mailto:${form.familySigningEmail || form.signingEmail}`} className="text-blue-600 underline">
+                    {form.familySigningEmail || form.signingEmail}
+                  </a> : 
+                  '-'
+              } 
+            />
+            <TableRow 
+              label="Tax Forms" 
+              value={
+                <div className="flex items-center space-x-6">
+                  <CheckboxDisplay checked={form.t1Form || false} label="T1" />
+                  <CheckboxDisplay checked={form.s216Form || false} label="S216" />
+                  <CheckboxDisplay checked={form.s116Form || false} label="S116" />
+                  <CheckboxDisplay checked={form.paperFiled || false} label="Paper Filed" />
+                </div>
+              }
+            />
+            <TableRow 
+              label="Installments Required (Yes/No)" 
+              value={
+                <div className="flex items-center space-x-4">
+                  <CheckboxDisplay checked={form.familyInstallmentsRequired || false} label="Yes" />
+                  <CheckboxDisplay checked={!(form.familyInstallmentsRequired || false)} label="No" />
+                </div>
+              }
+            />
+            <TableRow 
+              label="Installment Attachment" 
+              value={form.installmentAttachmentUploaded ? 'Uploaded' : 'No attachment uploaded'}
             />
           </tbody>
         </table>
