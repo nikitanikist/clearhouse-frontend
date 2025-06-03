@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -159,19 +158,35 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
   const selectedForm = selectedFormId ? forms.find(form => form.id === selectedFormId) : null;
 
   const renderActionButtons = (form: any) => {
-    // For pending status, only show view button in table
+    // For pending status - different behavior for different roles
     if (status === 'pending') {
-      return (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handleViewForm(form.id)}
-          className="flex items-center gap-2"
-        >
-          <Eye className="h-4 w-4" />
-          View
-        </Button>
-      );
+      if (user?.role === 'preparer') {
+        // Preparer only sees view button for pending forms
+        return (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleViewForm(form.id)}
+            className="flex items-center gap-2"
+          >
+            <Eye className="h-4 w-4" />
+            View
+          </Button>
+        );
+      } else if (user?.role === 'admin' || user?.role === 'superadmin') {
+        // Admin/superadmin only sees view button (as requested)
+        return (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleViewForm(form.id)}
+            className="flex items-center gap-2"
+          >
+            <Eye className="h-4 w-4" />
+            View
+          </Button>
+        );
+      }
     }
 
     if (status === 'rejected' && (user?.role === 'preparer')) {
