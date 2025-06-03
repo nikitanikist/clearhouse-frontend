@@ -25,9 +25,10 @@ import CloseoutFormCreate from './CloseoutFormCreate';
 interface CloseoutFormsListProps {
   status: 'pending' | 'active' | 'completed' | 'rejected';
   onBack: () => void;
+  onFormSelect?: (form: any) => void;
 }
 
-const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack }) => {
+const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, onFormSelect }) => {
   const { forms, updateFormStatus, assignForm } = useData();
   const { user } = useAuth();
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
@@ -145,8 +146,18 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
   };
 
   const handleViewForm = (formId: string) => {
-    setSelectedFormId(formId);
-    setShowFormView(true);
+    const form = forms.find(f => f.id === formId);
+    console.log('CloseoutFormsList - handleViewForm called with:', formId);
+    console.log('CloseoutFormsList - Found form:', form);
+    
+    if (form && onFormSelect) {
+      console.log('CloseoutFormsList - Calling onFormSelect with form');
+      onFormSelect(form);
+    } else {
+      console.log('CloseoutFormsList - Using dialog view');
+      setSelectedFormId(formId);
+      setShowFormView(true);
+    }
   };
 
   const handleEditForm = (form: any) => {

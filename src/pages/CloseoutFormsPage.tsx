@@ -30,6 +30,7 @@ const CloseoutFormsPage = () => {
   console.log('CloseoutFormsPage - Status:', formStatus);
   console.log('CloseoutFormsPage - Raw status param:', status);
   console.log('CloseoutFormsPage - User role:', user?.role);
+  console.log('CloseoutFormsPage - Selected form:', selectedForm);
 
   const getTitle = () => {
     switch (formStatus) {
@@ -61,13 +62,23 @@ const CloseoutFormsPage = () => {
     }
   };
 
+  const handleFormSelect = (form: any) => {
+    console.log('CloseoutFormsPage - Form selected:', form);
+    setSelectedForm(form);
+  };
+
   const renderFormView = () => {
     if (!selectedForm) return null;
 
+    console.log('CloseoutFormsPage - Rendering form view for user role:', user?.role);
+    console.log('CloseoutFormsPage - Selected form data:', selectedForm);
+
     // Use admin view for admin/superadmin, regular view for preparers
     if (user?.role === 'admin' || user?.role === 'superadmin') {
+      console.log('CloseoutFormsPage - Using CloseoutFormAdminView');
       return <CloseoutFormAdminView form={selectedForm} />;
     } else {
+      console.log('CloseoutFormsPage - Using CloseoutFormView');
       return <CloseoutFormView form={selectedForm} />;
     }
   };
@@ -109,6 +120,7 @@ const CloseoutFormsPage = () => {
           <CloseoutFormsList 
             status={formStatus as 'pending' | 'active' | 'completed' | 'rejected'}
             onBack={handleBackToList}
+            onFormSelect={handleFormSelect}
           />
         </>
       ) : (
