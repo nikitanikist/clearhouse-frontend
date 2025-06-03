@@ -9,21 +9,23 @@ import { Plus } from 'lucide-react';
 import { UserRole } from '@/contexts/AuthContext';
 
 interface AddUserDialogProps {
-  onAddUser: (userData: { name: string; email: string; role: UserRole }) => void;
+  onAddUser: (userData: { name: string; email: string; password: string; role: UserRole }) => void;
 }
 
 const AddUserDialog = ({ onAddUser }: AddUserDialogProps) => {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [role, setRole] = useState<UserRole>('preparer');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (name && email && role) {
-      onAddUser({ name, email, role });
+    if (name && email && password && role) {
+      onAddUser({ name, email, password, role });
       setName('');
       setEmail('');
+      setPassword('');
       setRole('preparer');
       setOpen(false);
     }
@@ -60,6 +62,17 @@ const AddUserDialog = ({ onAddUser }: AddUserDialogProps) => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter email address"
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter password"
               required
             />
           </div>

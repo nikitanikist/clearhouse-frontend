@@ -80,7 +80,7 @@ const UsersPage = () => {
     }
   };
 
-  const handleAddUser = (userData: { name: string; email: string; role: UserRole }) => {
+  const handleAddUser = (userData: { name: string; email: string; password: string; role: UserRole }) => {
     const newUser = {
       id: `user-${Date.now()}`,
       name: userData.name,

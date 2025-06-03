@@ -20,6 +20,11 @@ const DashboardCards = () => {
     rejected: forms.filter(f => f.status === 'rejected').length
   });
 
+  // Don't show any cards for super admin
+  if (user?.role === 'superadmin') {
+    return null;
+  }
+
   // Filter forms based on user role
   const getFilteredForms = (status: string) => {
     let filteredForms = forms.filter(form => form.status === status);
@@ -117,7 +122,7 @@ const DashboardCards = () => {
       );
     }
 
-    if (user?.role === 'admin' || user?.role === 'superadmin') {
+    if (user?.role === 'admin') {
       return (
         <>
           <Card 

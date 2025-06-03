@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import DashboardCards from '@/components/Dashboard/DashboardCards';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
@@ -8,7 +9,20 @@ import CloseoutFormCreate from '@/components/CloseoutForms/CloseoutFormCreate';
 
 const DashboardHome = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+
+  // Redirect super admin to user management
+  useEffect(() => {
+    if (user?.role === 'superadmin') {
+      navigate('/dashboard/users');
+    }
+  }, [user, navigate]);
+
+  // Don't render anything for super admin while redirecting
+  if (user?.role === 'superadmin') {
+    return null;
+  }
 
   return (
     <div className="space-y-8">
