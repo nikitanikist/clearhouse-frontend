@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -236,7 +235,7 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
               label="HST - indicate draft or filed and attach pdf" 
               value={
                 form.hstDraftOrFinal ? 
-                  `${form.hstDraftOrFinal}${form.hstAttachmentUploaded ? ' - Uploaded' : ' - No file uploaded'}` : 
+                  `${form.hstDraftOrFinal} - No file uploaded` : 
                   'Draft - No file uploaded'
               }
             />
@@ -281,14 +280,14 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
           <tbody>
             <TableRow 
               label="Signing Person" 
-              value={form.familySigningPerson || form.signingPerson || '-'} 
+              value={form.signingPerson || '-'} 
             />
             <TableRow 
               label="Signing Email" 
               value={
-                form.familySigningEmail || form.signingEmail ? 
-                  <a href={`mailto:${form.familySigningEmail || form.signingEmail}`} className="text-blue-600 underline">
-                    {form.familySigningEmail || form.signingEmail}
+                form.signingEmail ? 
+                  <a href={`mailto:${form.signingEmail}`} className="text-blue-600 underline">
+                    {form.signingEmail}
                   </a> : 
                   '-'
               } 
@@ -297,10 +296,10 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
               label="Tax Forms" 
               value={
                 <div className="flex items-center space-x-6">
-                  <CheckboxDisplay checked={form.t1Form || false} label="T1" />
-                  <CheckboxDisplay checked={form.s216Form || false} label="S216" />
-                  <CheckboxDisplay checked={form.s116Form || false} label="S116" />
-                  <CheckboxDisplay checked={form.paperFiled || false} label="Paper Filed" />
+                  <CheckboxDisplay checked={form.isT1 || false} label="T1" />
+                  <CheckboxDisplay checked={form.isS216 || false} label="S216" />
+                  <CheckboxDisplay checked={form.isS116 || false} label="S116" />
+                  <CheckboxDisplay checked={form.isPaperFiled || false} label="Paper Filed" />
                 </div>
               }
             />
@@ -308,14 +307,14 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
               label="Installments Required (Yes/No)" 
               value={
                 <div className="flex items-center space-x-4">
-                  <CheckboxDisplay checked={form.familyInstallmentsRequired || false} label="Yes" />
-                  <CheckboxDisplay checked={!(form.familyInstallmentsRequired || false)} label="No" />
+                  <CheckboxDisplay checked={form.installmentsRequired || false} label="Yes" />
+                  <CheckboxDisplay checked={!(form.installmentsRequired || false)} label="No" />
                 </div>
               }
             />
             <TableRow 
               label="Installment Attachment" 
-              value={form.installmentAttachmentUploaded ? 'Uploaded' : 'No attachment uploaded'}
+              value={form.installmentAttachment ? 'Uploaded' : 'No attachment uploaded'}
             />
           </tbody>
         </table>
