@@ -39,10 +39,12 @@ const CloseoutFormGrid: React.FC<CloseoutFormGridProps> = ({
 
   return (
     <div className="space-y-4 animate-fade-in">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
-        {description && <p className="text-muted-foreground mt-1">{description}</p>}
-      </div>
+      {title && (
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
+          {description && <p className="text-muted-foreground mt-1">{description}</p>}
+        </div>
+      )}
 
       {forms.length === 0 ? (
         <Card>

@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import CloseoutFormGrid from '@/components/CloseoutForms/CloseoutFormGrid';
+import CloseoutFormsList from '@/components/CloseoutForms/CloseoutFormsList';
 import CloseoutFormView from '@/components/CloseoutForms/CloseoutFormView';
 import CloseoutFormCreate from '@/components/CloseoutForms/CloseoutFormCreate';
 import { Plus } from 'lucide-react';
@@ -33,7 +34,10 @@ const CloseoutFormsPage: React.FC<CloseoutFormsPageProps> = ({ status: defaultSt
     if (user?.role === 'superadmin') {
       return formsList; // Super admin sees all forms
     } else if (user?.role === 'admin') {
-      // Admin sees forms assigned to them
+      // Admin sees forms assigned to them OR unassigned pending forms
+      if (formsList === pendingForms) {
+        return formsList; // Admin sees all pending forms
+      }
       return formsList.filter(form => form.assignedTo && form.assignedTo.id === user.id);
     } else {
       // Preparer sees forms created by them
@@ -52,32 +56,27 @@ const CloseoutFormsPage: React.FC<CloseoutFormsPageProps> = ({ status: defaultSt
   if (defaultStatus) {
     let targetForms = [];
     let title = '';
-    let description = '';
     let emptyMessage = '';
     
     switch (defaultStatus) {
       case 'pending':
         targetForms = getFilteredForms(pendingForms);
         title = 'Pending Closeout Forms';
-        description = 'Forms awaiting review and approval';
         emptyMessage = 'No pending forms found';
         break;
       case 'active':
         targetForms = getFilteredForms(activeForms);
-        title = 'Working Closeout Forms';
-        description = 'Forms that are currently being processed';
+        title = 'Currently Working Forms';
         emptyMessage = 'No working forms found';
         break;
       case 'completed':
         targetForms = getFilteredForms(completedForms);
         title = 'Completed Closeout Forms';
-        description = 'Forms that have been finalized and closed';
         emptyMessage = 'No completed forms found';
         break;
       case 'rejected':
         targetForms = getFilteredForms(rejectedForms);
         title = 'Amendment Closeout Forms';
-        description = 'Forms that require revisions';
         emptyMessage = 'No amendment forms found';
         break;
     }
@@ -87,7 +86,6 @@ const CloseoutFormsPage: React.FC<CloseoutFormsPageProps> = ({ status: defaultSt
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-            <p className="text-muted-foreground">{description}</p>
           </div>
           
           {user?.role === 'preparer' && (
@@ -98,13 +96,20 @@ const CloseoutFormsPage: React.FC<CloseoutFormsPageProps> = ({ status: defaultSt
           )}
         </div>
         
-        <CloseoutFormGrid
-          forms={targetForms}
-          title={title}
-          description={description}
-          emptyMessage={emptyMessage}
-          onViewForm={handleViewForm}
-        />
+        {/* Use table format for active and completed, grid for pending and rejected */}
+        {(defaultStatus === 'active' || defaultStatus === 'completed') ? (
+          <CloseoutFormsList
+            status={defaultStatus}
+            onBack={() => window.history.back()}
+          />
+        ) : (
+          <CloseoutFormGrid
+            forms={targetForms}
+            title=""
+            emptyMessage={emptyMessage}
+            onViewForm={handleViewForm}
+          />
+        )}
         
         {/* Closeout Form View Dialog */}
         <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
@@ -180,7 +185,6 @@ const CloseoutFormsPage: React.FC<CloseoutFormsPageProps> = ({ status: defaultSt
           <CloseoutFormGrid
             forms={getFilteredForms(pendingForms)}
             title="Pending Closeout Forms"
-            description="Forms awaiting review and approval"
             emptyMessage="No pending forms found"
             onViewForm={handleViewForm}
           />
@@ -189,8 +193,7 @@ const CloseoutFormsPage: React.FC<CloseoutFormsPageProps> = ({ status: defaultSt
         <TabsContent value="active">
           <CloseoutFormGrid
             forms={getFilteredForms(activeForms)}
-            title="Working Closeout Forms"
-            description="Forms that are currently being processed"
+            title="Currently Working Forms"
             emptyMessage="No working forms found"
             onViewForm={handleViewForm}
           />
@@ -200,7 +203,6 @@ const CloseoutFormsPage: React.FC<CloseoutFormsPageProps> = ({ status: defaultSt
           <CloseoutFormGrid
             forms={getFilteredForms(completedForms)}
             title="Completed Closeout Forms"
-            description="Forms that have been finalized and closed"
             emptyMessage="No completed forms found"
             onViewForm={handleViewForm}
           />
@@ -210,7 +212,6 @@ const CloseoutFormsPage: React.FC<CloseoutFormsPageProps> = ({ status: defaultSt
           <CloseoutFormGrid
             forms={getFilteredForms(rejectedForms)}
             title="Amendment Closeout Forms"
-            description="Forms that require revisions"
             emptyMessage="No amendment forms found"
             onViewForm={handleViewForm}
           />
