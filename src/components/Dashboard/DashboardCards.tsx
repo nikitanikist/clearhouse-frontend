@@ -39,12 +39,12 @@ const DashboardCards = () => {
     return filteredForms;
   };
 
-  const pendingForms = forms.filter(form => form.status === 'pending');
+  const pendingForms = getFilteredForms('pending');
   const activeForms = getFilteredForms('active');
   const completedForms = getFilteredForms('completed');
   const rejectedForms = getFilteredForms('rejected');
 
-  console.log('Pending forms for admin:', pendingForms);
+  console.log('Pending forms for user:', pendingForms);
   console.log('User role:', user?.role);
 
   const handleCardClick = (status: string) => {
@@ -55,6 +55,20 @@ const DashboardCards = () => {
     if (user?.role === 'preparer') {
       return (
         <>
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => handleCardClick('pending')}
+          >
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Forms</CardTitle>
+              <Clock className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{pendingForms.length}</div>
+              <p className="text-xs text-muted-foreground">Awaiting review</p>
+            </CardContent>
+          </Card>
+
           <Card 
             className="hover:shadow-md transition-shadow cursor-pointer"
             onClick={() => handleCardClick('rejected')}
@@ -98,7 +112,7 @@ const DashboardCards = () => {
               <Clock className="h-4 w-4 text-blue-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{pendingForms.length}</div>
+              <div className="text-2xl font-bold">{forms.filter(form => form.status === 'pending').length}</div>
               <p className="text-xs text-muted-foreground">Awaiting review</p>
             </CardContent>
           </Card>
