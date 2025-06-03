@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -51,16 +50,32 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
   const getFilteredForms = () => {
     let filteredForms = forms.filter(form => form.status === status);
     
-    if (user?.role === 'admin') {
-      filteredForms = filteredForms.filter(form => form.assignedTo && form.assignedTo.id === user.id);
+    console.log('Filtering forms for status:', status);
+    console.log('User role:', user?.role);
+    console.log('Forms with matching status:', filteredForms);
+    
+    if (user?.role === 'superadmin') {
+      // Super admin sees all forms
+      return filteredForms;
+    } else if (user?.role === 'admin') {
+      if (status === 'pending') {
+        // Admin sees all pending forms
+        return filteredForms;
+      } else {
+        // For other statuses, admin sees forms assigned to them
+        return filteredForms.filter(form => form.assignedTo && form.assignedTo.id === user.id);
+      }
     } else if (user?.role === 'preparer') {
-      filteredForms = filteredForms.filter(form => form.createdBy.id === user.id);
+      // Preparer sees forms created by them
+      return filteredForms.filter(form => form.createdBy.id === user.id);
     }
     
     return filteredForms;
   };
 
   const filteredForms = getFilteredForms();
+
+  console.log('Final filtered forms:', filteredForms);
 
   const getStatusBadge = (formStatus: string) => {
     switch (formStatus) {
