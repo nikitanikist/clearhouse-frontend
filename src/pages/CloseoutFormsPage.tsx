@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -22,6 +23,10 @@ const CloseoutFormsPage = () => {
     // Reset selected form when the status route changes
     setSelectedForm(null);
   }, [status]);
+
+  console.log('CloseoutFormsPage - Forms:', forms);
+  console.log('CloseoutFormsPage - Status:', status);
+  console.log('CloseoutFormsPage - User role:', user?.role);
 
   const getTitle = () => {
     switch (status) {
@@ -52,24 +57,6 @@ const CloseoutFormsPage = () => {
         return 'Overview of all closeout forms.';
     }
   };
-
-  const filteredForms = forms.filter(form => {
-    const matchesStatus = !status || form.status === status;
-    const matchesSearch =
-      user?.role !== 'preparer' ||
-      form.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      form.signingEmail.toLowerCase().includes(searchTerm.toLowerCase());
-
-    if (user?.role === 'admin' && status !== 'pending') {
-      return matchesStatus && matchesSearch && form.assignedTo?.id === user.id;
-    }
-
-    if (user?.role === 'preparer') {
-      return matchesStatus && matchesSearch && form.createdBy?.id === user.id;
-    }
-
-    return matchesStatus && matchesSearch;
-  });
 
   const renderFormView = () => {
     if (!selectedForm) return null;
@@ -139,3 +126,4 @@ const CloseoutFormsPage = () => {
 };
 
 export default CloseoutFormsPage;
+

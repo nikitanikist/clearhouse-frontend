@@ -50,28 +50,37 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
 
   // Filter forms based on user role and status
   const getFilteredForms = () => {
+    console.log('CloseoutFormsList - All forms:', forms);
+    console.log('CloseoutFormsList - Status filter:', status);
+    console.log('CloseoutFormsList - User:', user);
+    
     let filteredForms = forms.filter(form => form.status === status);
     
-    console.log('Filtering forms for status:', status);
-    console.log('User role:', user?.role);
-    console.log('Forms with matching status:', filteredForms);
+    console.log('CloseoutFormsList - Forms with matching status:', filteredForms);
     
     if (user?.role === 'superadmin') {
       // Super admin sees all forms
+      console.log('CloseoutFormsList - Super admin sees all forms');
       return filteredForms;
     } else if (user?.role === 'admin') {
       if (status === 'pending') {
         // Admin sees all pending forms
+        console.log('CloseoutFormsList - Admin sees all pending forms');
         return filteredForms;
       } else {
         // For other statuses, admin sees forms assigned to them
-        return filteredForms.filter(form => form.assignedTo && form.assignedTo.id === user.id);
+        const assignedForms = filteredForms.filter(form => form.assignedTo && form.assignedTo.id === user.id);
+        console.log('CloseoutFormsList - Admin sees assigned forms:', assignedForms);
+        return assignedForms;
       }
     } else if (user?.role === 'preparer') {
       // Preparer sees forms created by them
-      return filteredForms.filter(form => form.createdBy.id === user.id);
+      const createdForms = filteredForms.filter(form => form.createdBy && form.createdBy.id === user.id);
+      console.log('CloseoutFormsList - Preparer sees created forms:', createdForms);
+      return createdForms;
     }
     
+    console.log('CloseoutFormsList - Fallback to filtered forms:', filteredForms);
     return filteredForms;
   };
 
@@ -88,7 +97,7 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
     );
   }, [forms, status, user, searchQuery]);
 
-  console.log('Final filtered forms:', searchFilteredForms);
+  console.log('CloseoutFormsList - Final filtered forms:', searchFilteredForms);
 
   const getStatusBadge = (formStatus: string) => {
     switch (formStatus) {
