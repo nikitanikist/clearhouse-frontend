@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -49,17 +48,37 @@ export interface CloseoutFormTableData {
   years: string;
   jobNumber: string;
   invoiceAmount: string;
+  invoiceDescription: string; // New field
   billDetail: string;
   paymentRequired: boolean;
   wipRecovery: string;
   recoveryReason: string;
   familyMembers: FamilyMember[];
-  // New fields for missing sections
+  
+  // Filing Details - existing fields
   t2091PrincipalResidence: boolean;
   t1135ForeignProperty: boolean;
   t1032PensionSplit: boolean;
   hstDraftOrFinal: string;
   otherNotes: string;
+  
+  // Filing Details - new tax return type fields
+  t106: boolean;
+  t1134: boolean;
+  ontarioAnnualReturn: boolean;
+  tSlips: boolean;
+  quebecReturn: boolean;
+  albertaReturn: boolean;
+  
+  // Additional Documentation
+  otherDocuments: string;
+  
+  // Tax Installment Section
+  corporateInstallmentsRequired: boolean;
+  fedScheduleAttached: boolean;
+  hstInstallmentRequired: boolean;
+  hstTabCompleted: boolean;
+  
   // T1 Summary fields
   priorPeriodsBalance: string;
   taxesPayable: string;
@@ -67,6 +86,7 @@ export interface CloseoutFormTableData {
   installmentsAfterYear: string;
   amountOwing: string;
   dueDate: string;
+  
   // HST Summary fields
   hstPriorBalance: string;
   hstPayable: string;
@@ -91,6 +111,7 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
     years: initialData?.years || '2024',
     jobNumber: initialData?.jobNumber || '10254-T1',
     invoiceAmount: initialData?.invoiceAmount || '$348 CAD',
+    invoiceDescription: initialData?.invoiceDescription || 'Standard wording for T2',
     billDetail: initialData?.billDetail || 'Personal T1 + Foreign Income + Donation Sched.',
     paymentRequired: initialData?.paymentRequired || false,
     wipRecovery: initialData?.wipRecovery || '100%',
@@ -111,12 +132,31 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
         installmentAttachment: null
       }
     ],
-    // Initialize new fields with defaults or from initialData
+    
+    // Filing Details - existing fields
     t2091PrincipalResidence: initialData?.t2091PrincipalResidence || false,
     t1135ForeignProperty: initialData?.t1135ForeignProperty || false,
     t1032PensionSplit: initialData?.t1032PensionSplit || false,
     hstDraftOrFinal: initialData?.hstDraftOrFinal || 'N/A',
     otherNotes: initialData?.otherNotes || '',
+    
+    // Filing Details - new tax return type fields
+    t106: initialData?.t106 || false,
+    t1134: initialData?.t1134 || false,
+    ontarioAnnualReturn: initialData?.ontarioAnnualReturn || false,
+    tSlips: initialData?.tSlips || false,
+    quebecReturn: initialData?.quebecReturn || false,
+    albertaReturn: initialData?.albertaReturn || false,
+    
+    // Additional Documentation
+    otherDocuments: initialData?.otherDocuments || '',
+    
+    // Tax Installment Section
+    corporateInstallmentsRequired: initialData?.corporateInstallmentsRequired || false,
+    fedScheduleAttached: initialData?.fedScheduleAttached || false,
+    hstInstallmentRequired: initialData?.hstInstallmentRequired || false,
+    hstTabCompleted: initialData?.hstTabCompleted || false,
+    
     // T1 Summary fields
     priorPeriodsBalance: initialData?.priorPeriodsBalance || '0',
     taxesPayable: initialData?.taxesPayable || '0',
@@ -124,6 +164,7 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
     installmentsAfterYear: initialData?.installmentsAfterYear || '0',
     amountOwing: initialData?.amountOwing || '0',
     dueDate: initialData?.dueDate || '',
+    
     // HST Summary fields
     hstPriorBalance: initialData?.hstPriorBalance || '0',
     hstPayable: initialData?.hstPayable || '0',
@@ -246,9 +287,9 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
         </div>
       )}
 
-      {/* General Information Section */}
+      {/* 1. General Information Section */}
       <div className="space-y-4">
-        <h3 className="text-xl font-semibold">General Information</h3>
+        <h3 className="text-xl font-semibold">1. General Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
           <div className="space-y-2">
             <Label htmlFor="filePath">File Path</Label>
@@ -299,11 +340,12 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
             />
           </div>
           <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="billDetail">Final Bill Detail</Label>
+            <Label htmlFor="invoiceDescription">Invoice Description</Label>
             <Textarea
-              id="billDetail"
-              value={formData.billDetail}
-              onChange={(e) => updateFormField('billDetail', e.target.value)}
+              id="invoiceDescription"
+              value={formData.invoiceDescription}
+              onChange={(e) => updateFormField('invoiceDescription', e.target.value)}
+              placeholder="e.g., Standard wording for T2"
             />
           </div>
           <div className="space-y-2">
@@ -312,6 +354,14 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
               id="wipRecovery"
               value={formData.wipRecovery}
               onChange={(e) => updateFormField('wipRecovery', e.target.value)}
+            />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="billDetail">Final Bill Detail</Label>
+            <Textarea
+              id="billDetail"
+              value={formData.billDetail}
+              onChange={(e) => updateFormField('billDetail', e.target.value)}
             />
           </div>
           <div className="space-y-2 md:col-span-2">
@@ -333,17 +383,25 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
         </div>
       </div>
 
-      {/* Tax Filing Information Section */}
+      {/* 2. Filing Details Section */}
       <div className="space-y-4">
-        <h3 className="text-xl font-semibold">Tax Filing Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+        <h3 className="text-xl font-semibold">2. Filing Details</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-blue-50 rounded-lg">
           <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
             <Checkbox
-              id="t2091PrincipalResidence"
-              checked={formData.t2091PrincipalResidence}
-              onCheckedChange={(checked) => updateFormField('t2091PrincipalResidence', checked)}
+              id="t106"
+              checked={formData.t106}
+              onCheckedChange={(checked) => updateFormField('t106', checked)}
             />
-            <Label htmlFor="t2091PrincipalResidence">T2091 Principal Residence</Label>
+            <Label htmlFor="t106">T106</Label>
+          </div>
+          <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
+            <Checkbox
+              id="t1134"
+              checked={formData.t1134}
+              onCheckedChange={(checked) => updateFormField('t1134', checked)}
+            />
+            <Label htmlFor="t1134">T1134</Label>
           </div>
           <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
             <Checkbox
@@ -355,13 +413,92 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
           </div>
           <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
             <Checkbox
+              id="t2091PrincipalResidence"
+              checked={formData.t2091PrincipalResidence}
+              onCheckedChange={(checked) => updateFormField('t2091PrincipalResidence', checked)}
+            />
+            <Label htmlFor="t2091PrincipalResidence">T2091 Principal Residence</Label>
+          </div>
+          <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
+            <Checkbox
               id="t1032PensionSplit"
               checked={formData.t1032PensionSplit}
               onCheckedChange={(checked) => updateFormField('t1032PensionSplit', checked)}
             />
             <Label htmlFor="t1032PensionSplit">T1032 Pension Split</Label>
           </div>
-          <div className="space-y-2 p-2 bg-yellow-100 rounded">
+          <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
+            <Checkbox
+              id="ontarioAnnualReturn"
+              checked={formData.ontarioAnnualReturn}
+              onCheckedChange={(checked) => updateFormField('ontarioAnnualReturn', checked)}
+            />
+            <Label htmlFor="ontarioAnnualReturn">Ontario Annual Return</Label>
+          </div>
+          <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
+            <Checkbox
+              id="tSlips"
+              checked={formData.tSlips}
+              onCheckedChange={(checked) => updateFormField('tSlips', checked)}
+            />
+            <Label htmlFor="tSlips">T Slips</Label>
+          </div>
+          <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
+            <Checkbox
+              id="quebecReturn"
+              checked={formData.quebecReturn}
+              onCheckedChange={(checked) => updateFormField('quebecReturn', checked)}
+            />
+            <Label htmlFor="quebecReturn">Quebec Return</Label>
+          </div>
+          <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
+            <Checkbox
+              id="albertaReturn"
+              checked={formData.albertaReturn}
+              onCheckedChange={(checked) => updateFormField('albertaReturn', checked)}
+            />
+            <Label htmlFor="albertaReturn">Alberta Return</Label>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Tax Installments Section */}
+      <div className="space-y-4">
+        <h3 className="text-xl font-semibold">3. Tax Installments</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-green-50 rounded-lg">
+          <div className="flex items-center space-x-2 p-2 bg-green-100 rounded">
+            <Checkbox
+              id="corporateInstallmentsRequired"
+              checked={formData.corporateInstallmentsRequired}
+              onCheckedChange={(checked) => updateFormField('corporateInstallmentsRequired', checked)}
+            />
+            <Label htmlFor="corporateInstallmentsRequired">Corporate Installments Required</Label>
+          </div>
+          <div className="flex items-center space-x-2 p-2 bg-green-100 rounded">
+            <Checkbox
+              id="fedScheduleAttached"
+              checked={formData.fedScheduleAttached}
+              onCheckedChange={(checked) => updateFormField('fedScheduleAttached', checked)}
+            />
+            <Label htmlFor="fedScheduleAttached">FED Schedule from T2 Attached</Label>
+          </div>
+          <div className="flex items-center space-x-2 p-2 bg-green-100 rounded">
+            <Checkbox
+              id="hstInstallmentRequired"
+              checked={formData.hstInstallmentRequired}
+              onCheckedChange={(checked) => updateFormField('hstInstallmentRequired', checked)}
+            />
+            <Label htmlFor="hstInstallmentRequired">HST Installment Required</Label>
+          </div>
+          <div className="flex items-center space-x-2 p-2 bg-green-100 rounded">
+            <Checkbox
+              id="hstTabCompleted"
+              checked={formData.hstTabCompleted}
+              onCheckedChange={(checked) => updateFormField('hstTabCompleted', checked)}
+            />
+            <Label htmlFor="hstTabCompleted">HST Installment Tab Completed</Label>
+          </div>
+          <div className="space-y-2 p-2 bg-green-100 rounded">
             <Label htmlFor="hstDraftOrFinal">HST Draft/Final</Label>
             <Select value={formData.hstDraftOrFinal} onValueChange={(value) => updateFormField('hstDraftOrFinal', value)}>
               <SelectTrigger>
@@ -374,144 +511,40 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2 md:col-span-2">
+        </div>
+      </div>
+
+      {/* 4. Documents Section */}
+      <div className="space-y-4">
+        <h3 className="text-xl font-semibold">4. Documents</h3>
+        <div className="p-4 bg-purple-50 rounded-lg">
+          <div className="space-y-2">
+            <Label htmlFor="otherDocuments">Other Documents to Include</Label>
+            <Textarea
+              id="otherDocuments"
+              value={formData.otherDocuments}
+              onChange={(e) => updateFormField('otherDocuments', e.target.value)}
+              placeholder="e.g., T2 Schedule 130 - attached"
+              rows={3}
+            />
+          </div>
+          <div className="space-y-2 mt-4">
             <Label htmlFor="otherNotes">Other Notes</Label>
             <Textarea
               id="otherNotes"
               value={formData.otherNotes}
               onChange={(e) => updateFormField('otherNotes', e.target.value)}
               placeholder="Additional notes or comments"
+              rows={3}
             />
           </div>
         </div>
       </div>
 
-      {/* T1 Summary Section */}
-      <div className="space-y-4">
-        <h3 className="text-xl font-semibold">T1 Summary</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-blue-50 rounded-lg">
-          <div className="space-y-2">
-            <Label htmlFor="priorPeriodsBalance">Prior Periods Balance</Label>
-            <Input
-              id="priorPeriodsBalance"
-              value={formData.priorPeriodsBalance}
-              onChange={(e) => updateFormField('priorPeriodsBalance', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="taxesPayable">Taxes Payable</Label>
-            <Input
-              id="taxesPayable"
-              value={formData.taxesPayable}
-              onChange={(e) => updateFormField('taxesPayable', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="installmentsDuringYear">Installments During Year</Label>
-            <Input
-              id="installmentsDuringYear"
-              value={formData.installmentsDuringYear}
-              onChange={(e) => updateFormField('installmentsDuringYear', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="installmentsAfterYear">Installments After Year</Label>
-            <Input
-              id="installmentsAfterYear"
-              value={formData.installmentsAfterYear}
-              onChange={(e) => updateFormField('installmentsAfterYear', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="amountOwing">Amount Owing</Label>
-            <Input
-              id="amountOwing"
-              value={formData.amountOwing}
-              onChange={(e) => updateFormField('amountOwing', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="dueDate">Due Date</Label>
-            <Input
-              id="dueDate"
-              value={formData.dueDate}
-              onChange={(e) => updateFormField('dueDate', e.target.value)}
-              placeholder="April 30, 2024"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* HST Summary Section */}
-      <div className="space-y-4">
-        <h3 className="text-xl font-semibold">HST Summary</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-green-50 rounded-lg">
-          <div className="space-y-2">
-            <Label htmlFor="hstPriorBalance">HST Prior Balance</Label>
-            <Input
-              id="hstPriorBalance"
-              value={formData.hstPriorBalance}
-              onChange={(e) => updateFormField('hstPriorBalance', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="hstPayable">HST Payable</Label>
-            <Input
-              id="hstPayable"
-              value={formData.hstPayable}
-              onChange={(e) => updateFormField('hstPayable', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="hstInstallmentsDuring">HST Installments During</Label>
-            <Input
-              id="hstInstallmentsDuring"
-              value={formData.hstInstallmentsDuring}
-              onChange={(e) => updateFormField('hstInstallmentsDuring', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="hstInstallmentsAfter">HST Installments After</Label>
-            <Input
-              id="hstInstallmentsAfter"
-              value={formData.hstInstallmentsAfter}
-              onChange={(e) => updateFormField('hstInstallmentsAfter', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="hstPaymentDue">HST Payment Due</Label>
-            <Input
-              id="hstPaymentDue"
-              value={formData.hstPaymentDue}
-              onChange={(e) => updateFormField('hstPaymentDue', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="hstDueDate">HST Due Date</Label>
-            <Input
-              id="hstDueDate"
-              value={formData.hstDueDate}
-              onChange={(e) => updateFormField('hstDueDate', e.target.value)}
-              placeholder="June 15, 2024"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* Family Members Table */}
+      {/* 5. Signature & Delivery Section */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
-          <h3 className="text-xl font-semibold">Client Information</h3>
+          <h3 className="text-xl font-semibold">5. Signature & Delivery</h3>
           <Button onClick={addFamilyMember} variant="outline" size="sm">
             <Plus className="mr-2 h-4 w-4" />
             Add Family Member
@@ -532,7 +565,6 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
                 <TableHead className="min-w-[100px] text-center font-semibold">Paper Filed</TableHead>
                 <TableHead className="min-w-[120px] text-center font-semibold">Installments</TableHead>
                 <TableHead className="min-w-[180px] font-semibold">Personal Tax Payment</TableHead>
-                <TableHead className="min-w-[200px] font-semibold">Installment Attachment</TableHead>
                 <TableHead className="min-w-[80px] text-center font-semibold">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -644,16 +676,6 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
                       className="w-full min-w-[150px]"
                     />
                   </TableCell>
-                  <TableCell className="p-3">
-                    {member.installmentsRequired && (
-                      <div className="min-w-[180px]">
-                        <InstallmentAttachmentUpload
-                          attachment={member.installmentAttachment}
-                          onAttachmentChange={(attachment) => updateFamilyMember(member.id, 'installmentAttachment', attachment)}
-                        />
-                      </div>
-                    )}
-                  </TableCell>
                   <TableCell className="p-3 text-center">
                     {formData.familyMembers.length > 1 && (
                       <Button
@@ -670,6 +692,153 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
               ))}
             </TableBody>
           </Table>
+        </div>
+      </div>
+
+      {/* 6. Installment Attachment Section */}
+      <div className="space-y-4">
+        <h3 className="text-xl font-semibold">6. Installment Attachment</h3>
+        <div className="space-y-4">
+          {formData.familyMembers.map((member, index) => (
+            member.installmentsRequired && (
+              <div key={member.id} className="p-4 bg-orange-50 rounded-lg border">
+                <h4 className="font-medium mb-3">
+                  {member.clientName || `Family Member ${index + 1}`} - Installment Attachment
+                </h4>
+                <InstallmentAttachmentUpload
+                  attachment={member.installmentAttachment}
+                  onAttachmentChange={(attachment) => updateFamilyMember(member.id, 'installmentAttachment', attachment)}
+                />
+              </div>
+            )
+          ))}
+          {!formData.familyMembers.some(member => member.installmentsRequired) && (
+            <div className="p-4 bg-gray-100 rounded-lg text-center text-gray-600">
+              No installment attachments required for any family members
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 7. T1 Summary Section */}
+      <div className="space-y-4">
+        <h3 className="text-xl font-semibold">7. T1 Summary</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-blue-50 rounded-lg">
+          <div className="space-y-2">
+            <Label htmlFor="priorPeriodsBalance">Prior Periods Balance</Label>
+            <Input
+              id="priorPeriodsBalance"
+              value={formData.priorPeriodsBalance}
+              onChange={(e) => updateFormField('priorPeriodsBalance', e.target.value)}
+              placeholder="$0.00"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="taxesPayable">Taxes Payable</Label>
+            <Input
+              id="taxesPayable"
+              value={formData.taxesPayable}
+              onChange={(e) => updateFormField('taxesPayable', e.target.value)}
+              placeholder="$0.00"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="installmentsDuringYear">Installments During Year</Label>
+            <Input
+              id="installmentsDuringYear"
+              value={formData.installmentsDuringYear}
+              onChange={(e) => updateFormField('installmentsDuringYear', e.target.value)}
+              placeholder="$0.00"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="installmentsAfterYear">Installments After Year</Label>
+            <Input
+              id="installmentsAfterYear"
+              value={formData.installmentsAfterYear}
+              onChange={(e) => updateFormField('installmentsAfterYear', e.target.value)}
+              placeholder="$0.00"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="amountOwing">Amount Owing</Label>
+            <Input
+              id="amountOwing"
+              value={formData.amountOwing}
+              onChange={(e) => updateFormField('amountOwing', e.target.value)}
+              placeholder="$0.00"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="dueDate">Due Date</Label>
+            <Input
+              id="dueDate"
+              value={formData.dueDate}
+              onChange={(e) => updateFormField('dueDate', e.target.value)}
+              placeholder="April 30, 2024"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 8. HST Summary Section */}
+      <div className="space-y-4">
+        <h3 className="text-xl font-semibold">8. HST Summary</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-green-50 rounded-lg">
+          <div className="space-y-2">
+            <Label htmlFor="hstPriorBalance">HST Prior Balance</Label>
+            <Input
+              id="hstPriorBalance"
+              value={formData.hstPriorBalance}
+              onChange={(e) => updateFormField('hstPriorBalance', e.target.value)}
+              placeholder="$0.00"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="hstPayable">HST Payable</Label>
+            <Input
+              id="hstPayable"
+              value={formData.hstPayable}
+              onChange={(e) => updateFormField('hstPayable', e.target.value)}
+              placeholder="$0.00"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="hstInstallmentsDuring">HST Installments During</Label>
+            <Input
+              id="hstInstallmentsDuring"
+              value={formData.hstInstallmentsDuring}
+              onChange={(e) => updateFormField('hstInstallmentsDuring', e.target.value)}
+              placeholder="$0.00"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="hstInstallmentsAfter">HST Installments After</Label>
+            <Input
+              id="hstInstallmentsAfter"
+              value={formData.hstInstallmentsAfter}
+              onChange={(e) => updateFormField('hstInstallmentsAfter', e.target.value)}
+              placeholder="$0.00"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="hstPaymentDue">HST Payment Due</Label>
+            <Input
+              id="hstPaymentDue"
+              value={formData.hstPaymentDue}
+              onChange={(e) => updateFormField('hstPaymentDue', e.target.value)}
+              placeholder="$0.00"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="hstDueDate">HST Due Date</Label>
+            <Input
+              id="hstDueDate"
+              value={formData.hstDueDate}
+              onChange={(e) => updateFormField('hstDueDate', e.target.value)}
+              placeholder="June 15, 2024"
+            />
+          </div>
         </div>
       </div>
     </div>

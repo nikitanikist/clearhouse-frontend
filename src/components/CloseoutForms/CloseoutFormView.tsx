@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -68,7 +67,7 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
       {/* General Information Table */}
       <Card>
         <CardHeader>
-          <CardTitle>General Information</CardTitle>
+          <CardTitle>1. General Information</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -94,8 +93,14 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
               <TableRow>
                 <TableCell className="font-medium bg-gray-50">Invoice Amount</TableCell>
                 <TableCell>{form.invoiceAmount}</TableCell>
+                <TableCell className="font-medium bg-gray-50">Invoice Description</TableCell>
+                <TableCell>{form.invoiceDescription || 'N/A'}</TableCell>
+              </TableRow>
+              <TableRow>
                 <TableCell className="font-medium bg-gray-50">WIP Recovery</TableCell>
                 <TableCell>{form.wipRecovery}</TableCell>
+                <TableCell className="font-medium bg-gray-50">Bill Detail</TableCell>
+                <TableCell>{form.billDetail}</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium bg-gray-50">Payment Required</TableCell>
@@ -104,41 +109,51 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
                     {form.paymentRequired ? "Yes" : "No"}
                   </Badge>
                 </TableCell>
-                <TableCell className="font-medium bg-gray-50">Bill Detail</TableCell>
-                <TableCell>{form.billDetail}</TableCell>
+                <TableCell className="font-medium bg-gray-50">Recovery Reason</TableCell>
+                <TableCell>{form.recoveryReason || 'N/A'}</TableCell>
               </TableRow>
-              {form.recoveryReason && (
-                <TableRow>
-                  <TableCell className="font-medium bg-gray-50">Recovery Reason</TableCell>
-                  <TableCell colSpan={3}>{form.recoveryReason}</TableCell>
-                </TableRow>
-              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
 
-      {/* Tax Filing Information Table */}
+      {/* Filing Details */}
       <Card>
         <CardHeader>
-          <CardTitle>Tax Filing Information</CardTitle>
+          <CardTitle>2. Filing Details</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableBody>
               <TableRow>
-                <TableCell className="font-medium w-1/4 bg-gray-50">T2091 Principal Residence</TableCell>
+                <TableCell className="font-medium w-1/4 bg-gray-50">T106</TableCell>
                 <TableCell className="w-1/4">
                   <div className="flex items-center space-x-2">
-                    {form.t2091PrincipalResidence ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
-                    <span>{form.t2091PrincipalResidence ? "Yes" : "No"}</span>
+                    {form.t106 ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                    <span>{form.t106 ? "Yes" : "No"}</span>
                   </div>
                 </TableCell>
-                <TableCell className="font-medium w-1/4 bg-gray-50">T1135 Foreign Property</TableCell>
+                <TableCell className="font-medium w-1/4 bg-gray-50">T1134</TableCell>
                 <TableCell className="w-1/4">
+                  <div className="flex items-center space-x-2">
+                    {form.t1134 ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                    <span>{form.t1134 ? "Yes" : "No"}</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium bg-gray-50">T1135 Foreign Property</TableCell>
+                <TableCell>
                   <div className="flex items-center space-x-2">
                     {form.t1135ForeignProperty ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
                     <span>{form.t1135ForeignProperty ? "Yes" : "No"}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="font-medium bg-gray-50">T2091 Principal Residence</TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-2">
+                    {form.t2091PrincipalResidence ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                    <span>{form.t2091PrincipalResidence ? "Yes" : "No"}</span>
                   </div>
                 </TableCell>
               </TableRow>
@@ -150,13 +165,120 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
                     <span>{form.t1032PensionSplit ? "Yes" : "No"}</span>
                   </div>
                 </TableCell>
+                <TableCell className="font-medium bg-gray-50">Ontario Annual Return</TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-2">
+                    {form.ontarioAnnualReturn ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                    <span>{form.ontarioAnnualReturn ? "Yes" : "No"}</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium bg-gray-50">T Slips</TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-2">
+                    {form.tSlips ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                    <span>{form.tSlips ? "Yes" : "No"}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="font-medium bg-gray-50">Quebec Return</TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-2">
+                    {form.quebecReturn ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                    <span>{form.quebecReturn ? "Yes" : "No"}</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium bg-gray-50">Alberta Return</TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-2">
+                    {form.albertaReturn ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                    <span>{form.albertaReturn ? "Yes" : "No"}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="font-medium bg-gray-50"></TableCell>
+                <TableCell></TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Tax Installments */}
+      <Card>
+        <CardHeader>
+          <CardTitle>3. Tax Installments</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableBody>
+              <TableRow>
+                <TableCell className="font-medium w-1/4 bg-gray-50">Corporate Installments Required</TableCell>
+                <TableCell className="w-1/4">
+                  <div className="flex items-center space-x-2">
+                    {form.corporateInstallmentsRequired ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                    <span>{form.corporateInstallmentsRequired ? "Yes" : "No"}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="font-medium w-1/4 bg-gray-50">FED Schedule Attached</TableCell>
+                <TableCell className="w-1/4">
+                  <div className="flex items-center space-x-2">
+                    {form.fedScheduleAttached ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                    <span>{form.fedScheduleAttached ? "Yes" : "No"}</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium bg-gray-50">HST Installment Required</TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-2">
+                    {form.hstInstallmentRequired ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                    <span>{form.hstInstallmentRequired ? "Yes" : "No"}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="font-medium bg-gray-50">HST Tab Completed</TableCell>
+                <TableCell>
+                  <div className="flex items-center space-x-2">
+                    {form.hstTabCompleted ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                    <span>{form.hstTabCompleted ? "Yes" : "No"}</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+              <TableRow>
                 <TableCell className="font-medium bg-gray-50">HST Draft/Final</TableCell>
                 <TableCell>{form.hstDraftOrFinal}</TableCell>
+                <TableCell className="font-medium bg-gray-50"></TableCell>
+                <TableCell></TableCell>
               </TableRow>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+
+      {/* Documents */}
+      <Card>
+        <CardHeader>
+          <CardTitle>4. Documents</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableBody>
+              {form.otherDocuments && (
+                <TableRow>
+                  <TableCell className="font-medium w-1/4 bg-gray-50">Other Documents to Include</TableCell>
+                  <TableCell colSpan={3}>{form.otherDocuments}</TableCell>
+                </TableRow>
+              )}
               {form.otherNotes && (
                 <TableRow>
                   <TableCell className="font-medium bg-gray-50">Other Notes</TableCell>
                   <TableCell colSpan={3}>{form.otherNotes}</TableCell>
+                </TableRow>
+              )}
+              {!form.otherDocuments && !form.otherNotes && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center text-gray-500 italic">No additional documents or notes</TableCell>
                 </TableRow>
               )}
             </TableBody>
@@ -164,9 +286,10 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
         </CardContent>
       </Card>
 
+      {/* T1 Summary */}
       <Card>
         <CardHeader>
-          <CardTitle>T1 Summary</CardTitle>
+          <CardTitle>7. T1 Summary</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -194,9 +317,10 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
         </CardContent>
       </Card>
 
+      {/* HST Summary */}
       <Card>
         <CardHeader>
-          <CardTitle>HST Summary</CardTitle>
+          <CardTitle>8. HST Summary</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -224,9 +348,10 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
         </CardContent>
       </Card>
 
+      {/* 5. Signature & Delivery - Family Members */}
       <Card>
         <CardHeader>
-          <CardTitle>Family Members & Installment Attachments</CardTitle>
+          <CardTitle>5. Signature & Delivery</CardTitle>
         </CardHeader>
         <CardContent>
           {form.familyMembers && form.familyMembers.length > 0 ? (
@@ -291,7 +416,7 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
                       </TableRow>
                       {member.installmentsRequired && (
                         <TableRow>
-                          <TableCell className="font-medium bg-gray-50">Installment Attachment</TableCell>
+                          <TableCell className="font-medium bg-gray-50">6. Installment Attachment</TableCell>
                           <TableCell colSpan={3}>
                             {member.installmentAttachment ? (
                               <div className="flex items-center space-x-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
@@ -380,7 +505,7 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
                 </TableRow>
                 {form.installmentsRequired && (
                   <TableRow>
-                    <TableCell className="font-medium bg-gray-50">Installment Attachment</TableCell>
+                    <TableCell className="font-medium bg-gray-50">6. Installment Attachment</TableCell>
                     <TableCell colSpan={3}>
                       {form.installmentAttachment ? (
                         <div className="flex items-center space-x-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
