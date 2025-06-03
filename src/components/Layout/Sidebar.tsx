@@ -15,6 +15,8 @@ const Sidebar = () => {
   // Base navigation links - available to preparers
   const preparerLinks = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
+    { name: 'Amendment Forms', href: '/dashboard/closeout-forms/rejected', icon: AlertCircle },
+    { name: 'Completed Forms', href: '/dashboard/closeout-forms/completed', icon: CheckCircle },
   ];
 
   // Links for admin and superadmin

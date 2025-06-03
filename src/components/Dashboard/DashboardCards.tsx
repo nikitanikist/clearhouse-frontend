@@ -25,7 +25,13 @@ const DashboardCards = () => {
     let filteredForms = forms.filter(form => form.status === status);
     
     if (user?.role === 'admin') {
-      filteredForms = filteredForms.filter(form => form.assignedTo && form.assignedTo.id === user.id);
+      if (status === 'pending') {
+        // Admin sees all pending forms
+        return filteredForms;
+      } else {
+        // For other statuses, admin sees forms assigned to them
+        filteredForms = filteredForms.filter(form => form.assignedTo && form.assignedTo.id === user.id);
+      }
     } else if (user?.role === 'preparer') {
       filteredForms = filteredForms.filter(form => form.createdBy.id === user.id);
     }
@@ -49,20 +55,6 @@ const DashboardCards = () => {
     if (user?.role === 'preparer') {
       return (
         <>
-          <Card 
-            className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => handleCardClick('active')}
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Forms</CardTitle>
-              <FileText className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{activeForms.length}</div>
-              <p className="text-xs text-muted-foreground">Currently working on</p>
-            </CardContent>
-          </Card>
-
           <Card 
             className="hover:shadow-md transition-shadow cursor-pointer"
             onClick={() => handleCardClick('rejected')}
