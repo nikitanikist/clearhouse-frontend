@@ -1070,6 +1070,7 @@ const initialForms: CloseoutForm[] = [
     billDetail: 'T1 only',
     paymentRequired: true,
     wipRecovery: '110%',
+    recoveryReason: 'Family filing discount',
     isT1: true,
     isS216: false,
     isS116: false,
@@ -1081,14 +1082,35 @@ const initialForms: CloseoutForm[] = [
     tSlips: true,
     quebecReturn: false,
     albertaReturn: false,
+    t2091PrincipalResidence: false,
     t1135ForeignProperty: false,
+    t1032PensionSplit: false,
+    hstDraftOrFinal: 'Draft',
+    otherNotes: 'Family T1 returns for all 4 members',
+    otherDocuments: 'Family T1 returns for all 4 members',
     corporateInstallmentsRequired: false,
     fedScheduleAttached: true,
-    hstDraftOrFinal: 'Draft',
     hstInstallmentRequired: false,
     hstTabCompleted: false,
-    otherDocuments: 'Family T1 returns for all 4 members',
-    installmentAttachment: null,
+    // T1 Summary fields
+    priorPeriodsBalance: '300.00',
+    taxesPayable: '4,200.00',
+    installmentsDuringYear: '1,500.00',
+    installmentsAfterYear: '500.00',
+    amountOwing: '2,500.00',
+    dueDate: 'April 30, 2024',
+    // HST Summary fields
+    hstPriorBalance: '0',
+    hstPayable: '0',
+    hstInstallmentsDuring: '0',
+    hstInstallmentsAfter: '0',
+    hstPaymentDue: '0',
+    hstDueDate: 'N/A',
+    installmentAttachment: {
+      fileName: 'family_installment_schedule_2023.pdf',
+      fileUrl: '#',
+      uploadedAt: '2025-06-01T09:05:00Z'
+    },
     status: 'pending' as const,
     createdBy: {
       id: 'preparer-1',
@@ -1110,34 +1132,46 @@ const initialForms: CloseoutForm[] = [
     // Multiple family members data
     familyMembers: [
       {
+        id: '1',
         clientName: 'Priya Sharma (Spouse)',
         signingPerson: 'Priya Sharma',
         signingEmail: 'priya@gmail.com',
+        additionalEmails: [],
         isT1: true,
         isS216: false,
         isS116: true,
         isPaperFiled: false,
-        installmentsRequired: false
+        installmentsRequired: false,
+        personalTaxPayment: '$800.00',
+        installmentAttachment: null
       },
       {
+        id: '2',
         clientName: 'Raj Sharma (Son)',
         signingPerson: 'Amit Sharma',
         signingEmail: 'amit@gmail.com',
+        additionalEmails: [],
         isT1: true,
         isS216: false,
         isS116: false,
         isPaperFiled: false,
-        installmentsRequired: false
+        installmentsRequired: false,
+        personalTaxPayment: '$0.00',
+        installmentAttachment: null
       },
       {
+        id: '3',
         clientName: 'Meera Sharma (Daughter)',
         signingPerson: 'Amit Sharma',
         signingEmail: 'amit@gmail.com',
+        additionalEmails: [],
         isT1: true,
         isS216: false,
         isS116: false,
         isPaperFiled: false,
-        installmentsRequired: false
+        installmentsRequired: false,
+        personalTaxPayment: '$0.00',
+        installmentAttachment: null
       }
     ]
   }
