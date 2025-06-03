@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -18,23 +19,38 @@ const CloseoutFormsPage = () => {
   const [selectedForm, setSelectedForm] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  console.log('CloseoutFormsPage - URL params status:', status);
+  console.log('=== CloseoutFormsPage Debug Info ===');
+  console.log('CloseoutFormsPage - Raw status from useParams:', status);
   console.log('CloseoutFormsPage - Current location pathname:', location.pathname);
+  console.log('CloseoutFormsPage - Current location search:', location.search);
+  console.log('CloseoutFormsPage - User role:', user?.role);
 
-  // Validate and get the form status
-  const getValidatedStatus = (): 'pending' | 'active' | 'completed' | 'rejected' => {
+  // Validate the status parameter - if invalid, redirect back to dashboard
+  const validateStatus = (statusParam: string | undefined): 'pending' | 'active' | 'completed' | 'rejected' | null => {
     const validStatuses = ['pending', 'active', 'completed', 'rejected'] as const;
     
-    if (status && validStatuses.includes(status as any)) {
-      console.log('CloseoutFormsPage - Using valid status:', status);
-      return status as 'pending' | 'active' | 'completed' | 'rejected';
+    if (!statusParam) {
+      console.error('CloseoutFormsPage - No status parameter found, redirecting to dashboard');
+      navigate('/dashboard');
+      return null;
     }
     
-    console.log('CloseoutFormsPage - Invalid status, defaulting to pending:', status);
-    return 'pending';
+    if (!validStatuses.includes(statusParam as any)) {
+      console.error('CloseoutFormsPage - Invalid status parameter:', statusParam, 'redirecting to dashboard');
+      navigate('/dashboard');
+      return null;
+    }
+    
+    console.log('CloseoutFormsPage - Valid status confirmed:', statusParam);
+    return statusParam as 'pending' | 'active' | 'completed' | 'rejected';
   };
 
-  const formStatus = getValidatedStatus();
+  const formStatus = validateStatus(status);
+
+  // If status is invalid, render nothing while redirecting
+  if (!formStatus) {
+    return <div>Redirecting...</div>;
+  }
 
   useEffect(() => {
     // Reset selected form when the status route changes
@@ -44,7 +60,6 @@ const CloseoutFormsPage = () => {
 
   console.log('CloseoutFormsPage - Final formStatus being used:', formStatus);
   console.log('CloseoutFormsPage - Forms:', forms);
-  console.log('CloseoutFormsPage - User role:', user?.role);
   console.log('CloseoutFormsPage - Selected form:', selectedForm);
 
   const getTitle = () => {
@@ -57,8 +72,6 @@ const CloseoutFormsPage = () => {
         return 'Completed Closeout Forms';
       case 'rejected':
         return 'Amendment Required Forms';
-      default:
-        return 'Closeout Forms';
     }
   };
 
@@ -72,8 +85,6 @@ const CloseoutFormsPage = () => {
         return 'List of successfully completed closeout forms.';
       case 'rejected':
         return 'List of closeout forms that require amendments.';
-      default:
-        return 'Overview of all closeout forms.';
     }
   };
 

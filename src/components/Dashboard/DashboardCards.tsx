@@ -55,6 +55,7 @@ const DashboardCards = () => {
     const targetPath = `/dashboard/closeout-forms/${status}`;
     console.log('DashboardCards - Navigating to:', targetPath);
     console.log('DashboardCards - Status clicked:', status);
+    console.log('DashboardCards - About to navigate with status:', status);
     navigate(targetPath);
   };
 
@@ -64,7 +65,10 @@ const DashboardCards = () => {
         <>
           <Card 
             className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => handleCardClick('pending')}
+            onClick={() => {
+              console.log('DashboardCards - Preparer clicking PENDING card');
+              handleCardClick('pending');
+            }}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pending Forms</CardTitle>
@@ -78,7 +82,10 @@ const DashboardCards = () => {
 
           <Card 
             className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => handleCardClick('rejected')}
+            onClick={() => {
+              console.log('DashboardCards - Preparer clicking REJECTED/AMENDMENT card');
+              handleCardClick('rejected');
+            }}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Amendment Forms</CardTitle>
@@ -92,7 +99,10 @@ const DashboardCards = () => {
 
           <Card 
             className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => handleCardClick('completed')}
+            onClick={() => {
+              console.log('DashboardCards - Preparer clicking COMPLETED card');
+              handleCardClick('completed');
+            }}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Completed Forms</CardTitle>
@@ -112,7 +122,10 @@ const DashboardCards = () => {
         <>
           <Card 
             className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => handleCardClick('pending')}
+            onClick={() => {
+              console.log('DashboardCards - Admin clicking PENDING card');
+              handleCardClick('pending');
+            }}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pending Forms</CardTitle>
@@ -126,7 +139,10 @@ const DashboardCards = () => {
 
           <Card 
             className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => handleCardClick('active')}
+            onClick={() => {
+              console.log('DashboardCards - Admin clicking ACTIVE/CURRENTLY WORKING card');
+              handleCardClick('active');
+            }}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Currently Working</CardTitle>
@@ -140,7 +156,10 @@ const DashboardCards = () => {
 
           <Card 
             className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => handleCardClick('rejected')}
+            onClick={() => {
+              console.log('DashboardCards - Admin clicking REJECTED/AMENDMENT card');
+              handleCardClick('rejected');
+            }}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Amendment Requested</CardTitle>
@@ -154,7 +173,10 @@ const DashboardCards = () => {
 
           <Card 
             className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => handleCardClick('completed')}
+            onClick={() => {
+              console.log('DashboardCards - Admin clicking COMPLETED card');
+              handleCardClick('completed');
+            }}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Completed Forms</CardTitle>
