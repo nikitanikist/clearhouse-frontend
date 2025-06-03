@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -10,9 +11,9 @@ const DashboardCards = () => {
   const { forms } = useData();
   const navigate = useNavigate();
 
-  console.log('Current user:', user);
-  console.log('All forms:', forms);
-  console.log('Forms count by status:', {
+  console.log('DashboardCards - Current user:', user);
+  console.log('DashboardCards - All forms:', forms);
+  console.log('DashboardCards - Forms count by status:', {
     pending: forms.filter(f => f.status === 'pending').length,
     active: forms.filter(f => f.status === 'active').length,
     completed: forms.filter(f => f.status === 'completed').length,
@@ -43,11 +44,18 @@ const DashboardCards = () => {
   const completedForms = getFilteredForms('completed');
   const rejectedForms = getFilteredForms('rejected');
 
-  console.log('Pending forms for user:', pendingForms);
-  console.log('User role:', user?.role);
+  console.log('DashboardCards - Filtered forms:', {
+    pending: pendingForms.length,
+    active: activeForms.length,
+    completed: completedForms.length,
+    rejected: rejectedForms.length
+  });
 
   const handleCardClick = (status: string) => {
-    navigate(`/dashboard/closeout-forms/${status}`);
+    const targetPath = `/dashboard/closeout-forms/${status}`;
+    console.log('DashboardCards - Navigating to:', targetPath);
+    console.log('DashboardCards - Status clicked:', status);
+    navigate(targetPath);
   };
 
   const getFormCards = () => {
