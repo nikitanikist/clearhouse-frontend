@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -14,32 +13,28 @@ const CloseoutFormsPage = () => {
   const { user } = useAuth();
   const { forms } = useData();
   const navigate = useNavigate();
-  const params = useParams<{ status: string }>();
+  const { status } = useParams<{ status: string }>();
   const location = useLocation();
   const [selectedForm, setSelectedForm] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Extract status from URL params and validate it
-  const extractStatusFromParams = () => {
-    console.log('CloseoutFormsPage - Full URL params:', params);
-    console.log('CloseoutFormsPage - Current location pathname:', location.pathname);
-    console.log('CloseoutFormsPage - Raw status param:', params.status);
-    
+  console.log('CloseoutFormsPage - URL params status:', status);
+  console.log('CloseoutFormsPage - Current location pathname:', location.pathname);
+
+  // Validate and get the form status
+  const getValidatedStatus = (): 'pending' | 'active' | 'completed' | 'rejected' => {
     const validStatuses = ['pending', 'active', 'completed', 'rejected'] as const;
-    const extractedStatus = params.status;
     
-    if (extractedStatus && validStatuses.includes(extractedStatus as any)) {
-      console.log('CloseoutFormsPage - Valid status extracted:', extractedStatus);
-      return extractedStatus as 'pending' | 'active' | 'completed' | 'rejected';
+    if (status && validStatuses.includes(status as any)) {
+      console.log('CloseoutFormsPage - Using valid status:', status);
+      return status as 'pending' | 'active' | 'completed' | 'rejected';
     }
     
-    console.error('CloseoutFormsPage - Invalid or missing status, redirecting to dashboard');
-    // If status is invalid or missing, redirect to dashboard
-    navigate('/dashboard');
-    return 'pending' as const; // fallback for rendering
+    console.log('CloseoutFormsPage - Invalid status, defaulting to pending:', status);
+    return 'pending';
   };
 
-  const formStatus = extractStatusFromParams();
+  const formStatus = getValidatedStatus();
 
   useEffect(() => {
     // Reset selected form when the status route changes
