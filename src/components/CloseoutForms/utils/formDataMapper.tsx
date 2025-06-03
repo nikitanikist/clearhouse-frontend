@@ -1,4 +1,5 @@
 
+
 import { CloseoutFormTableData } from '../CloseoutFormTable';
 import { User } from '@/contexts/AuthContext';
 
@@ -26,6 +27,7 @@ export const mapTableDataToCloseoutForm = (
     years: formData.years,
     jobNumber: formData.jobNumber,
     invoiceAmount: formData.invoiceAmount,
+    invoiceDescription: formData.invoiceDescription || '',
     billDetail: formData.billDetail,
     paymentRequired: formData.paymentRequired,
     wipRecovery: formData.wipRecovery,
@@ -35,12 +37,24 @@ export const mapTableDataToCloseoutForm = (
     isS116: primaryMember.isS116,
     isPaperFiled: primaryMember.isPaperFiled,
     installmentsRequired: primaryMember.installmentsRequired,
-    // Map all the new required fields from the form data
+    // Map all the filing detail fields
+    t106: formData.t106 || false,
+    t1134: formData.t1134 || false,
+    ontarioAnnualReturn: formData.ontarioAnnualReturn || false,
+    tSlips: formData.tSlips || false,
+    quebecReturn: formData.quebecReturn || false,
+    albertaReturn: formData.albertaReturn || false,
     t2091PrincipalResidence: formData.t2091PrincipalResidence,
     t1135ForeignProperty: formData.t1135ForeignProperty,
     t1032PensionSplit: formData.t1032PensionSplit,
     hstDraftOrFinal: formData.hstDraftOrFinal,
     otherNotes: formData.otherNotes,
+    otherDocuments: formData.otherDocuments || '',
+    // Tax installment fields
+    corporateInstallmentsRequired: formData.corporateInstallmentsRequired || false,
+    fedScheduleAttached: formData.fedScheduleAttached || false,
+    hstInstallmentRequired: formData.hstInstallmentRequired || false,
+    hstTabCompleted: formData.hstTabCompleted || false,
     // T1 Summary fields
     priorPeriodsBalance: formData.priorPeriodsBalance,
     taxesPayable: formData.taxesPayable,
@@ -64,3 +78,4 @@ export const mapTableDataToCloseoutForm = (
     familyMembers: formData.familyMembers,
   };
 };
+
