@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -96,7 +97,8 @@ const CloseoutFormsPage: React.FC<CloseoutFormsPageProps> = ({ status: defaultSt
             <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
           </div>
           
-          {user?.role === 'preparer' && (
+          {/* Only show Create Form button for non-preparer roles (admin/superadmin) */}
+          {user?.role !== 'preparer' && (
             <Button onClick={() => setCreateDialogOpen(true)}>
               <Plus className="mr-2 h-4 w-4" />
               Create Form
@@ -139,7 +141,8 @@ const CloseoutFormsPage: React.FC<CloseoutFormsPageProps> = ({ status: defaultSt
           </p>
         </div>
         
-        {user?.role === 'preparer' && (
+        {/* Only show Create Form button for non-preparer roles (admin/superadmin) */}
+        {user?.role !== 'preparer' && (
           <Button onClick={() => setCreateDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Create Form

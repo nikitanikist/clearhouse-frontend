@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -16,7 +16,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Eye, Edit, ArrowLeft, Play, FileX, X, UserPlus } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Eye, Edit, ArrowLeft, Play, FileX, X, UserPlus, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import CloseoutFormView from './CloseoutFormView';
 import CloseoutFormCreate from './CloseoutFormCreate';
@@ -38,6 +39,7 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [selectedAssignee, setSelectedAssignee] = useState('');
   const [actionFormId, setActionFormId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Available admins for assignment
   const availableAdmins = [
@@ -73,9 +75,20 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
     return filteredForms;
   };
 
-  const filteredForms = getFilteredForms();
+  // Filter forms by search query (client email)
+  const searchFilteredForms = useMemo(() => {
+    const filtered = getFilteredForms();
+    
+    if (!searchQuery.trim()) {
+      return filtered;
+    }
+    
+    return filtered.filter(form => 
+      form.signingEmail.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [forms, status, user, searchQuery]);
 
-  console.log('Final filtered forms:', filteredForms);
+  console.log('Final filtered forms:', searchFilteredForms);
 
   const getStatusBadge = (formStatus: string) => {
     switch (formStatus) {
@@ -246,15 +259,30 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
                 {getStatusTitle()}
               </CardTitle>
               <CardDescription>
-                {filteredForms.length} form{filteredForms.length !== 1 ? 's' : ''} found
+                {searchFilteredForms.length} form{searchFilteredForms.length !== 1 ? 's' : ''} found
               </CardDescription>
+            </div>
+          </div>
+          
+          {/* Search Box */}
+          <div className="flex items-center gap-2 mt-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Search by client email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          {filteredForms.length === 0 ? (
+          {searchFilteredForms.length === 0 ? (
             <div className="text-center py-8">
-              <p className="text-muted-foreground">No {status} forms found.</p>
+              <p className="text-muted-foreground">
+                {searchQuery.trim() ? `No forms found matching "${searchQuery}"` : `No ${status} forms found.`}
+              </p>
             </div>
           ) : (
             <div className="border rounded-lg overflow-hidden">
@@ -273,7 +301,7 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredForms.map((form) => (
+                  {searchFilteredForms.map((form) => (
                     <TableRow key={form.id}>
                       <TableCell className="font-medium">{form.clientName}</TableCell>
                       <TableCell>{form.signingEmail}</TableCell>

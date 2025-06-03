@@ -65,7 +65,7 @@ const DashboardCards = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{pendingForms.length}</div>
-              <p className="text-xs text-muted-foreground">Awaiting review</p>
+              <p className="text-xs text-muted-foreground">Pending with admin</p>
             </CardContent>
           </Card>
 
