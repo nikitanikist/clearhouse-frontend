@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -158,46 +159,18 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
   const selectedForm = selectedFormId ? forms.find(form => form.id === selectedFormId) : null;
 
   const renderActionButtons = (form: any) => {
-    if (status === 'pending' && (user?.role === 'admin' || user?.role === 'superadmin')) {
+    // For pending status, only show view button in table
+    if (status === 'pending') {
       return (
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleViewForm(form.id)}
-            className="flex items-center gap-2"
-          >
-            <Eye className="h-4 w-4" />
-            View
-          </Button>
-          <Button
-            variant="default"
-            size="sm"
-            onClick={() => handleStartWorking(form.id)}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
-          >
-            <Play className="h-4 w-4" />
-            Working on it
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleRequestAmendment(form.id)}
-            className="flex items-center gap-2 text-orange-600 border-orange-600 hover:bg-orange-50"
-          >
-            <FileX className="h-4 w-4" />
-            Need Amendment
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleAssignForm(form.id)}
-            className="flex items-center gap-2 text-blue-600 border-blue-600 hover:bg-blue-50"
-          >
-            <UserPlus className="h-4 w-4" />
-            Assign To
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleViewForm(form.id)}
+          className="flex items-center gap-2"
+        >
+          <Eye className="h-4 w-4" />
+          View
+        </Button>
       );
     }
 
