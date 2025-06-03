@@ -45,7 +45,7 @@ const mockUsers: Record<UserRole, User> = {
   },
 };
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
   const login = (role: UserRole) => {
@@ -57,13 +57,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setUser(null);
   };
 
+  const value: AuthContextType = {
+    user, 
+    login, 
+    logout,
+    isAuthenticated: !!user,
+  };
+
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      login, 
-      logout,
-      isAuthenticated: !!user,
-    }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
