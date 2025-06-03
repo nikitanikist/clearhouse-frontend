@@ -1,7 +1,8 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { 
   Table,
   TableBody,
@@ -10,14 +11,58 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { FileText, Download, Check, X } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { FileText, Download, Check, X, Play, FileX, UserPlus } from 'lucide-react';
 import { CloseoutForm } from '@/contexts/DataContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useData } from '@/contexts/DataContext';
 
 interface CloseoutFormViewProps {
   form: CloseoutForm;
 }
 
 const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
+  const { user } = useAuth();
+  const { updateFormStatus, assignForm } = useData();
+  const [showAmendmentDialog, setShowAmendmentDialog] = useState(false);
+  const [amendmentNote, setAmendmentNote] = useState('');
+  const [showAssignDialog, setShowAssignDialog] = useState(false);
+  const [selectedAssignee, setSelectedAssignee] = useState('');
+
+  // Available admins for assignment
+  const availableAdmins = [
+    { id: 'admin-1', name: 'Jordan Lee' },
+    { id: 'admin-2', name: 'Sarah Chen' },
+    { id: 'admin-3', name: 'Mike Davis' },
+  ];
+
+  const handleStartWorking = () => {
+    updateFormStatus(form.id, 'active', 'Admin started working on this form');
+  };
+
+  const submitAmendment = () => {
+    if (amendmentNote.trim()) {
+      updateFormStatus(form.id, 'rejected', amendmentNote);
+      setShowAmendmentDialog(false);
+      setAmendmentNote('');
+    }
+  };
+
+  const submitAssignment = () => {
+    if (selectedAssignee) {
+      const assigneeName = availableAdmins.find(admin => admin.id === selectedAssignee)?.name || '';
+      assignForm(form.id, selectedAssignee, assigneeName);
+      setShowAssignDialog(false);
+      setSelectedAssignee('');
+    }
+  };
+
+  // Show admin action buttons only for pending forms and if user is admin/superadmin
+  const showAdminActions = form.status === 'pending' && (user?.role === 'admin' || user?.role === 'superadmin');
+
   return (
     <div className="space-y-6">
       {/* General Information Table */}
@@ -119,7 +164,6 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
         </CardContent>
       </Card>
 
-      {/* T1 Summary Table */}
       <Card>
         <CardHeader>
           <CardTitle>T1 Summary</CardTitle>
@@ -150,7 +194,6 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
         </CardContent>
       </Card>
 
-      {/* HST Summary Table */}
       <Card>
         <CardHeader>
           <CardTitle>HST Summary</CardTitle>
@@ -181,7 +224,6 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
         </CardContent>
       </Card>
 
-      {/* Family Members Table */}
       <Card>
         <CardHeader>
           <CardTitle>Family Members & Installment Attachments</CardTitle>
@@ -376,6 +418,110 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
           )}
         </CardContent>
       </Card>
+
+      {/* Admin Action Buttons */}
+      {showAdminActions && (
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex justify-end gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowAssignDialog(true)}
+                className="flex items-center gap-2 text-blue-600 border-blue-600 hover:bg-blue-50"
+              >
+                <UserPlus className="h-4 w-4" />
+                Assign To
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowAmendmentDialog(true)}
+                className="flex items-center gap-2 text-orange-600 border-orange-600 hover:bg-orange-50"
+              >
+                <FileX className="h-4 w-4" />
+                Amendment
+              </Button>
+              <Button
+                onClick={handleStartWorking}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+              >
+                <Play className="h-4 w-4" />
+                Working on it
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Amendment Request Dialog */}
+      <Dialog open={showAmendmentDialog} onOpenChange={setShowAmendmentDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Request Amendment</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="amendment-note">Amendment Note</Label>
+              <Textarea
+                id="amendment-note"
+                placeholder="Please describe what amendments are needed..."
+                value={amendmentNote}
+                onChange={(e) => setAmendmentNote(e.target.value)}
+                rows={4}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowAmendmentDialog(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={submitAmendment}
+                disabled={!amendmentNote.trim()}
+                className="bg-orange-600 hover:bg-orange-700 text-white"
+              >
+                Request Amendment
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Form Dialog */}
+      <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assign Form to Admin</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="assignee">Select Admin</Label>
+              <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose an admin..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableAdmins.map((admin) => (
+                    <SelectItem key={admin.id} value={admin.id}>
+                      {admin.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setShowAssignDialog(false)}>
+                Cancel
+              </Button>
+              <Button 
+                onClick={submitAssignment}
+                disabled={!selectedAssignee}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Assign Form
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

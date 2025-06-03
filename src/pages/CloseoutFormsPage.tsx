@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -34,7 +33,7 @@ const CloseoutFormsPage: React.FC<CloseoutFormsPageProps> = ({ status: defaultSt
     if (user?.role === 'superadmin') {
       return formsList; // Super admin sees all forms
     } else if (user?.role === 'admin') {
-      // Admin sees forms assigned to them OR unassigned pending forms
+      // Admin sees forms assigned to them OR all pending forms
       if (formsList === pendingForms) {
         return formsList; // Admin sees all pending forms
       }
@@ -96,20 +95,11 @@ const CloseoutFormsPage: React.FC<CloseoutFormsPageProps> = ({ status: defaultSt
           )}
         </div>
         
-        {/* Use table format for active and completed, grid for pending and rejected */}
-        {(defaultStatus === 'active' || defaultStatus === 'completed') ? (
-          <CloseoutFormsList
-            status={defaultStatus}
-            onBack={() => window.history.back()}
-          />
-        ) : (
-          <CloseoutFormGrid
-            forms={targetForms}
-            title=""
-            emptyMessage={emptyMessage}
-            onViewForm={handleViewForm}
-          />
-        )}
+        {/* Use table format for all statuses when accessed via URL */}
+        <CloseoutFormsList
+          status={defaultStatus}
+          onBack={() => window.history.back()}
+        />
         
         {/* Closeout Form View Dialog */}
         <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
