@@ -24,28 +24,10 @@ const CloseoutFormsPage = () => {
   console.log('CloseoutFormsPage - Current location pathname:', location.pathname);
   console.log('CloseoutFormsPage - User role:', user?.role);
 
-  // Validate that we have a proper status parameter
-  const validateStatus = (statusParam: string | undefined) => {
-    const validStatuses = ['pending', 'active', 'completed', 'rejected'] as const;
-    
-    console.log('CloseoutFormsPage - Validating status:', statusParam);
-    
-    if (!statusParam || !validStatuses.includes(statusParam as any)) {
-      console.error('CloseoutFormsPage - Invalid status, redirecting to dashboard');
-      navigate('/dashboard');
-      return null;
-    }
-    
-    console.log('CloseoutFormsPage - Valid status confirmed:', statusParam);
-    return statusParam as 'pending' | 'active' | 'completed' | 'rejected';
-  };
+  // Use the status directly from URL params
+  const formStatus = status as 'pending' | 'active' | 'completed' | 'rejected';
 
-  const formStatus = validateStatus(status);
-
-  // If we don't have a valid status, don't render anything
-  if (!formStatus) {
-    return <div>Redirecting to dashboard...</div>;
-  }
+  console.log('CloseoutFormsPage - Final formStatus being used:', formStatus);
 
   useEffect(() => {
     // Reset selected form when the status route changes
@@ -53,7 +35,6 @@ const CloseoutFormsPage = () => {
     console.log('CloseoutFormsPage - Status changed to:', formStatus);
   }, [formStatus]);
 
-  console.log('CloseoutFormsPage - Final formStatus being used:', formStatus);
   console.log('CloseoutFormsPage - Forms:', forms);
   console.log('CloseoutFormsPage - Selected form:', selectedForm);
 
@@ -67,6 +48,8 @@ const CloseoutFormsPage = () => {
         return 'Completed Closeout Forms';
       case 'rejected':
         return 'Amendment Required Forms';
+      default:
+        return 'Closeout Forms';
     }
   };
 
@@ -80,6 +63,8 @@ const CloseoutFormsPage = () => {
         return 'List of successfully completed closeout forms.';
       case 'rejected':
         return 'List of closeout forms that require amendments.';
+      default:
+        return 'List of closeout forms.';
     }
   };
 
