@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -81,6 +82,10 @@ const CloseoutFormsPage = () => {
     }
   };
 
+  const handleBackToList = () => {
+    navigate('/dashboard');
+  };
+
   return (
     <div className="space-y-6">
       {!selectedForm ? (
@@ -112,9 +117,8 @@ const CloseoutFormsPage = () => {
           )}
 
           <CloseoutFormsList 
-            forms={filteredForms} 
-            onSelectForm={setSelectedForm}
-            showCreateButton={false}
+            status={status as 'pending' | 'active' | 'completed' | 'rejected'}
+            onBack={handleBackToList}
           />
         </>
       ) : (

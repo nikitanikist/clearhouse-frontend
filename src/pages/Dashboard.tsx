@@ -24,10 +24,10 @@ const Dashboard = () => {
           <Route path="/" element={<DashboardHome />} />
           
           {/* Closeout Forms routes for all users */}
-          <Route path="/closeout-forms/pending" element={<CloseoutFormsPage status="pending" />} />
-          <Route path="/closeout-forms/active" element={<CloseoutFormsPage status="active" />} />
-          <Route path="/closeout-forms/rejected" element={<CloseoutFormsPage status="rejected" />} />
-          <Route path="/closeout-forms/completed" element={<CloseoutFormsPage status="completed" />} />
+          <Route path="/closeout-forms/pending" element={<CloseoutFormsPage />} />
+          <Route path="/closeout-forms/active" element={<CloseoutFormsPage />} />
+          <Route path="/closeout-forms/rejected" element={<CloseoutFormsPage />} />
+          <Route path="/closeout-forms/completed" element={<CloseoutFormsPage />} />
           
           {/* Super Admin only routes */}
           {user?.role === 'superadmin' && (
