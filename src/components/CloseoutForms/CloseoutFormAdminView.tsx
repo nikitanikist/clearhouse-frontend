@@ -276,48 +276,190 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
       {/* 10. Family Members & Installment Attachments Section */}
       <div className="space-y-4">
         <h2 className="text-lg font-bold border-b border-gray-300 pb-2">FAMILY MEMBERS & INSTALLMENT ATTACHMENTS</h2>
-        <table className="w-full border-collapse">
-          <tbody>
-            <TableRow 
-              label="Signing Person" 
-              value={form.signingPerson || '-'} 
-            />
-            <TableRow 
-              label="Signing Email" 
-              value={
-                form.signingEmail ? 
-                  <a href={`mailto:${form.signingEmail}`} className="text-blue-600 underline">
-                    {form.signingEmail}
-                  </a> : 
-                  '-'
-              } 
-            />
-            <TableRow 
-              label="Tax Forms" 
-              value={
-                <div className="flex items-center space-x-6">
-                  <CheckboxDisplay checked={form.isT1 || false} label="T1" />
-                  <CheckboxDisplay checked={form.isS216 || false} label="S216" />
-                  <CheckboxDisplay checked={form.isS116 || false} label="S116" />
-                  <CheckboxDisplay checked={form.isPaperFiled || false} label="Paper Filed" />
-                </div>
-              }
-            />
-            <TableRow 
-              label="Installments Required (Yes/No)" 
-              value={
-                <div className="flex items-center space-x-4">
-                  <CheckboxDisplay checked={form.installmentsRequired || false} label="Yes" />
-                  <CheckboxDisplay checked={!(form.installmentsRequired || false)} label="No" />
-                </div>
-              }
-            />
-            <TableRow 
-              label="Installment Attachment" 
-              value={form.installmentAttachment ? 'Uploaded' : 'No attachment uploaded'}
-            />
-          </tbody>
-        </table>
+        
+        {/* Check if there are multiple family members */}
+        {form.familyMembers && form.familyMembers.length > 0 ? (
+          /* Multiple family members - horizontal layout like Excel */
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse min-w-max">
+              <thead>
+                <tr>
+                  <th className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50 text-left min-w-[200px]">
+                    Field
+                  </th>
+                  <th className="border border-gray-300 px-4 py-2 font-semibold bg-blue-50 text-center min-w-[180px]">
+                    {form.clientName}
+                  </th>
+                  {form.familyMembers.map((member, index) => (
+                    <th key={index} className="border border-gray-300 px-4 py-2 font-semibold bg-blue-50 text-center min-w-[180px]">
+                      {member.clientName}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {/* File Path - shared for all */}
+                <tr>
+                  <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">File Path</td>
+                  <td className="border border-gray-300 px-4 py-2 text-xs font-mono" colSpan={1 + form.familyMembers.length}>
+                    {form.filePath}
+                  </td>
+                </tr>
+                
+                {/* Signing Person */}
+                <tr>
+                  <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">Signing Person</td>
+                  <td className="border border-gray-300 px-4 py-2 text-center">
+                    {form.signingPerson || '-'}
+                  </td>
+                  {form.familyMembers.map((member, index) => (
+                    <td key={index} className="border border-gray-300 px-4 py-2 text-center">
+                      {member.signingPerson || '-'}
+                    </td>
+                  ))}
+                </tr>
+                
+                {/* Signing Email */}
+                <tr>
+                  <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">Signing Email</td>
+                  <td className="border border-gray-300 px-4 py-2 text-center">
+                    {form.signingEmail ? (
+                      <a href={`mailto:${form.signingEmail}`} className="text-blue-600 underline text-sm">
+                        {form.signingEmail}
+                      </a>
+                    ) : '-'}
+                  </td>
+                  {form.familyMembers.map((member, index) => (
+                    <td key={index} className="border border-gray-300 px-4 py-2 text-center">
+                      {member.signingEmail ? (
+                        <a href={`mailto:${member.signingEmail}`} className="text-blue-600 underline text-sm">
+                          {member.signingEmail}
+                        </a>
+                      ) : '-'}
+                    </td>
+                  ))}
+                </tr>
+                
+                {/* T1 Form */}
+                <tr>
+                  <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">T1</td>
+                  <td className="border border-gray-300 px-4 py-2 text-center">
+                    <CheckboxDisplay checked={form.isT1 || false} label="" />
+                  </td>
+                  {form.familyMembers.map((member, index) => (
+                    <td key={index} className="border border-gray-300 px-4 py-2 text-center">
+                      <CheckboxDisplay checked={member.isT1 || false} label="" />
+                    </td>
+                  ))}
+                </tr>
+                
+                {/* S216 Form */}
+                <tr>
+                  <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">S216</td>
+                  <td className="border border-gray-300 px-4 py-2 text-center">
+                    <CheckboxDisplay checked={form.isS216 || false} label="" />
+                  </td>
+                  {form.familyMembers.map((member, index) => (
+                    <td key={index} className="border border-gray-300 px-4 py-2 text-center">
+                      <CheckboxDisplay checked={member.isS216 || false} label="" />
+                    </td>
+                  ))}
+                </tr>
+                
+                {/* S116 Form */}
+                <tr>
+                  <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">S116</td>
+                  <td className="border border-gray-300 px-4 py-2 text-center">
+                    <CheckboxDisplay checked={form.isS116 || false} label="" />
+                  </td>
+                  {form.familyMembers.map((member, index) => (
+                    <td key={index} className="border border-gray-300 px-4 py-2 text-center">
+                      <CheckboxDisplay checked={member.isS116 || false} label="" />
+                    </td>
+                  ))}
+                </tr>
+                
+                {/* Paper Filed */}
+                <tr>
+                  <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">Paper Filed</td>
+                  <td className="border border-gray-300 px-4 py-2 text-center">
+                    <CheckboxDisplay checked={form.isPaperFiled || false} label="" />
+                  </td>
+                  {form.familyMembers.map((member, index) => (
+                    <td key={index} className="border border-gray-300 px-4 py-2 text-center">
+                      <CheckboxDisplay checked={member.isPaperFiled || false} label="" />
+                    </td>
+                  ))}
+                </tr>
+                
+                {/* Installments Required */}
+                <tr>
+                  <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">Installments Required</td>
+                  <td className="border border-gray-300 px-4 py-2 text-center">
+                    {form.installmentsRequired ? 'Yes' : 'No'}
+                  </td>
+                  {form.familyMembers.map((member, index) => (
+                    <td key={index} className="border border-gray-300 px-4 py-2 text-center">
+                      {member.installmentsRequired ? 'Yes' : 'No'}
+                    </td>
+                  ))}
+                </tr>
+                
+                {/* Installment Attachment */}
+                <tr>
+                  <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">Installment Attachment</td>
+                  <td className="border border-gray-300 px-4 py-2 text-center" colSpan={1 + form.familyMembers.length}>
+                    {form.installmentAttachment ? 'Uploaded' : 'No attachment uploaded'}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          /* Single member - original vertical layout */
+          <table className="w-full border-collapse">
+            <tbody>
+              <TableRow 
+                label="Signing Person" 
+                value={form.signingPerson || '-'} 
+              />
+              <TableRow 
+                label="Signing Email" 
+                value={
+                  form.signingEmail ? 
+                    <a href={`mailto:${form.signingEmail}`} className="text-blue-600 underline">
+                      {form.signingEmail}
+                    </a> : 
+                    '-'
+                } 
+              />
+              <TableRow 
+                label="Tax Forms" 
+                value={
+                  <div className="flex items-center space-x-6">
+                    <CheckboxDisplay checked={form.isT1 || false} label="T1" />
+                    <CheckboxDisplay checked={form.isS216 || false} label="S216" />
+                    <CheckboxDisplay checked={form.isS116 || false} label="S116" />
+                    <CheckboxDisplay checked={form.isPaperFiled || false} label="Paper Filed" />
+                  </div>
+                }
+              />
+              <TableRow 
+                label="Installments Required (Yes/No)" 
+                value={
+                  <div className="flex items-center space-x-4">
+                    <CheckboxDisplay checked={form.installmentsRequired || false} label="Yes" />
+                    <CheckboxDisplay checked={!(form.installmentsRequired || false)} label="No" />
+                  </div>
+                }
+              />
+              <TableRow 
+                label="Installment Attachment" 
+                value={form.installmentAttachment ? 'Uploaded' : 'No attachment uploaded'}
+              />
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Admin Action Buttons */}

@@ -166,7 +166,7 @@ interface DataContextType {
 }
 
 // Enhanced sample form data with more pending forms for admin section
-const sampleForms: CloseoutForm[] = [
+const initialForms: CloseoutForm[] = [
   // Rohit Sharma - 2022 Tax Year (Previous Year - Completed)
   {
     id: 'form-rohit-2022',
@@ -1053,6 +1053,94 @@ const sampleForms: CloseoutForm[] = [
       },
     ],
   },
+  // Add new demo form with multiple family members
+  {
+    id: 'form-pending-demo-multiple',
+    clientName: 'Amit Sharma (Primary)',
+    filePath: '\\\\Clearhouse\\Clients\\Sharma_Family_2024\\T1',
+    signingPerson: 'Amit Sharma',
+    signingEmail: 'amit@gmail.com',
+    additionalEmails: ['family@sharma.com'],
+    partner: 'Jordan L.',
+    manager: 'Sarah M.',
+    years: '2023',
+    jobNumber: '10450-T1-FAM',
+    invoiceAmount: '$1,850 CAD',
+    invoiceDescription: 'Family T1 Returns - 4 Members',
+    billDetail: 'T1 only',
+    paymentRequired: true,
+    wipRecovery: '110%',
+    isT1: true,
+    isS216: false,
+    isS116: false,
+    isPaperFiled: false,
+    installmentsRequired: true,
+    t106: false,
+    t1134: false,
+    ontarioAnnualReturn: true,
+    tSlips: true,
+    quebecReturn: false,
+    albertaReturn: false,
+    t1135ForeignProperty: false,
+    corporateInstallmentsRequired: false,
+    fedScheduleAttached: true,
+    hstDraftOrFinal: 'Draft',
+    hstInstallmentRequired: false,
+    hstTabCompleted: false,
+    otherDocuments: 'Family T1 returns for all 4 members',
+    installmentAttachment: null,
+    status: 'pending' as const,
+    createdBy: {
+      id: 'preparer-1',
+      name: 'Jennifer Wilson',
+      role: 'preparer'
+    },
+    assignedTo: null,
+    createdAt: '2025-06-01T09:00:00Z',
+    updatedAt: '2025-06-01T09:00:00Z',
+    comments: [],
+    history: [
+      {
+        id: 'hist-demo-1',
+        action: 'Created family form with 4 members',
+        performedBy: 'Jennifer Wilson',
+        timestamp: '2025-06-01T09:00:00Z'
+      }
+    ],
+    // Multiple family members data
+    familyMembers: [
+      {
+        clientName: 'Priya Sharma (Spouse)',
+        signingPerson: 'Priya Sharma',
+        signingEmail: 'priya@gmail.com',
+        isT1: true,
+        isS216: false,
+        isS116: true,
+        isPaperFiled: false,
+        installmentsRequired: false
+      },
+      {
+        clientName: 'Raj Sharma (Son)',
+        signingPerson: 'Amit Sharma',
+        signingEmail: 'amit@gmail.com',
+        isT1: true,
+        isS216: false,
+        isS116: false,
+        isPaperFiled: false,
+        installmentsRequired: false
+      },
+      {
+        clientName: 'Meera Sharma (Daughter)',
+        signingPerson: 'Amit Sharma',
+        signingEmail: 'amit@gmail.com',
+        isT1: true,
+        isS216: false,
+        isS116: false,
+        isPaperFiled: false,
+        installmentsRequired: false
+      }
+    ]
+  }
 ];
 
 // Sample email data
@@ -1290,7 +1378,7 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [forms, setForms] = useState<CloseoutForm[]>(sampleForms);
+  const [forms, setForms] = useState<CloseoutForm[]>(initialForms);
   const [emails, setEmails] = useState<EmailThread[]>(sampleEmails);
 
   const createForm = useCallback((form: Omit<CloseoutForm, 'id' | 'createdAt' | 'updatedAt' | 'comments' | 'history'>) => {
