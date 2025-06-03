@@ -10,7 +10,11 @@ import CloseoutFormView from '@/components/CloseoutForms/CloseoutFormView';
 import CloseoutFormCreate from '@/components/CloseoutForms/CloseoutFormCreate';
 import { Plus } from 'lucide-react';
 
-const CloseoutFormsPage = () => {
+interface CloseoutFormsPageProps {
+  status?: 'pending' | 'active' | 'completed' | 'rejected';
+}
+
+const CloseoutFormsPage: React.FC<CloseoutFormsPageProps> = ({ status: defaultStatus }) => {
   const { user } = useAuth();
   const { forms } = useData();
   
@@ -44,6 +48,83 @@ const CloseoutFormsPage = () => {
 
   const selectedForm = selectedFormId ? forms.find(form => form.id === selectedFormId) : null;
 
+  // If a specific status is provided, show only that tab content
+  if (defaultStatus) {
+    let targetForms = [];
+    let title = '';
+    let description = '';
+    let emptyMessage = '';
+    
+    switch (defaultStatus) {
+      case 'pending':
+        targetForms = getFilteredForms(pendingForms);
+        title = 'Pending Closeout Forms';
+        description = 'Forms awaiting review and approval';
+        emptyMessage = 'No pending forms found';
+        break;
+      case 'active':
+        targetForms = getFilteredForms(activeForms);
+        title = 'Working Closeout Forms';
+        description = 'Forms that are currently being processed';
+        emptyMessage = 'No working forms found';
+        break;
+      case 'completed':
+        targetForms = getFilteredForms(completedForms);
+        title = 'Completed Closeout Forms';
+        description = 'Forms that have been finalized and closed';
+        emptyMessage = 'No completed forms found';
+        break;
+      case 'rejected':
+        targetForms = getFilteredForms(rejectedForms);
+        title = 'Amendment Closeout Forms';
+        description = 'Forms that require revisions';
+        emptyMessage = 'No amendment forms found';
+        break;
+    }
+
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+            <p className="text-muted-foreground">{description}</p>
+          </div>
+          
+          {user?.role === 'preparer' && (
+            <Button onClick={() => setCreateDialogOpen(true)}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Form
+            </Button>
+          )}
+        </div>
+        
+        <CloseoutFormGrid
+          forms={targetForms}
+          title={title}
+          description={description}
+          emptyMessage={emptyMessage}
+          onViewForm={handleViewForm}
+        />
+        
+        {/* Closeout Form View Dialog */}
+        <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
+          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Closeout Form Details</DialogTitle>
+            </DialogHeader>
+            {selectedForm && <CloseoutFormView form={selectedForm} />}
+          </DialogContent>
+        </Dialog>
+        
+        <CloseoutFormCreate
+          open={createDialogOpen}
+          onOpenChange={setCreateDialogOpen}
+        />
+      </div>
+    );
+  }
+
+  // Default view with tabs
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">

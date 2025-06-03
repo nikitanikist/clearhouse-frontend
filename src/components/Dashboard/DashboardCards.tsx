@@ -2,12 +2,14 @@
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 
 const DashboardCards = () => {
   const { user } = useAuth();
   const { forms } = useData();
+  const navigate = useNavigate();
 
   console.log('Current user:', user);
   console.log('All forms:', forms);
@@ -39,11 +41,18 @@ const DashboardCards = () => {
   console.log('Pending forms for admin:', pendingForms);
   console.log('User role:', user?.role);
 
+  const handleCardClick = (status: string) => {
+    navigate(`/dashboard/closeout-forms/${status}`);
+  };
+
   const getFormCards = () => {
     if (user?.role === 'preparer') {
       return (
         <>
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => handleCardClick('active')}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Active Forms</CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
@@ -54,7 +63,10 @@ const DashboardCards = () => {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => handleCardClick('rejected')}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Amendment Forms</CardTitle>
               <AlertCircle className="h-4 w-4 text-orange-500" />
@@ -65,7 +77,10 @@ const DashboardCards = () => {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => handleCardClick('completed')}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Completed Forms</CardTitle>
               <CheckCircle className="h-4 w-4 text-green-500" />
@@ -82,7 +97,10 @@ const DashboardCards = () => {
     if (user?.role === 'admin' || user?.role === 'superadmin') {
       return (
         <>
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => handleCardClick('pending')}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Pending Forms</CardTitle>
               <Clock className="h-4 w-4 text-blue-500" />
@@ -93,7 +111,10 @@ const DashboardCards = () => {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => handleCardClick('active')}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Currently Working</CardTitle>
               <FileText className="h-4 w-4 text-green-500" />
@@ -104,7 +125,10 @@ const DashboardCards = () => {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => handleCardClick('rejected')}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Amendment Required</CardTitle>
               <AlertCircle className="h-4 w-4 text-orange-500" />
@@ -115,7 +139,10 @@ const DashboardCards = () => {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+          <Card 
+            className="hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => handleCardClick('completed')}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Completed Forms</CardTitle>
               <CheckCircle className="h-4 w-4 text-green-500" />
