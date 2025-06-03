@@ -65,7 +65,10 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
       return [];
     }
     
-    let filteredForms = forms.filter(form => form.status === status);
+    let filteredForms = forms.filter(form => {
+      console.log(`Checking form ${form.id} with status ${form.status} against filter ${status}`);
+      return form.status === status;
+    });
     
     console.log('CloseoutFormsList - Forms with matching status:', filteredForms);
     
@@ -109,6 +112,7 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
   }, [forms, status, user, searchQuery]);
 
   console.log('CloseoutFormsList - Final filtered forms:', searchFilteredForms);
+  console.log('CloseoutFormsList - Number of forms to display:', searchFilteredForms.length);
 
   const getStatusBadge = (formStatus: string) => {
     switch (formStatus) {
@@ -184,8 +188,13 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
   };
 
   const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return format(date, 'MMM d, yyyy');
+    try {
+      const date = new Date(dateStr);
+      return format(date, 'MMM d, yyyy');
+    } catch (error) {
+      console.error('Error formatting date:', dateStr, error);
+      return dateStr;
+    }
   };
 
   const selectedForm = selectedFormId ? forms.find(form => form.id === selectedFormId) : null;
@@ -303,6 +312,11 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
               <p className="text-muted-foreground">
                 {searchQuery.trim() ? `No forms found matching "${searchQuery}"` : `No ${status} forms found.`}
               </p>
+              {!searchQuery.trim() && (
+                <p className="text-sm text-gray-500 mt-2">
+                  Debug info: Status={status}, User role={user?.role}, Total forms={forms?.length || 0}
+                </p>
+              )}
             </div>
           ) : (
             <div className="border rounded-lg overflow-hidden">
@@ -323,12 +337,12 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
                 <TableBody>
                   {searchFilteredForms.map((form) => (
                     <TableRow key={form.id}>
-                      <TableCell className="font-medium">{form.clientName}</TableCell>
-                      <TableCell>{form.signingEmail}</TableCell>
-                      <TableCell>{form.jobNumber}</TableCell>
-                      <TableCell>{form.years}</TableCell>
-                      <TableCell>{form.partner}</TableCell>
-                      <TableCell>{form.invoiceAmount}</TableCell>
+                      <TableCell className="font-medium">{form.clientName || 'N/A'}</TableCell>
+                      <TableCell>{form.signingEmail || 'N/A'}</TableCell>
+                      <TableCell>{form.jobNumber || 'N/A'}</TableCell>
+                      <TableCell>{form.years || 'N/A'}</TableCell>
+                      <TableCell>{form.partner || 'N/A'}</TableCell>
+                      <TableCell>{form.invoiceAmount || 'N/A'}</TableCell>
                       <TableCell>{getStatusBadge(form.status)}</TableCell>
                       <TableCell>{formatDate(form.createdAt)}</TableCell>
                       <TableCell>
