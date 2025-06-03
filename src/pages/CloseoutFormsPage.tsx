@@ -24,8 +24,15 @@ const CloseoutFormsPage = () => {
   console.log('CloseoutFormsPage - Current location pathname:', location.pathname);
   console.log('CloseoutFormsPage - User role:', user?.role);
 
-  // Use the status directly from URL params
-  const formStatus = status as 'pending' | 'active' | 'completed' | 'rejected';
+  // Extract status from URL path if useParams doesn't work
+  const getStatusFromPath = () => {
+    const pathParts = location.pathname.split('/');
+    const statusIndex = pathParts.findIndex(part => part === 'closeout-forms') + 1;
+    return pathParts[statusIndex];
+  };
+
+  // Use the status from params or extract from path
+  const formStatus = (status || getStatusFromPath()) as 'pending' | 'active' | 'completed' | 'rejected';
 
   console.log('CloseoutFormsPage - Final formStatus being used:', formStatus);
 
