@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -19,17 +18,21 @@ const CloseoutFormsPage = () => {
   const [selectedForm, setSelectedForm] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Ensure status has a default value if undefined
+  const formStatus = status || 'pending';
+
   useEffect(() => {
     // Reset selected form when the status route changes
     setSelectedForm(null);
   }, [status]);
 
   console.log('CloseoutFormsPage - Forms:', forms);
-  console.log('CloseoutFormsPage - Status:', status);
+  console.log('CloseoutFormsPage - Status:', formStatus);
+  console.log('CloseoutFormsPage - Raw status param:', status);
   console.log('CloseoutFormsPage - User role:', user?.role);
 
   const getTitle = () => {
-    switch (status) {
+    switch (formStatus) {
       case 'pending':
         return 'Pending Closeout Forms';
       case 'active':
@@ -44,7 +47,7 @@ const CloseoutFormsPage = () => {
   };
 
   const getDescription = () => {
-    switch (status) {
+    switch (formStatus) {
       case 'pending':
         return 'List of closeout forms awaiting review.';
       case 'active':
@@ -104,7 +107,7 @@ const CloseoutFormsPage = () => {
           )}
 
           <CloseoutFormsList 
-            status={status as 'pending' | 'active' | 'completed' | 'rejected'}
+            status={formStatus as 'pending' | 'active' | 'completed' | 'rejected'}
             onBack={handleBackToList}
           />
         </>
@@ -126,4 +129,3 @@ const CloseoutFormsPage = () => {
 };
 
 export default CloseoutFormsPage;
-

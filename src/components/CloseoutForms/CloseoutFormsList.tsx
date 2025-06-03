@@ -54,6 +54,17 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack })
     console.log('CloseoutFormsList - Status filter:', status);
     console.log('CloseoutFormsList - User:', user);
     
+    // Ensure we have forms and status
+    if (!forms || !Array.isArray(forms)) {
+      console.log('CloseoutFormsList - No forms array found');
+      return [];
+    }
+    
+    if (!status) {
+      console.log('CloseoutFormsList - No status provided');
+      return [];
+    }
+    
     let filteredForms = forms.filter(form => form.status === status);
     
     console.log('CloseoutFormsList - Forms with matching status:', filteredForms);
