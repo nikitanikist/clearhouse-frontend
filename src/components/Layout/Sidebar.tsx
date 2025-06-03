@@ -48,7 +48,7 @@ const Sidebar = () => {
   console.log('Sidebar - Navigation links:', navLinks);
 
   return (
-    <div className="h-screen w-64 flex flex-col bg-sidebar border-r border-gray-200">
+    <div className="h-screen w-64 flex flex-col bg-sidebar border-r border-gray-200 fixed left-0 top-0">
       <div className="p-4 flex items-center justify-center">
         <Link to="/" className="flex items-center gap-2">
           <img 
