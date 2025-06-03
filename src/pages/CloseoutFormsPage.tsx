@@ -59,7 +59,12 @@ const CloseoutFormsPage: React.FC<CloseoutFormsPageProps> = ({ status: defaultSt
     
     switch (defaultStatus) {
       case 'pending':
-        targetForms = getFilteredForms(pendingForms);
+        // For pending forms, show all pending forms for admins and superadmins
+        if (user?.role === 'admin' || user?.role === 'superadmin') {
+          targetForms = pendingForms; // Show all pending forms
+        } else {
+          targetForms = getFilteredForms(pendingForms); // Filter for preparers
+        }
         title = 'Pending Closeout Forms';
         emptyMessage = 'No pending forms found';
         break;
@@ -79,6 +84,10 @@ const CloseoutFormsPage: React.FC<CloseoutFormsPageProps> = ({ status: defaultSt
         emptyMessage = 'No amendment forms found';
         break;
     }
+
+    console.log('Target forms for status', defaultStatus, ':', targetForms);
+    console.log('User role:', user?.role);
+    console.log('All forms:', forms);
 
     return (
       <div className="space-y-6">
@@ -172,38 +181,30 @@ const CloseoutFormsPage: React.FC<CloseoutFormsPageProps> = ({ status: defaultSt
         </TabsList>
         
         <TabsContent value="pending">
-          <CloseoutFormGrid
-            forms={getFilteredForms(pendingForms)}
-            title="Pending Closeout Forms"
-            emptyMessage="No pending forms found"
-            onViewForm={handleViewForm}
+          <CloseoutFormsList
+            status="pending"
+            onBack={() => {}}
           />
         </TabsContent>
         
         <TabsContent value="active">
-          <CloseoutFormGrid
-            forms={getFilteredForms(activeForms)}
-            title="Currently Working Forms"
-            emptyMessage="No working forms found"
-            onViewForm={handleViewForm}
+          <CloseoutFormsList
+            status="active"
+            onBack={() => {}}
           />
         </TabsContent>
         
         <TabsContent value="completed">
-          <CloseoutFormGrid
-            forms={getFilteredForms(completedForms)}
-            title="Completed Closeout Forms"
-            emptyMessage="No completed forms found"
-            onViewForm={handleViewForm}
+          <CloseoutFormsList
+            status="completed"
+            onBack={() => {}}
           />
         </TabsContent>
         
         <TabsContent value="rejected">
-          <CloseoutFormGrid
-            forms={getFilteredForms(rejectedForms)}
-            title="Amendment Closeout Forms"
-            emptyMessage="No amendment forms found"
-            onViewForm={handleViewForm}
+          <CloseoutFormsList
+            status="rejected"
+            onBack={() => {}}
           />
         </TabsContent>
       </Tabs>
