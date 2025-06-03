@@ -20,7 +20,7 @@ const Sidebar = () => {
     { name: 'Completed Forms', href: '/dashboard/closeout-forms/completed', icon: CheckCircle },
   ];
 
-  // Links for admin and superadmin
+  // Links for admin
   const adminLinks = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Pending Forms', href: '/dashboard/closeout-forms/pending', icon: Clock },
@@ -29,7 +29,9 @@ const Sidebar = () => {
     { name: 'Completed Forms', href: '/dashboard/closeout-forms/completed', icon: CheckCircle },
   ];
 
+  // Super admin only has user management
   const superAdminLinks = [
+    { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'User Management', href: '/dashboard/users', icon: Users },
     { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ];
@@ -42,7 +44,7 @@ const Sidebar = () => {
   } else if (user?.role === 'admin') {
     navLinks = [...adminLinks];
   } else if (user?.role === 'superadmin') {
-    navLinks = [...adminLinks, ...superAdminLinks];
+    navLinks = [...superAdminLinks];
   }
 
   console.log('Sidebar - Navigation links:', navLinks);
