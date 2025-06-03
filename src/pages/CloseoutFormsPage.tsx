@@ -1,231 +1,135 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import CloseoutFormGrid from '@/components/CloseoutForms/CloseoutFormGrid';
+import { Input } from '@/components/ui/input';
+import { Search, ArrowLeft } from 'lucide-react';
 import CloseoutFormsList from '@/components/CloseoutForms/CloseoutFormsList';
 import CloseoutFormView from '@/components/CloseoutForms/CloseoutFormView';
-import CloseoutFormCreate from '@/components/CloseoutForms/CloseoutFormCreate';
-import { Plus } from 'lucide-react';
+import CloseoutFormAdminView from '@/components/CloseoutForms/CloseoutFormAdminView';
 
-interface CloseoutFormsPageProps {
-  status?: 'pending' | 'active' | 'completed' | 'rejected';
-}
-
-const CloseoutFormsPage: React.FC<CloseoutFormsPageProps> = ({ status: defaultStatus }) => {
+const CloseoutFormsPage = () => {
   const { user } = useAuth();
   const { forms } = useData();
-  
-  const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
-  const [formDialogOpen, setFormDialogOpen] = useState(false);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  
-  // Filter forms based on status
-  const pendingForms = forms.filter(form => form.status === 'pending');
-  const activeForms = forms.filter(form => form.status === 'active');
-  const completedForms = forms.filter(form => form.status === 'completed');
-  const rejectedForms = forms.filter(form => form.status === 'rejected');
-  
-  // Filter forms based on user role
-  const getFilteredForms = (formsList: typeof forms) => {
-    if (user?.role === 'superadmin') {
-      return formsList; // Super admin sees all forms
-    } else if (user?.role === 'admin') {
-      // Admin sees forms assigned to them OR all pending forms
-      if (formsList === pendingForms) {
-        return formsList; // Admin sees all pending forms
-      }
-      return formsList.filter(form => form.assignedTo && form.assignedTo.id === user.id);
-    } else {
-      // Preparer sees forms created by them
-      return formsList.filter(form => form.createdBy.id === user.id);
-    }
-  };
+  const navigate = useNavigate();
+  const { status } = useParams<{ status: string }>();
+  const [selectedForm, setSelectedForm] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const handleViewForm = (formId: string) => {
-    setSelectedFormId(formId);
-    setFormDialogOpen(true);
-  };
+  useEffect(() => {
+    // Reset selected form when the status route changes
+    setSelectedForm(null);
+  }, [status]);
 
-  const selectedForm = selectedFormId ? forms.find(form => form.id === selectedFormId) : null;
-
-  // If a specific status is provided, show only that tab content
-  if (defaultStatus) {
-    let targetForms = [];
-    let title = '';
-    let emptyMessage = '';
-    
-    switch (defaultStatus) {
+  const getTitle = () => {
+    switch (status) {
       case 'pending':
-        // For pending forms, show all pending forms for admins and superadmins
-        if (user?.role === 'admin' || user?.role === 'superadmin') {
-          targetForms = pendingForms; // Show all pending forms
-        } else {
-          targetForms = getFilteredForms(pendingForms); // Filter for preparers
-        }
-        title = 'Pending Closeout Forms';
-        emptyMessage = 'No pending forms found';
-        break;
+        return 'Pending Closeout Forms';
       case 'active':
-        targetForms = getFilteredForms(activeForms);
-        title = 'Currently Working Forms';
-        emptyMessage = 'No working forms found';
-        break;
+        return 'Active Closeout Forms';
       case 'completed':
-        targetForms = getFilteredForms(completedForms);
-        title = 'Completed Closeout Forms';
-        emptyMessage = 'No completed forms found';
-        break;
+        return 'Completed Closeout Forms';
       case 'rejected':
-        targetForms = getFilteredForms(rejectedForms);
-        title = 'Amendment Closeout Forms';
-        emptyMessage = 'No amendment forms found';
-        break;
+        return 'Amendment Required Forms';
+      default:
+        return 'Closeout Forms';
+    }
+  };
+
+  const getDescription = () => {
+    switch (status) {
+      case 'pending':
+        return 'List of closeout forms awaiting review.';
+      case 'active':
+        return 'List of closeout forms currently being processed.';
+      case 'completed':
+        return 'List of successfully completed closeout forms.';
+      case 'rejected':
+        return 'List of closeout forms that require amendments.';
+      default:
+        return 'Overview of all closeout forms.';
+    }
+  };
+
+  const filteredForms = forms.filter(form => {
+    const matchesStatus = !status || form.status === status;
+    const matchesSearch =
+      user?.role !== 'preparer' ||
+      form.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      form.signingEmail.toLowerCase().includes(searchTerm.toLowerCase());
+
+    if (user?.role === 'admin' && status !== 'pending') {
+      return matchesStatus && matchesSearch && form.assignedTo?.id === user.id;
     }
 
-    console.log('Target forms for status', defaultStatus, ':', targetForms);
-    console.log('User role:', user?.role);
-    console.log('All forms:', forms);
+    if (user?.role === 'preparer') {
+      return matchesStatus && matchesSearch && form.createdBy?.id === user.id;
+    }
 
-    return (
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-          </div>
-          
-          {/* Only show Create Form button for non-preparer roles (admin/superadmin) */}
-          {user?.role !== 'preparer' && (
-            <Button onClick={() => setCreateDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Form
-            </Button>
-          )}
-        </div>
-        
-        {/* Use table format for all statuses when accessed via URL */}
-        <CloseoutFormsList
-          status={defaultStatus}
-          onBack={() => window.history.back()}
-        />
-        
-        {/* Closeout Form View Dialog */}
-        <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
-          <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Closeout Form Details</DialogTitle>
-            </DialogHeader>
-            {selectedForm && <CloseoutFormView form={selectedForm} />}
-          </DialogContent>
-        </Dialog>
-        
-        <CloseoutFormCreate
-          open={createDialogOpen}
-          onOpenChange={setCreateDialogOpen}
-        />
-      </div>
-    );
-  }
+    return matchesStatus && matchesSearch;
+  });
 
-  // Default view with tabs
+  const renderFormView = () => {
+    if (!selectedForm) return null;
+
+    // Use admin view for admin/superadmin, regular view for preparers
+    if (user?.role === 'admin' || user?.role === 'superadmin') {
+      return <CloseoutFormAdminView form={selectedForm} />;
+    } else {
+      return <CloseoutFormView form={selectedForm} />;
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Closeout Forms</h1>
-          <p className="text-muted-foreground">
-            Manage tax return closeout forms and track their status
-          </p>
-        </div>
-        
-        {/* Only show Create Form button for non-preparer roles (admin/superadmin) */}
-        {user?.role !== 'preparer' && (
-          <Button onClick={() => setCreateDialogOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Create Form
-          </Button>
-        )}
-      </div>
-      
-      <Tabs defaultValue="pending" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="pending" className="relative">
-            Pending
-            {getFilteredForms(pendingForms).length > 0 && (
-              <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-xs flex items-center justify-center text-primary-foreground">
-                {getFilteredForms(pendingForms).length}
-              </span>
-            )}
-          </TabsTrigger>
-          
-          {user?.role !== 'preparer' && (
-            <TabsTrigger value="active" className="relative">
-              Working
-              {getFilteredForms(activeForms).length > 0 && (
-                <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-xs flex items-center justify-center text-primary-foreground">
-                  {getFilteredForms(activeForms).length}
-                </span>
-              )}
-            </TabsTrigger>
+      {!selectedForm ? (
+        <>
+          {/* Form list header */}
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight text-gray-900">
+                {getTitle()}
+              </h1>
+              <p className="text-gray-600">{getDescription()}</p>
+            </div>
+          </div>
+
+          {/* Search box for preparers only */}
+          {user?.role === 'preparer' && (
+            <div className="mb-6">
+              <div className="relative max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <Input
+                  type="text"
+                  placeholder="Search by client email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+            </div>
           )}
-          
-          <TabsTrigger value="completed">Completed</TabsTrigger>
-          <TabsTrigger value="rejected" className="relative">
-            Amendment
-            {getFilteredForms(rejectedForms).length > 0 && (
-              <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-xs flex items-center justify-center text-destructive-foreground">
-                {getFilteredForms(rejectedForms).length}
-              </span>
-            )}
-          </TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="pending">
-          <CloseoutFormsList
-            status="pending"
-            onBack={() => {}}
+
+          <CloseoutFormsList 
+            forms={filteredForms} 
+            onSelectForm={setSelectedForm}
+            showCreateButton={false}
           />
-        </TabsContent>
-        
-        <TabsContent value="active">
-          <CloseoutFormsList
-            status="active"
-            onBack={() => {}}
-          />
-        </TabsContent>
-        
-        <TabsContent value="completed">
-          <CloseoutFormsList
-            status="completed"
-            onBack={() => {}}
-          />
-        </TabsContent>
-        
-        <TabsContent value="rejected">
-          <CloseoutFormsList
-            status="rejected"
-            onBack={() => {}}
-          />
-        </TabsContent>
-      </Tabs>
-      
-      {/* Closeout Form View Dialog */}
-      <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Closeout Form Details</DialogTitle>
-          </DialogHeader>
-          {selectedForm && <CloseoutFormView form={selectedForm} />}
-        </DialogContent>
-      </Dialog>
-      
-      <CloseoutFormCreate
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-      />
+        </>
+      ) : (
+        <div className="space-y-4">
+          <Button
+            variant="outline"
+            onClick={() => setSelectedForm(null)}
+            className="mb-4"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to List
+          </Button>
+          {renderFormView()}
+        </div>
+      )}
     </div>
   );
 };
