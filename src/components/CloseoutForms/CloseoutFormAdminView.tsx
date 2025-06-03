@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Check, X, Play, FileX, UserPlus } from 'lucide-react';
+import { Check, X, Play, FileX, UserPlus, CheckCircle } from 'lucide-react';
 import { CloseoutForm } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -33,6 +33,10 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
     updateFormStatus(form.id, 'active', 'Admin started working on this form');
   };
 
+  const handleMarkComplete = () => {
+    updateFormStatus(form.id, 'completed', 'Form marked as completed by admin');
+  };
+
   const submitAmendment = () => {
     if (amendmentNote.trim()) {
       updateFormStatus(form.id, 'rejected', amendmentNote);
@@ -51,6 +55,7 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
   };
 
   const showAdminActions = form.status === 'pending' && (user?.role === 'admin' || user?.role === 'superadmin');
+  const showMarkCompleteButton = form.status === 'active' && (user?.role === 'admin' || user?.role === 'superadmin');
 
   const TableRow = ({ label, value, isHighlighted = false }: { label: string; value: React.ReactNode; isHighlighted?: boolean }) => (
     <tr className={isHighlighted ? 'bg-yellow-50' : ''}>
@@ -463,32 +468,45 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
       </div>
 
       {/* Admin Action Buttons */}
-      {showAdminActions && (
+      {(showAdminActions || showMarkCompleteButton) && (
         <div className="border-t-2 border-gray-300 pt-6">
           <div className="flex justify-end gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setShowAssignDialog(true)}
-              className="flex items-center gap-2 text-blue-600 border-blue-600 hover:bg-blue-50"
-            >
-              <UserPlus className="h-4 w-4" />
-              Assign To
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setShowAmendmentDialog(true)}
-              className="flex items-center gap-2 text-orange-600 border-orange-600 hover:bg-orange-50"
-            >
-              <FileX className="h-4 w-4" />
-              Amendment
-            </Button>
-            <Button
-              onClick={handleStartWorking}
-              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
-            >
-              <Play className="h-4 w-4" />
-              Working on it
-            </Button>
+            {showAdminActions && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAssignDialog(true)}
+                  className="flex items-center gap-2 text-blue-600 border-blue-600 hover:bg-blue-50"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  Assign To
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowAmendmentDialog(true)}
+                  className="flex items-center gap-2 text-orange-600 border-orange-600 hover:bg-orange-50"
+                >
+                  <FileX className="h-4 w-4" />
+                  Amendment
+                </Button>
+                <Button
+                  onClick={handleStartWorking}
+                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                >
+                  <Play className="h-4 w-4" />
+                  Working on it
+                </Button>
+              </>
+            )}
+            {showMarkCompleteButton && (
+              <Button
+                onClick={handleMarkComplete}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <CheckCircle className="h-4 w-4" />
+                Mark as Complete
+              </Button>
+            )}
           </div>
         </div>
       )}

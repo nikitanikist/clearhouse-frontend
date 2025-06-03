@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -14,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { FileText, Download, Check, X, Play, FileX, UserPlus } from 'lucide-react';
+import { FileText, Download, Check, X, Play, FileX, UserPlus, CheckCircle } from 'lucide-react';
 import { CloseoutForm } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -42,6 +43,10 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
     updateFormStatus(form.id, 'active', 'Admin started working on this form');
   };
 
+  const handleMarkComplete = () => {
+    updateFormStatus(form.id, 'completed', 'Form marked as completed by admin');
+  };
+
   const submitAmendment = () => {
     if (amendmentNote.trim()) {
       updateFormStatus(form.id, 'rejected', amendmentNote);
@@ -61,6 +66,7 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
 
   // Show admin action buttons only for pending forms and if user is admin/superadmin
   const showAdminActions = form.status === 'pending' && (user?.role === 'admin' || user?.role === 'superadmin');
+  const showMarkCompleteButton = form.status === 'active' && (user?.role === 'admin' || user?.role === 'superadmin');
 
   return (
     <div className="space-y-6">
@@ -545,33 +551,46 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
       </Card>
 
       {/* Admin Action Buttons */}
-      {showAdminActions && (
+      {(showAdminActions || showMarkCompleteButton) && (
         <Card>
           <CardContent className="pt-6">
             <div className="flex justify-end gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowAssignDialog(true)}
-                className="flex items-center gap-2 text-blue-600 border-blue-600 hover:bg-blue-50"
-              >
-                <UserPlus className="h-4 w-4" />
-                Assign To
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setShowAmendmentDialog(true)}
-                className="flex items-center gap-2 text-orange-600 border-orange-600 hover:bg-orange-50"
-              >
-                <FileX className="h-4 w-4" />
-                Amendment
-              </Button>
-              <Button
-                onClick={handleStartWorking}
-                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
-              >
-                <Play className="h-4 w-4" />
-                Working on it
-              </Button>
+              {showAdminActions && (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowAssignDialog(true)}
+                    className="flex items-center gap-2 text-blue-600 border-blue-600 hover:bg-blue-50"
+                  >
+                    <UserPlus className="h-4 w-4" />
+                    Assign To
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowAmendmentDialog(true)}
+                    className="flex items-center gap-2 text-orange-600 border-orange-600 hover:bg-orange-50"
+                  >
+                    <FileX className="h-4 w-4" />
+                    Amendment
+                  </Button>
+                  <Button
+                    onClick={handleStartWorking}
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    <Play className="h-4 w-4" />
+                    Working on it
+                  </Button>
+                </>
+              )}
+              {showMarkCompleteButton && (
+                <Button
+                  onClick={handleMarkComplete}
+                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Mark as Complete
+                </Button>
+              )}
             </div>
           </CardContent>
         </Card>
