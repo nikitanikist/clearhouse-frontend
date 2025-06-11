@@ -903,5 +903,3 @@ const CloseoutFormTable = ({
 };
 
 export default CloseoutFormTable;
-
-}
