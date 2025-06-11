@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -233,5 +234,3 @@ const CloseoutFormCreate = ({
 };
 
 export default CloseoutFormCreate;
-
-}
