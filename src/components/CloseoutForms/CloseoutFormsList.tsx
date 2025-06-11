@@ -130,11 +130,15 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, o
     }
   };
 
-  const getFormTypeBadge = (formType: string) => {
+  const getFormTypeBadge = (form: any) => {
+    // Use existing returnType or default to Personal
+    const formType = form.returnType || 'personal';
     switch (formType) {
       case 'personal':
+      case 'T1':
         return <Badge variant="outline" className="bg-blue-50 text-blue-700">Personal</Badge>;
       case 'corporate':
+      case 'T2':
         return <Badge variant="outline" className="bg-green-50 text-green-700">Corporate</Badge>;
       default:
         return <Badge variant="outline" className="bg-gray-50 text-gray-700">Personal</Badge>;
@@ -393,7 +397,7 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, o
                 <TableBody>
                   {searchFilteredForms.map((form) => (
                     <TableRow key={form.id}>
-                      <TableCell>{getFormTypeBadge(form.formType || 'personal')}</TableCell>
+                      <TableCell>{getFormTypeBadge(form)}</TableCell>
                       <TableCell className="font-medium">{form.clientName || 'N/A'}</TableCell>
                       <TableCell>{form.signingEmail || 'N/A'}</TableCell>
                       <TableCell>{form.jobNumber || 'N/A'}</TableCell>

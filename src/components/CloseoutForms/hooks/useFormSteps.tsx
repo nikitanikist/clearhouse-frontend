@@ -16,7 +16,11 @@ export const useFormSteps = () => {
   };
 
   const handleNewClient = (email: string) => {
-    setSelectedClient({ email, name: undefined });
+    setSelectedClient({ 
+      id: `new-client-${Date.now()}`, 
+      email, 
+      name: undefined 
+    });
     setIsNewClient(true);
     setStep(3);
   };
