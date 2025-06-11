@@ -1,4 +1,3 @@
-
 import { CloseoutFormTableData } from '../CloseoutFormTable';
 import { User } from '@/contexts/AuthContext';
 
@@ -42,6 +41,14 @@ export const mapTableDataToCloseoutForm = (
     isPaperFiled: !primaryMember.isEfiled,
     installmentsRequired: primaryMember.installmentsRequired,
     
+    // New filing detail fields with default values
+    t106: false,
+    t1134: false,
+    ontarioAnnualReturn: formData.ontarioAnnualReturn || false,
+    tSlips: formData.tSlipType ? true : false,
+    quebecReturn: false,
+    albertaReturn: false,
+    
     // Tax forms
     t2091PrincipalResidence: formData.t2091PrincipalResidence,
     t1135ForeignProperty: formData.t1135ForeignProperty,
@@ -49,15 +56,22 @@ export const mapTableDataToCloseoutForm = (
     hstDraftOrFinal: formData.hstDraftOrFinal,
     tSlipType: formData.tSlipType,
     
+    // Other documents and notes
+    otherNotes: formData.otherNotes,
+    otherDocuments: formData.otherDocuments || '',
+    
+    // Tax installment fields with default values
+    corporateInstallmentsRequired: false,
+    fedScheduleAttached: false,
+    hstInstallmentRequired: formData.hstInstallmentsRequired || false,
+    hstTabCompleted: false,
+    
     // Installments
     personalTaxInstallmentsRequired: formData.personalTaxInstallmentsRequired,
     hstInstallmentsRequired: formData.hstInstallmentsRequired,
     
     // Outstanding balance
     outstandingTaxBalance: formData.outstandingTaxBalance,
-    
-    otherNotes: formData.otherNotes,
-    otherDocuments: formData.otherDocuments,
     
     // T1 Summary fields
     priorPeriodsBalance: formData.priorPeriodsBalance,
