@@ -17,7 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Eye, Edit, ArrowLeft, Play, FileX, X, UserPlus, Search } from 'lucide-react';
+import { Eye, Edit, ArrowLeft, FileX, X, UserPlus, Search } from 'lucide-react';
 import { format } from 'date-fns';
 import CloseoutFormView from './CloseoutFormView';
 import CloseoutFormCreate from './CloseoutFormCreate';
@@ -130,6 +130,17 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, o
     }
   };
 
+  const getFormTypeBadge = (formType: string) => {
+    switch (formType) {
+      case 'personal':
+        return <Badge variant="outline" className="bg-blue-50 text-blue-700">Personal</Badge>;
+      case 'corporate':
+        return <Badge variant="outline" className="bg-green-50 text-green-700">Corporate</Badge>;
+      default:
+        return <Badge variant="outline" className="bg-gray-50 text-gray-700">Personal</Badge>;
+    }
+  };
+
   const getStatusTitle = () => {
     switch (status) {
       case 'pending':
@@ -165,11 +176,7 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, o
     setShowEditForm(true);
   };
 
-  const handleStartWorking = (formId: string) => {
-    updateFormStatus(formId, 'active', 'Admin started working on this form');
-  };
-
-  const handleRequestAmendment = (formId: string) => {
+  const handleAmendForm = (formId: string) => {
     setActionFormId(formId);
     setShowAmendmentDialog(true);
   };
@@ -240,6 +247,40 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, o
           </Button>
         );
       }
+    }
+
+    if (status === 'active' && (user?.role === 'admin' || user?.role === 'superadmin')) {
+      return (
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleViewForm(form.id)}
+            className="flex items-center gap-2"
+          >
+            <Eye className="h-4 w-4" />
+            View
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleAmendForm(form.id)}
+            className="flex items-center gap-2 text-orange-600 hover:text-orange-700"
+          >
+            <FileX className="h-4 w-4" />
+            Amend
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleAssignForm(form.id)}
+            className="flex items-center gap-2 text-blue-600 hover:text-blue-700"
+          >
+            <UserPlus className="h-4 w-4" />
+            Reassign
+          </Button>
+        </div>
+      );
     }
 
     if (status === 'rejected' && (user?.role === 'preparer')) {
@@ -334,6 +375,7 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, o
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Type</TableHead>
                     <TableHead>Client Name</TableHead>
                     <TableHead>Email ID</TableHead>
                     <TableHead>Job Number</TableHead>
@@ -341,6 +383,9 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, o
                     <TableHead>Partner</TableHead>
                     <TableHead>Invoice Amount</TableHead>
                     <TableHead>Status</TableHead>
+                    {status === 'active' && (user?.role === 'admin' || user?.role === 'superadmin') && (
+                      <TableHead>Assigned To</TableHead>
+                    )}
                     <TableHead>Created Date</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -348,6 +393,7 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, o
                 <TableBody>
                   {searchFilteredForms.map((form) => (
                     <TableRow key={form.id}>
+                      <TableCell>{getFormTypeBadge(form.formType || 'personal')}</TableCell>
                       <TableCell className="font-medium">{form.clientName || 'N/A'}</TableCell>
                       <TableCell>{form.signingEmail || 'N/A'}</TableCell>
                       <TableCell>{form.jobNumber || 'N/A'}</TableCell>
@@ -355,6 +401,17 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, o
                       <TableCell>{form.partner || 'N/A'}</TableCell>
                       <TableCell>{form.invoiceAmount || 'N/A'}</TableCell>
                       <TableCell>{getStatusBadge(form.status)}</TableCell>
+                      {status === 'active' && (user?.role === 'admin' || user?.role === 'superadmin') && (
+                        <TableCell>
+                          {form.assignedTo ? (
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700">
+                              {form.assignedTo.name}
+                            </Badge>
+                          ) : (
+                            <span className="text-gray-400">Unassigned</span>
+                          )}
+                        </TableCell>
+                      )}
                       <TableCell>{formatDate(form.createdAt)}</TableCell>
                       <TableCell>
                         {renderActionButtons(form)}

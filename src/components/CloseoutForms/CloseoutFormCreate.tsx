@@ -14,6 +14,7 @@ import { Client } from './ClientSearch';
 import { useFormSteps } from './hooks/useFormSteps';
 import { mapTableDataToCloseoutForm } from './utils/formDataMapper';
 import { useIsMobile } from '@/hooks/use-mobile';
+import FormTypeSelection from './FormTypeSelection';
 import ClientSearchStep from './steps/ClientSearchStep';
 import DocumentUploadStep from './steps/DocumentUploadStep';
 import FormCompletionStep from './steps/FormCompletionStep';
@@ -47,9 +48,12 @@ const CloseoutFormCreate = ({
     getStepDescription,
   } = useFormSteps();
 
+  const [formType, setFormType] = React.useState<'personal' | 'corporate' | null>(null);
+
   // If editing, pre-populate data
   React.useEffect(() => {
     if (editForm && open) {
+      setFormType('personal'); // Default for existing forms
       // Pre-populate form with existing data - add missing id property for Client
       handleClientSelect({ 
         id: editForm.id || 'temp-id', 
@@ -100,9 +104,14 @@ const CloseoutFormCreate = ({
           installmentAttachment: editForm.installmentAttachment
         }]
       });
-      setStep(3); // Go directly to form completion step
+      setStep(4); // Go directly to form completion step (adjusted for new step)
     }
   }, [editForm, open]);
+
+  const handleFormTypeSelect = (type: 'personal' | 'corporate') => {
+    setFormType(type);
+    setStep(2); // Move to client search step
+  };
 
   // Get previous year forms for selected client
   const getPreviousYearForms = () => {
@@ -121,7 +130,7 @@ const CloseoutFormCreate = ({
   const handleFormSubmit = (formData: CloseoutFormTableData) => {
     if (!user) return;
     
-    const mappedFormData = mapTableDataToCloseoutForm(formData, user);
+    const mappedFormData = mapTableDataToCloseoutForm(formData, user, formType || 'personal');
     
     if (editForm) {
       // Update existing form - pass the complete form object with required properties
@@ -138,16 +147,18 @@ const CloseoutFormCreate = ({
     
     // Reset form
     resetForm();
+    setFormType(null);
     onOpenChange(false);
   };
 
   const handleClose = () => {
     resetForm();
+    setFormType(null);
     onOpenChange(false);
   };
 
   // Determine if we should use full screen mode
-  const isComparisonView = step === 3 && shouldShowComparison();
+  const isComparisonView = step === 4 && shouldShowComparison();
   const shouldUseFullScreen = isComparisonView;
   
   return (
@@ -155,7 +166,7 @@ const CloseoutFormCreate = ({
       <DialogContent className={
         shouldUseFullScreen
           ? "w-screen h-screen max-w-none max-h-none m-0 rounded-none overflow-y-auto"
-          : step === 3 
+          : step === 4 
           ? "sm:max-w-7xl max-h-[90vh] overflow-y-auto" 
           : "sm:max-w-2xl"
       }>
@@ -168,39 +179,49 @@ const CloseoutFormCreate = ({
         
         <div className={shouldUseFullScreen ? "flex-1" : ""}>
           {step === 1 && !editForm && (
+            <FormTypeSelection onTypeSelect={handleFormTypeSelect} />
+          )}
+
+          {step === 2 && !editForm && (
             <ClientSearchStep 
               onClientSelect={handleClientSelect}
               onNewClient={handleNewClient}
             />
           )}
 
-          {step === 2 && selectedClient && !editForm && (
+          {step === 3 && selectedClient && !editForm && (
             <DocumentUploadStep 
               selectedClient={selectedClient}
               onDataExtracted={handleDataExtracted}
             />
           )}
           
-          {step === 3 && extractedData && (
+          {step === 4 && extractedData && (
             <FormCompletionStep 
               extractedData={extractedData}
               selectedClient={selectedClient!}
               isNewClient={isNewClient}
               previousForms={getPreviousYearForms()}
               onSubmit={handleFormSubmit}
-              onCancel={() => editForm ? handleClose() : setStep(2)}
+              onCancel={() => editForm ? handleClose() : setStep(3)}
+              formType={formType || 'personal'}
             />
           )}
         </div>
         
         {/* Only show footer for non-completion steps */}
-        {step !== 3 && (
+        {step !== 4 && (
           <div className="flex justify-end gap-3 pt-4 border-t">
             {step === 1 ? (
               <Button variant="outline" onClick={handleClose}>Cancel</Button>
             ) : step === 2 ? (
               <>
                 <Button variant="outline" onClick={() => setStep(1)}>Back</Button>
+                <Button variant="outline" onClick={handleClose}>Cancel</Button>
+              </>
+            ) : step === 3 ? (
+              <>
+                <Button variant="outline" onClick={() => setStep(2)}>Back</Button>
                 <Button variant="outline" onClick={handleClose}>Cancel</Button>
               </>
             ) : null}
@@ -212,3 +233,5 @@ const CloseoutFormCreate = ({
 };
 
 export default CloseoutFormCreate;
+
+}

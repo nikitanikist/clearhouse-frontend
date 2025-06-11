@@ -28,10 +28,8 @@ export interface FamilyMember {
   signingPerson: string;
   signingEmail: string;
   additionalEmails: string[];
-  isT1: boolean;
-  isS216: boolean;
-  isS116: boolean;
-  isPaperFiled: boolean;
+  returnType: 'T1' | 'S216' | 'S116';
+  isEfiled: boolean;
   installmentsRequired: boolean;
   personalTaxPayment: string;
   installmentAttachment: {
@@ -42,42 +40,38 @@ export interface FamilyMember {
 }
 
 export interface CloseoutFormTableData {
+  formType: 'personal' | 'corporate';
   filePath: string;
   partner: string;
   manager: string;
   years: string;
   jobNumber: string;
   invoiceAmount: string;
-  invoiceDescription: string; // New field
   billDetail: string;
   paymentRequired: boolean;
   wipRecovery: string;
   recoveryReason: string;
   familyMembers: FamilyMember[];
   
-  // Filing Details - existing fields
+  // Filing Details for Personal Returns
   t2091PrincipalResidence: boolean;
   t1135ForeignProperty: boolean;
   t1032PensionSplit: boolean;
   hstDraftOrFinal: string;
   otherNotes: string;
   
-  // Filing Details - new tax return type fields
-  t106: boolean;
-  t1134: boolean;
-  ontarioAnnualReturn: boolean;
-  tSlips: boolean;
-  quebecReturn: boolean;
-  albertaReturn: boolean;
+  // T Slip specification
+  tSlipType: string;
   
   // Additional Documentation
   otherDocuments: string;
   
-  // Tax Installment Section
-  corporateInstallmentsRequired: boolean;
-  fedScheduleAttached: boolean;
-  hstInstallmentRequired: boolean;
-  hstTabCompleted: boolean;
+  // Personal Tax Installments
+  personalTaxInstallmentsRequired: boolean;
+  hstInstallmentsRequired: boolean;
+  
+  // Outstanding Tax Balance
+  outstandingTaxBalance: string;
   
   // T1 Summary fields
   priorPeriodsBalance: string;
@@ -85,7 +79,10 @@ export interface CloseoutFormTableData {
   installmentsDuringYear: string;
   installmentsAfterYear: string;
   amountOwing: string;
-  dueDate: string;
+  
+  // Due Dates
+  taxPaymentDueDate: string;
+  returnFilingDueDate: 'April 30' | 'June 15';
   
   // HST Summary fields
   hstPriorBalance: string;
@@ -94,6 +91,13 @@ export interface CloseoutFormTableData {
   hstInstallmentsAfter: string;
   hstPaymentDue: string;
   hstDueDate: string;
+  
+  // Multi-year support
+  yearlyAmounts: Array<{
+    year: string;
+    amountOwing: string;
+    dueDate: string;
+  }>;
 }
 
 interface CloseoutFormTableProps {
@@ -101,17 +105,24 @@ interface CloseoutFormTableProps {
   onSubmit: (data: CloseoutFormTableData) => void;
   onCancel: () => void;
   showButtons?: boolean;
+  formType?: 'personal' | 'corporate';
 }
 
-const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true }: CloseoutFormTableProps) => {
+const CloseoutFormTable = ({ 
+  initialData, 
+  onSubmit, 
+  onCancel, 
+  showButtons = true,
+  formType = 'personal' 
+}: CloseoutFormTableProps) => {
   const [formData, setFormData] = useState<CloseoutFormTableData>({
+    formType: formType,
     filePath: initialData?.filePath || '\\\\Clearhouse\\Clients\\ClientName_2024\\T1',
     partner: initialData?.partner || 'Priya S.',
     manager: initialData?.manager || 'Deepak Jain',
     years: initialData?.years || '2024',
     jobNumber: initialData?.jobNumber || '10254-T1',
     invoiceAmount: initialData?.invoiceAmount || '$348 CAD',
-    invoiceDescription: initialData?.invoiceDescription || 'Standard wording for T2',
     billDetail: initialData?.billDetail || 'Personal T1 + Foreign Income + Donation Sched.',
     paymentRequired: initialData?.paymentRequired || false,
     wipRecovery: initialData?.wipRecovery || '100%',
@@ -123,39 +134,33 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
         signingPerson: 'John Smith',
         signingEmail: 'john.smith@email.com',
         additionalEmails: [],
-        isT1: true,
-        isS216: false,
-        isS116: false,
-        isPaperFiled: false,
+        returnType: 'T1',
+        isEfiled: true,
         installmentsRequired: true,
         personalTaxPayment: '$1,250.00',
         installmentAttachment: null
       }
     ],
     
-    // Filing Details - existing fields
+    // Filing Details
     t2091PrincipalResidence: initialData?.t2091PrincipalResidence || false,
     t1135ForeignProperty: initialData?.t1135ForeignProperty || false,
     t1032PensionSplit: initialData?.t1032PensionSplit || false,
     hstDraftOrFinal: initialData?.hstDraftOrFinal || 'N/A',
     otherNotes: initialData?.otherNotes || '',
     
-    // Filing Details - new tax return type fields
-    t106: initialData?.t106 || false,
-    t1134: initialData?.t1134 || false,
-    ontarioAnnualReturn: initialData?.ontarioAnnualReturn || false,
-    tSlips: initialData?.tSlips || false,
-    quebecReturn: initialData?.quebecReturn || false,
-    albertaReturn: initialData?.albertaReturn || false,
+    // T Slip specification
+    tSlipType: initialData?.tSlipType || '',
     
     // Additional Documentation
     otherDocuments: initialData?.otherDocuments || '',
     
-    // Tax Installment Section
-    corporateInstallmentsRequired: initialData?.corporateInstallmentsRequired || false,
-    fedScheduleAttached: initialData?.fedScheduleAttached || false,
-    hstInstallmentRequired: initialData?.hstInstallmentRequired || false,
-    hstTabCompleted: initialData?.hstTabCompleted || false,
+    // Personal Tax Installments
+    personalTaxInstallmentsRequired: initialData?.personalTaxInstallmentsRequired || false,
+    hstInstallmentsRequired: initialData?.hstInstallmentsRequired || false,
+    
+    // Outstanding Tax Balance
+    outstandingTaxBalance: initialData?.outstandingTaxBalance || '$0.00',
     
     // T1 Summary fields
     priorPeriodsBalance: initialData?.priorPeriodsBalance || '0',
@@ -163,7 +168,10 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
     installmentsDuringYear: initialData?.installmentsDuringYear || '0',
     installmentsAfterYear: initialData?.installmentsAfterYear || '0',
     amountOwing: initialData?.amountOwing || '0',
-    dueDate: initialData?.dueDate || '',
+    
+    // Due Dates
+    taxPaymentDueDate: initialData?.taxPaymentDueDate || '',
+    returnFilingDueDate: initialData?.returnFilingDueDate || 'April 30',
     
     // HST Summary fields
     hstPriorBalance: initialData?.hstPriorBalance || '0',
@@ -171,8 +179,26 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
     hstInstallmentsDuring: initialData?.hstInstallmentsDuring || '0',
     hstInstallmentsAfter: initialData?.hstInstallmentsAfter || '0',
     hstPaymentDue: initialData?.hstPaymentDue || '0',
-    hstDueDate: initialData?.hstDueDate || ''
+    hstDueDate: initialData?.hstDueDate || '',
+    
+    // Multi-year support
+    yearlyAmounts: initialData?.yearlyAmounts || []
   });
+
+  // Parse years and create yearly amounts if multiple years
+  React.useEffect(() => {
+    if (formData.years.includes(',') || formData.years.includes('-')) {
+      const years = formData.years.split(/[,-]/).map(y => y.trim());
+      if (years.length > 1) {
+        const yearlyAmounts = years.map(year => ({
+          year,
+          amountOwing: '$0.00',
+          dueDate: ''
+        }));
+        setFormData(prev => ({ ...prev, yearlyAmounts }));
+      }
+    }
+  }, [formData.years]);
 
   const addFamilyMember = () => {
     const newMember: FamilyMember = {
@@ -181,10 +207,8 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
       signingPerson: '',
       signingEmail: '',
       additionalEmails: [],
-      isT1: false,
-      isS216: false,
-      isS116: false,
-      isPaperFiled: false,
+      returnType: 'T1',
+      isEfiled: true,
       installmentsRequired: false,
       personalTaxPayment: '$0.00',
       installmentAttachment: null
@@ -211,7 +235,6 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
         if (member.id === id) {
           const updatedMember = { ...member, [field]: value };
           
-          // If installments checkbox is unchecked, clear the attachment
           if (field === 'installmentsRequired' && !value) {
             updatedMember.installmentAttachment = null;
           }
@@ -225,6 +248,15 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
 
   const updateFormField = (field: keyof Omit<CloseoutFormTableData, 'familyMembers'>, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const updateYearlyAmount = (index: number, field: 'amountOwing' | 'dueDate', value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      yearlyAmounts: prev.yearlyAmounts.map((item, idx) => 
+        idx === index ? { ...item, [field]: value } : item
+      )
+    }));
   };
 
   const handleSubmit = () => {
@@ -276,7 +308,7 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
     <div className="space-y-6">
       {showButtons && (
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold">Closeout Form</h2>
+          <h2 className="text-2xl font-bold">Personal Tax Closeout Form</h2>
           <div className="flex gap-2">
             <Button variant="outline" onClick={onCancel}>Cancel</Button>
             <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700">
@@ -321,6 +353,7 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
               id="years"
               value={formData.years}
               onChange={(e) => updateFormField('years', e.target.value)}
+              placeholder="e.g., 2024 or 2023,2024"
             />
           </div>
           <div className="space-y-2">
@@ -337,15 +370,6 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
               id="invoiceAmount"
               value={formData.invoiceAmount}
               onChange={(e) => updateFormField('invoiceAmount', e.target.value)}
-            />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="invoiceDescription">Invoice Description</Label>
-            <Textarea
-              id="invoiceDescription"
-              value={formData.invoiceDescription}
-              onChange={(e) => updateFormField('invoiceDescription', e.target.value)}
-              placeholder="e.g., Standard wording for T2"
             />
           </div>
           <div className="space-y-2">
@@ -372,6 +396,15 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
               onChange={(e) => updateFormField('recoveryReason', e.target.value)}
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="outstandingTaxBalance">Outstanding Tax Balance</Label>
+            <Input
+              id="outstandingTaxBalance"
+              value={formData.outstandingTaxBalance}
+              onChange={(e) => updateFormField('outstandingTaxBalance', e.target.value)}
+              placeholder="$0.00"
+            />
+          </div>
           <div className="flex items-center space-x-2">
             <Checkbox
               id="paymentRequired"
@@ -387,22 +420,6 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
       <div className="space-y-4">
         <h3 className="text-xl font-semibold">2. Filing Details</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-blue-50 rounded-lg">
-          <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
-            <Checkbox
-              id="t106"
-              checked={formData.t106}
-              onCheckedChange={(checked) => updateFormField('t106', checked)}
-            />
-            <Label htmlFor="t106">T106</Label>
-          </div>
-          <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
-            <Checkbox
-              id="t1134"
-              checked={formData.t1134}
-              onCheckedChange={(checked) => updateFormField('t1134', checked)}
-            />
-            <Label htmlFor="t1134">T1134</Label>
-          </div>
           <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
             <Checkbox
               id="t1135ForeignProperty"
@@ -427,78 +444,16 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
             />
             <Label htmlFor="t1032PensionSplit">T1032 Pension Split</Label>
           </div>
-          <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
-            <Checkbox
-              id="ontarioAnnualReturn"
-              checked={formData.ontarioAnnualReturn}
-              onCheckedChange={(checked) => updateFormField('ontarioAnnualReturn', checked)}
+          <div className="space-y-2 p-2 bg-yellow-100 rounded">
+            <Label htmlFor="tSlipType">T Slip Type</Label>
+            <Input
+              id="tSlipType"
+              value={formData.tSlipType}
+              onChange={(e) => updateFormField('tSlipType', e.target.value)}
+              placeholder="e.g., T4, T5, T3"
             />
-            <Label htmlFor="ontarioAnnualReturn">Ontario Annual Return</Label>
           </div>
-          <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
-            <Checkbox
-              id="tSlips"
-              checked={formData.tSlips}
-              onCheckedChange={(checked) => updateFormField('tSlips', checked)}
-            />
-            <Label htmlFor="tSlips">T Slips</Label>
-          </div>
-          <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
-            <Checkbox
-              id="quebecReturn"
-              checked={formData.quebecReturn}
-              onCheckedChange={(checked) => updateFormField('quebecReturn', checked)}
-            />
-            <Label htmlFor="quebecReturn">Quebec Return</Label>
-          </div>
-          <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
-            <Checkbox
-              id="albertaReturn"
-              checked={formData.albertaReturn}
-              onCheckedChange={(checked) => updateFormField('albertaReturn', checked)}
-            />
-            <Label htmlFor="albertaReturn">Alberta Return</Label>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Tax Installments Section */}
-      <div className="space-y-4">
-        <h3 className="text-xl font-semibold">3. Tax Installments</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-green-50 rounded-lg">
-          <div className="flex items-center space-x-2 p-2 bg-green-100 rounded">
-            <Checkbox
-              id="corporateInstallmentsRequired"
-              checked={formData.corporateInstallmentsRequired}
-              onCheckedChange={(checked) => updateFormField('corporateInstallmentsRequired', checked)}
-            />
-            <Label htmlFor="corporateInstallmentsRequired">Corporate Installments Required</Label>
-          </div>
-          <div className="flex items-center space-x-2 p-2 bg-green-100 rounded">
-            <Checkbox
-              id="fedScheduleAttached"
-              checked={formData.fedScheduleAttached}
-              onCheckedChange={(checked) => updateFormField('fedScheduleAttached', checked)}
-            />
-            <Label htmlFor="fedScheduleAttached">FED Schedule from T2 Attached</Label>
-          </div>
-          <div className="flex items-center space-x-2 p-2 bg-green-100 rounded">
-            <Checkbox
-              id="hstInstallmentRequired"
-              checked={formData.hstInstallmentRequired}
-              onCheckedChange={(checked) => updateFormField('hstInstallmentRequired', checked)}
-            />
-            <Label htmlFor="hstInstallmentRequired">HST Installment Required</Label>
-          </div>
-          <div className="flex items-center space-x-2 p-2 bg-green-100 rounded">
-            <Checkbox
-              id="hstTabCompleted"
-              checked={formData.hstTabCompleted}
-              onCheckedChange={(checked) => updateFormField('hstTabCompleted', checked)}
-            />
-            <Label htmlFor="hstTabCompleted">HST Installment Tab Completed</Label>
-          </div>
-          <div className="space-y-2 p-2 bg-green-100 rounded">
+          <div className="space-y-2 p-2 bg-yellow-100 rounded">
             <Label htmlFor="hstDraftOrFinal">HST Draft/Final</Label>
             <Select value={formData.hstDraftOrFinal} onValueChange={(value) => updateFormField('hstDraftOrFinal', value)}>
               <SelectTrigger>
@@ -512,6 +467,49 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
             </Select>
           </div>
         </div>
+      </div>
+
+      {/* 3. Personal Tax Installments Section */}
+      <div className="space-y-4">
+        <h3 className="text-xl font-semibold">3. Personal Tax Installments</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-green-50 rounded-lg">
+          <div className="flex items-center space-x-2 p-2 bg-green-100 rounded">
+            <Checkbox
+              id="personalTaxInstallmentsRequired"
+              checked={formData.personalTaxInstallmentsRequired}
+              onCheckedChange={(checked) => updateFormField('personalTaxInstallmentsRequired', checked)}
+            />
+            <Label htmlFor="personalTaxInstallmentsRequired">Personal Tax Installments Required</Label>
+          </div>
+          <div className="flex items-center space-x-2 p-2 bg-green-100 rounded">
+            <Checkbox
+              id="hstInstallmentsRequired"
+              checked={formData.hstInstallmentsRequired}
+              onCheckedChange={(checked) => updateFormField('hstInstallmentsRequired', checked)}
+            />
+            <Label htmlFor="hstInstallmentsRequired">HST Installments Required</Label>
+          </div>
+        </div>
+
+        {/* Installment Attachments */}
+        {(formData.personalTaxInstallmentsRequired || formData.hstInstallmentsRequired) && (
+          <div className="space-y-4">
+            <h4 className="text-lg font-medium">Installment Attachments</h4>
+            {formData.familyMembers.map((member, index) => (
+              member.installmentsRequired && (
+                <div key={member.id} className="p-4 bg-orange-50 rounded-lg border">
+                  <h5 className="font-medium mb-3">
+                    {member.clientName || `Family Member ${index + 1}`} - Installment Attachment
+                  </h5>
+                  <InstallmentAttachmentUpload
+                    attachment={member.installmentAttachment}
+                    onAttachmentChange={(attachment) => updateFamilyMember(member.id, 'installmentAttachment', attachment)}
+                  />
+                </div>
+              )
+            ))}
+          </div>
+        )}
       </div>
 
       {/* 4. Documents Section */}
@@ -559,10 +557,8 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
                 <TableHead className="min-w-[200px] font-semibold">Person Signing</TableHead>
                 <TableHead className="min-w-[250px] font-semibold">Email</TableHead>
                 <TableHead className="min-w-[200px] font-semibold">Additional Emails</TableHead>
-                <TableHead className="min-w-[80px] text-center font-semibold">T1</TableHead>
-                <TableHead className="min-w-[80px] text-center font-semibold">S216</TableHead>
-                <TableHead className="min-w-[80px] text-center font-semibold">S116</TableHead>
-                <TableHead className="min-w-[100px] text-center font-semibold">Paper Filed</TableHead>
+                <TableHead className="min-w-[120px] text-center font-semibold">Return Type</TableHead>
+                <TableHead className="min-w-[100px] text-center font-semibold">E-filed</TableHead>
                 <TableHead className="min-w-[120px] text-center font-semibold">Installments</TableHead>
                 <TableHead className="min-w-[180px] font-semibold">Personal Tax Payment</TableHead>
                 <TableHead className="min-w-[80px] text-center font-semibold">Actions</TableHead>
@@ -628,35 +624,26 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
                       </Button>
                     </div>
                   </TableCell>
-                  <TableCell className="p-3 text-center">
-                    <div className="flex justify-center">
-                      <Checkbox
-                        checked={member.isT1}
-                        onCheckedChange={(checked) => updateFamilyMember(member.id, 'isT1', checked)}
-                      />
-                    </div>
+                  <TableCell className="p-3">
+                    <Select 
+                      value={member.returnType} 
+                      onValueChange={(value: 'T1' | 'S216' | 'S116') => updateFamilyMember(member.id, 'returnType', value)}
+                    >
+                      <SelectTrigger className="min-w-[100px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="T1">T1</SelectItem>
+                        <SelectItem value="S216">S216</SelectItem>
+                        <SelectItem value="S116">S116</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell className="p-3 text-center">
                     <div className="flex justify-center">
                       <Checkbox
-                        checked={member.isS216}
-                        onCheckedChange={(checked) => updateFamilyMember(member.id, 'isS216', checked)}
-                      />
-                    </div>
-                  </TableCell>
-                  <TableCell className="p-3 text-center">
-                    <div className="flex justify-center">
-                      <Checkbox
-                        checked={member.isS116}
-                        onCheckedChange={(checked) => updateFamilyMember(member.id, 'isS116', checked)}
-                      />
-                    </div>
-                  </TableCell>
-                  <TableCell className="p-3 text-center">
-                    <div className="flex justify-center">
-                      <Checkbox
-                        checked={member.isPaperFiled}
-                        onCheckedChange={(checked) => updateFamilyMember(member.id, 'isPaperFiled', checked)}
+                        checked={member.isEfiled}
+                        onCheckedChange={(checked) => updateFamilyMember(member.id, 'isEfiled', checked)}
                       />
                     </div>
                   </TableCell>
@@ -695,34 +682,9 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
         </div>
       </div>
 
-      {/* 6. Installment Attachment Section */}
+      {/* 6. T1 Summary Section */}
       <div className="space-y-4">
-        <h3 className="text-xl font-semibold">6. Installment Attachment</h3>
-        <div className="space-y-4">
-          {formData.familyMembers.map((member, index) => (
-            member.installmentsRequired && (
-              <div key={member.id} className="p-4 bg-orange-50 rounded-lg border">
-                <h4 className="font-medium mb-3">
-                  {member.clientName || `Family Member ${index + 1}`} - Installment Attachment
-                </h4>
-                <InstallmentAttachmentUpload
-                  attachment={member.installmentAttachment}
-                  onAttachmentChange={(attachment) => updateFamilyMember(member.id, 'installmentAttachment', attachment)}
-                />
-              </div>
-            )
-          ))}
-          {!formData.familyMembers.some(member => member.installmentsRequired) && (
-            <div className="p-4 bg-gray-100 rounded-lg text-center text-gray-600">
-              No installment attachments required for any family members
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* 7. T1 Summary Section */}
-      <div className="space-y-4">
-        <h3 className="text-xl font-semibold">7. T1 Summary</h3>
+        <h3 className="text-xl font-semibold">6. T1 Summary</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-blue-50 rounded-lg">
           <div className="space-y-2">
             <Label htmlFor="priorPeriodsBalance">Prior Periods Balance</Label>
@@ -770,20 +732,69 @@ const CloseoutFormTable = ({ initialData, onSubmit, onCancel, showButtons = true
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="dueDate">Due Date</Label>
+            <Label htmlFor="taxPaymentDueDate">Tax Payment Due Date</Label>
             <Input
-              id="dueDate"
-              value={formData.dueDate}
-              onChange={(e) => updateFormField('dueDate', e.target.value)}
+              id="taxPaymentDueDate"
+              value={formData.taxPaymentDueDate}
+              onChange={(e) => updateFormField('taxPaymentDueDate', e.target.value)}
               placeholder="April 30, 2024"
             />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="returnFilingDueDate">Return Filing Due Date</Label>
+            <Select 
+              value={formData.returnFilingDueDate} 
+              onValueChange={(value: 'April 30' | 'June 15') => updateFormField('returnFilingDueDate', value)}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="April 30">April 30</SelectItem>
+                <SelectItem value="June 15">June 15</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
+
+        {/* Multi-year amounts */}
+        {formData.yearlyAmounts.length > 0 && (
+          <div className="mt-6">
+            <h4 className="text-lg font-medium mb-4">Multi-Year Amount Details</h4>
+            <div className="space-y-4">
+              {formData.yearlyAmounts.map((yearData, index) => (
+                <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-blue-100 rounded-lg">
+                  <div className="space-y-2">
+                    <Label>Year: {yearData.year}</Label>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`year-amount-${index}`}>Amount Owing</Label>
+                    <Input
+                      id={`year-amount-${index}`}
+                      value={yearData.amountOwing}
+                      onChange={(e) => updateYearlyAmount(index, 'amountOwing', e.target.value)}
+                      placeholder="$0.00"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`year-due-${index}`}>Due Date</Label>
+                    <Input
+                      id={`year-due-${index}`}
+                      value={yearData.dueDate}
+                      onChange={(e) => updateYearlyAmount(index, 'dueDate', e.target.value)}
+                      placeholder="April 30, 2024"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* 8. HST Summary Section */}
+      {/* 7. HST Summary Section */}
       <div className="space-y-4">
-        <h3 className="text-xl font-semibold">8. HST Summary</h3>
+        <h3 className="text-xl font-semibold">7. HST Summary</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-green-50 rounded-lg">
           <div className="space-y-2">
             <Label htmlFor="hstPriorBalance">HST Prior Balance</Label>

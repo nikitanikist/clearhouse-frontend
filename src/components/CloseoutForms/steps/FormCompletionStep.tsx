@@ -13,6 +13,7 @@ interface FormCompletionStepProps {
   previousForms: CloseoutForm[];
   onSubmit: (formData: CloseoutFormTableData) => void;
   onCancel: () => void;
+  formType?: 'personal' | 'corporate';
 }
 
 const FormCompletionStep = ({ 
@@ -21,15 +22,14 @@ const FormCompletionStep = ({
   isNewClient, 
   previousForms, 
   onSubmit, 
-  onCancel 
+  onCancel,
+  formType = 'personal'
 }: FormCompletionStepProps) => {
-  // Check if we have previous year data for comparison
   const hasPreviousYearData = !isNewClient && previousForms.length > 0;
   const mostRecentPreviousForm = hasPreviousYearData ? 
     previousForms.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] : 
     null;
 
-  // If we have previous year data, show the comparison view
   if (hasPreviousYearData && mostRecentPreviousForm) {
     return (
       <CloseoutFormComparison
@@ -41,12 +41,12 @@ const FormCompletionStep = ({
     );
   }
 
-  // Clean, user-friendly view for new clients or when no previous data exists
+  const formTypeDisplay = formType === 'personal' ? 'Personal Tax' : 'Corporate';
+
   return (
     <div className="max-w-5xl mx-auto p-6 space-y-6">
-      {/* Header for new client form */}
       <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-2">Create New Closeout Form</h1>
+        <h1 className="text-2xl font-semibold text-gray-900 mb-2">Create New {formTypeDisplay} Closeout Form</h1>
         <p className="text-sm text-gray-600">
           {isNewClient ? 'New client - no previous forms available' : 'Complete the form details below'}
         </p>
@@ -57,20 +57,21 @@ const FormCompletionStep = ({
           </span>
           <span className="text-gray-400">•</span>
           <span className="text-gray-600">{selectedClient?.email}</span>
+          <span className="text-gray-400">•</span>
+          <span className="text-gray-600">Type: {formTypeDisplay}</span>
         </div>
       </div>
 
-      {/* Main form content - single column, no horizontal scrolling */}
       <div className="bg-white rounded-lg shadow-sm border">
         <CloseoutFormTable
           initialData={extractedData}
           onSubmit={onSubmit}
           onCancel={onCancel}
           showButtons={true}
+          formType={formType}
         />
       </div>
 
-      {/* Optional: Previous year forms reference for existing clients without recent data */}
       {!isNewClient && selectedClient && 'name' in selectedClient && previousForms.length > 0 && (
         <div className="bg-gray-50 rounded-lg p-6 border">
           <h3 className="text-lg font-medium text-gray-900 mb-4">Previous Forms Reference</h3>
