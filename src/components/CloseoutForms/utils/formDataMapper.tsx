@@ -1,3 +1,4 @@
+
 import { CloseoutFormTableData } from '../CloseoutFormTable';
 import { User } from '@/contexts/AuthContext';
 
@@ -31,14 +32,14 @@ export const mapTableDataToCloseoutForm = (
     paymentRequired: formData.paymentRequired,
     wipRecovery: formData.wipRecovery,
     recoveryReason: formData.recoveryReason,
-    returnType: primaryMember.returnType || 'T1',
+    returnType: primaryMember.isT1 ? 'T1' : primaryMember.isS216 ? 'S216' : primaryMember.isS116 ? 'S116' : 'T1',
     
     // Individual boolean fields for return types
-    isT1: primaryMember.returnType === 'T1',
-    isS216: primaryMember.returnType === 'S216',
-    isS116: primaryMember.returnType === 'S116',
-    isEfiled: primaryMember.isEfiled,
-    isPaperFiled: !primaryMember.isEfiled,
+    isT1: primaryMember.isT1,
+    isS216: primaryMember.isS216,
+    isS116: primaryMember.isS116,
+    isEfiled: !primaryMember.isPaperFiled,
+    isPaperFiled: primaryMember.isPaperFiled,
     installmentsRequired: primaryMember.installmentsRequired,
     
     // New filing detail fields with default values
@@ -98,6 +99,19 @@ export const mapTableDataToCloseoutForm = (
     status: 'pending' as const,
     assignedTo: null,
     createdBy: createdByInfo,
-    familyMembers: formData.familyMembers,
+    familyMembers: formData.familyMembers.map(member => ({
+      id: member.id,
+      clientName: member.clientName,
+      signingPerson: member.signingPerson,
+      signingEmail: member.signingEmail,
+      additionalEmails: member.additionalEmails,
+      isT1: member.isT1,
+      isS216: member.isS216,
+      isS116: member.isS116,
+      isPaperFiled: member.isPaperFiled,
+      installmentsRequired: member.installmentsRequired,
+      personalTaxPayment: member.personalTaxPayment,
+      installmentAttachment: member.installmentAttachment,
+    })),
   };
 };

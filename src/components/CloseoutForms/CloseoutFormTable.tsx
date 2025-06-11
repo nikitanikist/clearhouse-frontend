@@ -28,8 +28,10 @@ export interface FamilyMember {
   signingPerson: string;
   signingEmail: string;
   additionalEmails: string[];
-  returnType: 'T1' | 'S216' | 'S116';
-  isEfiled: boolean;
+  isT1: boolean;
+  isS216: boolean;
+  isS116: boolean;
+  isPaperFiled: boolean;
   installmentsRequired: boolean;
   personalTaxPayment: string;
   installmentAttachment: {
@@ -59,6 +61,7 @@ export interface CloseoutFormTableData {
   t1032PensionSplit: boolean;
   hstDraftOrFinal: string;
   otherNotes: string;
+  ontarioAnnualReturn: boolean;
   
   // T Slip specification
   tSlipType: string;
@@ -134,8 +137,10 @@ const CloseoutFormTable = ({
         signingPerson: 'John Smith',
         signingEmail: 'john.smith@email.com',
         additionalEmails: [],
-        returnType: 'T1',
-        isEfiled: true,
+        isT1: true,
+        isS216: false,
+        isS116: false,
+        isPaperFiled: false,
         installmentsRequired: true,
         personalTaxPayment: '$1,250.00',
         installmentAttachment: null
@@ -148,6 +153,7 @@ const CloseoutFormTable = ({
     t1032PensionSplit: initialData?.t1032PensionSplit || false,
     hstDraftOrFinal: initialData?.hstDraftOrFinal || 'N/A',
     otherNotes: initialData?.otherNotes || '',
+    ontarioAnnualReturn: initialData?.ontarioAnnualReturn || false,
     
     // T Slip specification
     tSlipType: initialData?.tSlipType || '',
@@ -207,8 +213,10 @@ const CloseoutFormTable = ({
       signingPerson: '',
       signingEmail: '',
       additionalEmails: [],
-      returnType: 'T1',
-      isEfiled: true,
+      isT1: true,
+      isS216: false,
+      isS116: false,
+      isPaperFiled: false,
       installmentsRequired: false,
       personalTaxPayment: '$0.00',
       installmentAttachment: null
@@ -234,6 +242,18 @@ const CloseoutFormTable = ({
       familyMembers: prev.familyMembers.map(member => {
         if (member.id === id) {
           const updatedMember = { ...member, [field]: value };
+          
+          // If changing return type, reset others to false
+          if (field === 'isT1' && value) {
+            updatedMember.isS216 = false;
+            updatedMember.isS116 = false;
+          } else if (field === 'isS216' && value) {
+            updatedMember.isT1 = false;
+            updatedMember.isS116 = false;
+          } else if (field === 'isS116' && value) {
+            updatedMember.isT1 = false;
+            updatedMember.isS216 = false;
+          }
           
           if (field === 'installmentsRequired' && !value) {
             updatedMember.installmentAttachment = null;
@@ -302,6 +322,14 @@ const CloseoutFormTable = ({
           : member
       )
     }));
+  };
+
+  // Helper function to get current return type for display
+  const getReturnType = (member: FamilyMember): string => {
+    if (member.isT1) return 'T1';
+    if (member.isS216) return 'S216';
+    if (member.isS116) return 'S116';
+    return 'T1';
   };
 
   return (
@@ -444,6 +472,14 @@ const CloseoutFormTable = ({
             />
             <Label htmlFor="t1032PensionSplit">T1032 Pension Split</Label>
           </div>
+          <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
+            <Checkbox
+              id="ontarioAnnualReturn"
+              checked={formData.ontarioAnnualReturn}
+              onCheckedChange={(checked) => updateFormField('ontarioAnnualReturn', checked)}
+            />
+            <Label htmlFor="ontarioAnnualReturn">Ontario Annual Return</Label>
+          </div>
           <div className="space-y-2 p-2 bg-yellow-100 rounded">
             <Label htmlFor="tSlipType">T Slip Type</Label>
             <Input
@@ -558,7 +594,7 @@ const CloseoutFormTable = ({
                 <TableHead className="min-w-[250px] font-semibold">Email</TableHead>
                 <TableHead className="min-w-[200px] font-semibold">Additional Emails</TableHead>
                 <TableHead className="min-w-[120px] text-center font-semibold">Return Type</TableHead>
-                <TableHead className="min-w-[100px] text-center font-semibold">E-filed</TableHead>
+                <TableHead className="min-w-[100px] text-center font-semibold">Paper Filed</TableHead>
                 <TableHead className="min-w-[120px] text-center font-semibold">Installments</TableHead>
                 <TableHead className="min-w-[180px] font-semibold">Personal Tax Payment</TableHead>
                 <TableHead className="min-w-[80px] text-center font-semibold">Actions</TableHead>
@@ -625,25 +661,35 @@ const CloseoutFormTable = ({
                     </div>
                   </TableCell>
                   <TableCell className="p-3">
-                    <Select 
-                      value={member.returnType} 
-                      onValueChange={(value: 'T1' | 'S216' | 'S116') => updateFamilyMember(member.id, 'returnType', value)}
-                    >
-                      <SelectTrigger className="min-w-[100px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="T1">T1</SelectItem>
-                        <SelectItem value="S216">S216</SelectItem>
-                        <SelectItem value="S116">S116</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={member.isT1}
+                          onCheckedChange={(checked) => updateFamilyMember(member.id, 'isT1', checked)}
+                        />
+                        <Label className="text-sm">T1</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={member.isS216}
+                          onCheckedChange={(checked) => updateFamilyMember(member.id, 'isS216', checked)}
+                        />
+                        <Label className="text-sm">S216</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={member.isS116}
+                          onCheckedChange={(checked) => updateFamilyMember(member.id, 'isS116', checked)}
+                        />
+                        <Label className="text-sm">S116</Label>
+                      </div>
+                    </div>
                   </TableCell>
                   <TableCell className="p-3 text-center">
                     <div className="flex justify-center">
                       <Checkbox
-                        checked={member.isEfiled}
-                        onCheckedChange={(checked) => updateFamilyMember(member.id, 'isEfiled', checked)}
+                        checked={member.isPaperFiled}
+                        onCheckedChange={(checked) => updateFamilyMember(member.id, 'isPaperFiled', checked)}
                       />
                     </div>
                   </TableCell>
@@ -857,3 +903,5 @@ const CloseoutFormTable = ({
 };
 
 export default CloseoutFormTable;
+
+}
