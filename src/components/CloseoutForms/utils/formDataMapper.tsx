@@ -27,12 +27,19 @@ export const mapTableDataToCloseoutForm = (
     years: formData.years,
     jobNumber: formData.jobNumber,
     invoiceAmount: formData.invoiceAmount,
+    invoiceDescription: formData.billDetail, // Map billDetail to invoiceDescription
     billDetail: formData.billDetail,
     paymentRequired: formData.paymentRequired,
     wipRecovery: formData.wipRecovery,
     recoveryReason: formData.recoveryReason,
     returnType: primaryMember.returnType || 'T1',
+    
+    // Individual boolean fields for return types
+    isT1: primaryMember.returnType === 'T1',
+    isS216: primaryMember.returnType === 'S216',
+    isS116: primaryMember.returnType === 'S116',
     isEfiled: primaryMember.isEfiled,
+    isPaperFiled: !primaryMember.isEfiled,
     installmentsRequired: primaryMember.installmentsRequired,
     
     // Tax forms
@@ -58,6 +65,7 @@ export const mapTableDataToCloseoutForm = (
     installmentsDuringYear: formData.installmentsDuringYear,
     installmentsAfterYear: formData.installmentsAfterYear,
     amountOwing: formData.amountOwing,
+    dueDate: formData.taxPaymentDueDate, // Map taxPaymentDueDate to dueDate for backward compatibility
     taxPaymentDueDate: formData.taxPaymentDueDate,
     returnFilingDueDate: formData.returnFilingDueDate,
     
