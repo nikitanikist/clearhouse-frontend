@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
@@ -201,9 +202,6 @@ const CloseoutFormCreate = ({
             <DocumentUploadStep 
               selectedClient={selectedClient}
               onDataExtracted={handleDataExtracted}
-              onNext={() => setStep(4)}
-              onBack={() => setStep(2)}
-              formType={formType || 'personal'}
             />
           )}
           
