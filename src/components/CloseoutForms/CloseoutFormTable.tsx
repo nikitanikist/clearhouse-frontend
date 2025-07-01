@@ -4,16 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Minus, Save } from 'lucide-react';
+import { Plus, X, Upload } from 'lucide-react';
 import InstallmentAttachmentUpload from './InstallmentAttachmentUpload';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import {
   Select,
   SelectContent,
@@ -119,6 +111,7 @@ const CloseoutFormTable = ({
   formType = 'personal' 
 }: CloseoutFormTableProps) => {
   const [selectedMemberTab, setSelectedMemberTab] = useState<string>('1');
+  const [clientEmail, setClientEmail] = useState('');
   const [formData, setFormData] = useState<CloseoutFormTableData>({
     formType: formType,
     filePath: initialData?.filePath || '\\\\Clearhouse\\Clients\\ClientName_2024\\T1',
@@ -192,21 +185,6 @@ const CloseoutFormTable = ({
     yearlyAmounts: initialData?.yearlyAmounts || []
   });
 
-  // Parse years and create yearly amounts if multiple years
-  React.useEffect(() => {
-    if (formData.years.includes(',') || formData.years.includes('-')) {
-      const years = formData.years.split(/[,-]/).map(y => y.trim());
-      if (years.length > 1) {
-        const yearlyAmounts = years.map(year => ({
-          year,
-          amountOwing: '$0.00',
-          dueDate: ''
-        }));
-        setFormData(prev => ({ ...prev, yearlyAmounts }));
-      }
-    }
-  }, [formData.years]);
-
   const addFamilyMember = () => {
     const newMember: FamilyMember = {
       id: Date.now().toString(),
@@ -222,10 +200,12 @@ const CloseoutFormTable = ({
       personalTaxPayment: '$0.00',
       installmentAttachment: null
     };
+    const newId = (formData.familyMembers.length + 1).toString();
     setFormData(prev => ({
       ...prev,
-      familyMembers: [...prev.familyMembers, newMember]
+      familyMembers: [...prev.familyMembers, { ...newMember, id: newId }]
     }));
+    setSelectedMemberTab(newId);
   };
 
   const removeFamilyMember = (id: string) => {
@@ -234,6 +214,10 @@ const CloseoutFormTable = ({
         ...prev,
         familyMembers: prev.familyMembers.filter(member => member.id !== id)
       }));
+      // Switch to first member if current selected is removed
+      if (selectedMemberTab === id) {
+        setSelectedMemberTab('1');
+      }
     }
   };
 
@@ -271,686 +255,495 @@ const CloseoutFormTable = ({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const updateYearlyAmount = (index: number, field: 'amountOwing' | 'dueDate', value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      yearlyAmounts: prev.yearlyAmounts.map((item, idx) => 
-        idx === index ? { ...item, [field]: value } : item
-      )
-    }));
-  };
-
   const handleSubmit = () => {
     onSubmit(formData);
   };
 
-  const addEmailToMember = (memberId: string) => {
-    setFormData(prev => ({
-      ...prev,
-      familyMembers: prev.familyMembers.map(member =>
-        member.id === memberId 
-          ? { ...member, additionalEmails: [...member.additionalEmails, ''] }
-          : member
-      )
-    }));
-  };
-
-  const updateMemberEmail = (memberId: string, emailIndex: number, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      familyMembers: prev.familyMembers.map(member =>
-        member.id === memberId 
-          ? { 
-              ...member, 
-              additionalEmails: member.additionalEmails.map((email, idx) => 
-                idx === emailIndex ? value : email
-              )
-            }
-          : member
-      )
-    }));
-  };
-
-  const removeMemberEmail = (memberId: string, emailIndex: number) => {
-    setFormData(prev => ({
-      ...prev,
-      familyMembers: prev.familyMembers.map(member =>
-        member.id === memberId 
-          ? { 
-              ...member, 
-              additionalEmails: member.additionalEmails.filter((_, idx) => idx !== emailIndex)
-            }
-          : member
-      )
-    }));
-  };
-
-  // Helper function to get current return type for display
-  const getReturnType = (member: FamilyMember): string => {
-    if (member.isT1) return 'T1';
-    if (member.isS216) return 'S216';
-    if (member.isS116) return 'S116';
-    return 'T1';
-  };
+  const currentMember = formData.familyMembers.find(m => m.id === selectedMemberTab);
 
   return (
-    <div className="space-y-6">
-      {showButtons && (
+    <div className="min-h-screen bg-gray-50">
+      {/* Blue Header */}
+      <div className="bg-blue-600 text-white p-4">
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold">Personal Tax Closeout Form</h2>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onCancel}>Cancel</Button>
-            <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700">
-              <Save className="mr-2 h-4 w-4" />
-              Submit form
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {/* 1. General Information Section */}
-      <div className="space-y-4">
-        <h3 className="text-xl font-semibold">1. General Information</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
-          <div className="space-y-2">
-            <Label htmlFor="filePath">File Path</Label>
-            <Input
-              id="filePath"
-              value={formData.filePath}
-              onChange={(e) => updateFormField('filePath', e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="partner">Partner</Label>
-            <Input
-              id="partner"
-              value={formData.partner}
-              onChange={(e) => updateFormField('partner', e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="manager">Manager</Label>
-            <Input
-              id="manager"
-              value={formData.manager}
-              onChange={(e) => updateFormField('manager', e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="years">Year(s)</Label>
-            <Input
-              id="years"
-              value={formData.years}
-              onChange={(e) => updateFormField('years', e.target.value)}
-              placeholder="e.g., 2024 or 2023,2024"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="jobNumber">Job #</Label>
-            <Input
-              id="jobNumber"
-              value={formData.jobNumber}
-              onChange={(e) => updateFormField('jobNumber', e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="invoiceAmount">Invoice Amount</Label>
-            <Input
-              id="invoiceAmount"
-              value={formData.invoiceAmount}
-              onChange={(e) => updateFormField('invoiceAmount', e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="wipRecovery">WIP Recovery %</Label>
-            <Input
-              id="wipRecovery"
-              value={formData.wipRecovery}
-              onChange={(e) => updateFormField('wipRecovery', e.target.value)}
-            />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="billDetail">Final Bill Detail</Label>
-            <Textarea
-              id="billDetail"
-              value={formData.billDetail}
-              onChange={(e) => updateFormField('billDetail', e.target.value)}
-            />
-          </div>
-          <div className="space-y-2 md:col-span-2">
-            <Label htmlFor="recoveryReason">Reason for Recovery below 100%</Label>
-            <Input
-              id="recoveryReason"
-              value={formData.recoveryReason}
-              onChange={(e) => updateFormField('recoveryReason', e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="outstandingTaxBalance">Outstanding Tax Balance</Label>
-            <Input
-              id="outstandingTaxBalance"
-              value={formData.outstandingTaxBalance}
-              onChange={(e) => updateFormField('outstandingTaxBalance', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="paymentRequired"
-              checked={formData.paymentRequired}
-              onCheckedChange={(checked) => updateFormField('paymentRequired', checked)}
-            />
-            <Label htmlFor="paymentRequired">Payment required before filing?</Label>
-          </div>
-        </div>
-      </div>
-
-      {/* 2. Filing Details Section */}
-      <div className="space-y-4">
-        <h3 className="text-xl font-semibold">2. Filing Details</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-blue-50 rounded-lg">
-          <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
-            <Checkbox
-              id="t1135ForeignProperty"
-              checked={formData.t1135ForeignProperty}
-              onCheckedChange={(checked) => updateFormField('t1135ForeignProperty', checked)}
-            />
-            <Label htmlFor="t1135ForeignProperty">T1135 Foreign Property</Label>
-          </div>
-          <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
-            <Checkbox
-              id="t2091PrincipalResidence"
-              checked={formData.t2091PrincipalResidence}
-              onCheckedChange={(checked) => updateFormField('t2091PrincipalResidence', checked)}
-            />
-            <Label htmlFor="t2091PrincipalResidence">T2091 Principal Residence</Label>
-          </div>
-          <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
-            <Checkbox
-              id="t1032PensionSplit"
-              checked={formData.t1032PensionSplit}
-              onCheckedChange={(checked) => updateFormField('t1032PensionSplit', checked)}
-            />
-            <Label htmlFor="t1032PensionSplit">T1032 Pension Split</Label>
-          </div>
-          <div className="flex items-center space-x-2 p-2 bg-yellow-100 rounded">
-            <Checkbox
-              id="ontarioAnnualReturn"
-              checked={formData.ontarioAnnualReturn}
-              onCheckedChange={(checked) => updateFormField('ontarioAnnualReturn', checked)}
-            />
-            <Label htmlFor="ontarioAnnualReturn">Ontario Annual Return</Label>
-          </div>
-          <div className="space-y-2 p-2 bg-yellow-100 rounded">
-            <Label htmlFor="tSlipType">T Slip Type</Label>
-            <Input
-              id="tSlipType"
-              value={formData.tSlipType}
-              onChange={(e) => updateFormField('tSlipType', e.target.value)}
-              placeholder="e.g., T4, T5, T3"
-            />
-          </div>
-          <div className="space-y-2 p-2 bg-yellow-100 rounded">
-            <Label htmlFor="hstDraftOrFinal">HST Draft/Final</Label>
-            <Select value={formData.hstDraftOrFinal} onValueChange={(value) => updateFormField('hstDraftOrFinal', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="N/A">N/A</SelectItem>
-                <SelectItem value="Draft">Draft</SelectItem>
-                <SelectItem value="Final">Final</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      </div>
-
-      {/* 3. Personal Tax Installments Section */}
-      <div className="space-y-4">
-        <h3 className="text-xl font-semibold">3. Personal Tax Installments</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-green-50 rounded-lg">
-          <div className="flex items-center space-x-2 p-2 bg-green-100 rounded">
-            <Checkbox
-              id="personalTaxInstallmentsRequired"
-              checked={formData.personalTaxInstallmentsRequired}
-              onCheckedChange={(checked) => updateFormField('personalTaxInstallmentsRequired', checked)}
-            />
-            <Label htmlFor="personalTaxInstallmentsRequired">Personal Tax Installments Required</Label>
-          </div>
-          <div className="flex items-center space-x-2 p-2 bg-green-100 rounded">
-            <Checkbox
-              id="hstInstallmentsRequired"
-              checked={formData.hstInstallmentsRequired}
-              onCheckedChange={(checked) => updateFormField('hstInstallmentsRequired', checked)}
-            />
-            <Label htmlFor="hstInstallmentsRequired">HST Installments Required</Label>
-          </div>
-        </div>
-
-        {/* Installment Attachments */}
-        {(formData.personalTaxInstallmentsRequired || formData.hstInstallmentsRequired) && (
-          <div className="space-y-4">
-            <h4 className="text-lg font-medium">Installment Attachments</h4>
-            {formData.familyMembers.map((member, index) => (
-              member.installmentsRequired && (
-                <div key={member.id} className="p-4 bg-orange-50 rounded-lg border">
-                  <h5 className="font-medium mb-3">
-                    {member.clientName || `Family Member ${index + 1}`} - Installment Attachment
-                  </h5>
-                  <InstallmentAttachmentUpload
-                    attachment={member.installmentAttachment}
-                    onAttachmentChange={(attachment) => updateFamilyMember(member.id, 'installmentAttachment', attachment)}
-                  />
-                </div>
-              )
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* 4. Documents Section */}
-      <div className="space-y-4">
-        <h3 className="text-xl font-semibold">4. Documents</h3>
-        <div className="p-4 bg-purple-50 rounded-lg">
-          <div className="space-y-2">
-            <Label htmlFor="otherDocuments">Other Documents to Include</Label>
-            <Textarea
-              id="otherDocuments"
-              value={formData.otherDocuments}
-              onChange={(e) => updateFormField('otherDocuments', e.target.value)}
-              placeholder="e.g., T2 Schedule 130 - attached"
-              rows={3}
-            />
-          </div>
-          <div className="space-y-2 mt-4">
-            <Label htmlFor="otherNotes">Other Notes</Label>
-            <Textarea
-              id="otherNotes"
-              value={formData.otherNotes}
-              onChange={(e) => updateFormField('otherNotes', e.target.value)}
-              placeholder="Additional notes or comments"
-              rows={3}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* 5. Signature & Delivery Section */}
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-xl font-semibold">5. Signature & Delivery</h3>
-          <Button onClick={addFamilyMember} variant="outline" size="sm">
-            <Plus className="mr-2 h-4 w-4" />
+          <h1 className="text-xl font-semibold">Personal Tax Closeout Form</h1>
+          <Button 
+            onClick={addFamilyMember}
+            className="bg-green-500 hover:bg-green-600 text-white"
+          >
+            <Plus className="w-4 h-4 mr-2" />
             Add Family Member
           </Button>
         </div>
+      </div>
 
-        {/* Blue Header */}
-        <div className="bg-blue-600 text-white p-3 rounded-t-lg">
-          <h4 className="font-medium">Family Members & Signature Information</h4>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
-          {formData.familyMembers.map((member, index) => (
-            <div key={member.id} className="flex items-center">
-              <button
-                type="button"
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  selectedMemberTab === member.id
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-                onClick={() => setSelectedMemberTab(member.id)}
-              >
-                {index === 0 && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2">
-                    Primary
-                  </span>
-                )}
-                {member.clientName || `Member ${index + 1}`}
-              </button>
-              {formData.familyMembers.length > 1 && index > 0 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeFamilyMember(member.id)}
-                  className="ml-2 text-red-600 hover:text-red-700 p-1"
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
-              )}
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Top Controls */}
+        <div className="bg-white rounded-lg shadow-sm border p-4 mb-6">
+          <div className="grid grid-cols-4 gap-4">
+            <div>
+              <Label htmlFor="clientEmail" className="text-sm font-medium">Client Email</Label>
+              <Input
+                id="clientEmail"
+                value={clientEmail}
+                onChange={(e) => setClientEmail(e.target.value)}
+                placeholder="Enter client email"
+                className="mt-1"
+              />
             </div>
-          ))}
+            <div>
+              <Label htmlFor="returnType" className="text-sm font-medium">Return Type</Label>
+              <Select value={formData.formType} onValueChange={(value: 'personal' | 'corporate') => updateFormField('formType', value)}>
+                <SelectTrigger className="mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="personal">Personal</SelectItem>
+                  <SelectItem value="corporate">Corporate</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-sm font-medium">Filing Method</Label>
+              <div className="flex gap-4 mt-2">
+                <label className="flex items-center">
+                  <input type="radio" name="filingMethod" value="electronic" defaultChecked className="mr-2" />
+                  Electronic
+                </label>
+                <label className="flex items-center">
+                  <input type="radio" name="filingMethod" value="paper" className="mr-2" />
+                  Paper
+                </label>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Form Content for Selected Member */}
-        {formData.familyMembers.map((member) => 
-          member.id === selectedMemberTab && (
-            <div key={member.id} className="border rounded-lg p-6 bg-white">
-              {/* 2-Column Layout */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Left Column */}
-                <div className="space-y-4">
-                  <h5 className="font-medium text-gray-900 border-b pb-2">Client Information</h5>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor={`clientName-${member.id}`}>Client Name *</Label>
-                    <Input
-                      id={`clientName-${member.id}`}
-                      value={member.clientName}
-                      onChange={(e) => updateFamilyMember(member.id, 'clientName', e.target.value)}
-                      placeholder="Enter client name"
-                      className="w-full"
-                    />
+        {/* Family Member Tabs */}
+        <div className="bg-white rounded-lg shadow-sm border mb-6">
+          <div className="border-b">
+            <div className="flex">
+              {formData.familyMembers.map((member, index) => (
+                <button
+                  key={member.id}
+                  onClick={() => setSelectedMemberTab(member.id)}
+                  className={`px-4 py-3 border-r flex items-center gap-2 ${
+                    selectedMemberTab === member.id 
+                      ? 'bg-blue-50 border-b-2 border-blue-600 text-blue-600' 
+                      : 'hover:bg-gray-50'
+                  }`}
+                >
+                  <span>Member {index + 1}</span>
+                  {index === 0 && (
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">Primary</span>
+                  )}
+                  {index > 0 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeFamilyMember(member.id);
+                      }}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Form Content - 2 Column Layout */}
+          {currentMember && (
+            <div className="p-6">
+              <div className="grid grid-cols-12 gap-6">
+                {/* Left Column - Field Labels */}
+                <div className="col-span-4 space-y-8">
+                  {/* Section 1: Client Information */}
+                  <div>
+                    <h3 className="bg-blue-600 text-white px-3 py-2 rounded text-sm font-medium mb-4">
+                      1. Client Information
+                    </h3>
+                    <div className="space-y-4 text-sm">
+                      <div>Client Name</div>
+                      <div>Person for Signing</div>
+                      <div>Email for Signing</div>
+                      <div>Additional Emails for Package</div>
+                      <div>Return Type</div>
+                      <div>Paper Filed</div>
+                      <div>Tax Installments Required</div>
+                      <div>Personal Tax Payment</div>
+                      <div>Upload Documents</div>
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor={`signingPerson-${member.id}`}>Person Signing *</Label>
-                    <Input
-                      id={`signingPerson-${member.id}`}
-                      value={member.signingPerson}
-                      onChange={(e) => updateFamilyMember(member.id, 'signingPerson', e.target.value)}
-                      placeholder="Person who will sign"
-                      className="w-full"
-                    />
+                  {/* Section 2: General Information */}
+                  <div>
+                    <h3 className="bg-blue-600 text-white px-3 py-2 rounded text-sm font-medium mb-4">
+                      2. General Information
+                    </h3>
+                    <div className="space-y-4 text-sm">
+                      <div>File Path</div>
+                      <div>Partner</div>
+                      <div>Manager</div>
+                      <div>Year(s)</div>
+                      <div>Job Number</div>
+                      <div>Invoice Amount</div>
+                      <div>Bill Detail</div>
+                      <div>Payment Required Before Filing</div>
+                      <div>WIP Recovery %</div>
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor={`signingEmail-${member.id}`}>Signing Email *</Label>
-                    <Input
-                      id={`signingEmail-${member.id}`}
-                      value={member.signingEmail}
-                      onChange={(e) => updateFamilyMember(member.id, 'signingEmail', e.target.value)}
-                      placeholder="email@example.com"
-                      type="email"
-                      className="w-full"
-                    />
+                  {/* Section 3: Filing Details */}
+                  <div>
+                    <h3 className="bg-blue-600 text-white px-3 py-2 rounded text-sm font-medium mb-4">
+                      3. Filing Details
+                    </h3>
+                    <div className="space-y-4 text-sm">
+                      <div>T2091 Principal Residence</div>
+                      <div>T1135 Foreign Property</div>
+                      <div>T1032 Pension Split</div>
+                      <div>HST Draft/Final</div>
+                      <div>Other Notes</div>
+                    </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Additional Delivery Emails</Label>
-                    <div className="space-y-2">
-                      {member.additionalEmails.map((email, emailIndex) => (
-                        <div key={emailIndex} className="flex gap-2">
-                          <Input
-                            value={email}
-                            onChange={(e) => updateMemberEmail(member.id, emailIndex, e.target.value)}
-                            placeholder="additional@example.com"
-                            type="email"
-                            className="flex-1"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => removeMemberEmail(member.id, emailIndex)}
-                            className="text-red-600 hover:text-red-700"
-                          >
-                            <Minus className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => addEmailToMember(member.id)}
-                        className="w-full"
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Additional Email
-                      </Button>
+                  {/* Section 4: T1 Summary */}
+                  <div>
+                    <h3 className="bg-blue-600 text-white px-3 py-2 rounded text-sm font-medium mb-4">
+                      4. T1 Summary
+                    </h3>
+                    <div className="space-y-4 text-sm">
+                      <div>Prior Periods Balance</div>
+                      <div>Taxes Payable</div>
+                      <div>Installments During Year</div>
+                      <div>Installments After Year</div>
+                      <div>Amount Owing</div>
+                      <div>Tax Payment Due Date</div>
+                    </div>
+                  </div>
+
+                  {/* Section 5: HST Summary */}
+                  <div>
+                    <h3 className="bg-blue-600 text-white px-3 py-2 rounded text-sm font-medium mb-4">
+                      5. HST Summary
+                    </h3>
+                    <div className="space-y-4 text-sm">
+                      <div>HST Prior Balance</div>
+                      <div>HST Payable</div>
+                      <div>HST Installments During</div>
+                      <div>HST Installments After</div>
+                      <div>HST Payment Due</div>
+                      <div>HST Due Date</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Right Column */}
-                <div className="space-y-4">
-                  <h5 className="font-medium text-gray-900 border-b pb-2">Return & Filing Details</h5>
-                  
-                  <div className="space-y-3">
-                    <Label>Return Types</Label>
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`t1-${member.id}`}
-                          checked={member.isT1}
-                          onCheckedChange={(checked) => updateFamilyMember(member.id, 'isT1', checked)}
-                        />
-                        <Label htmlFor={`t1-${member.id}`}>T1 (Personal Tax Return)</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`s216-${member.id}`}
-                          checked={member.isS216}
-                          onCheckedChange={(checked) => updateFamilyMember(member.id, 'isS216', checked)}
-                        />
-                        <Label htmlFor={`s216-${member.id}`}>S216 (Non-Resident Tax Return)</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`s116-${member.id}`}
-                          checked={member.isS116}
-                          onCheckedChange={(checked) => updateFamilyMember(member.id, 'isS116', checked)}
-                        />
-                        <Label htmlFor={`s116-${member.id}`}>S116 (Certificate of Compliance)</Label>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label>Filing Options</Label>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`paperFiled-${member.id}`}
-                        checked={member.isPaperFiled}
-                        onCheckedChange={(checked) => updateFamilyMember(member.id, 'isPaperFiled', checked)}
+                {/* Right Column - Form Fields */}
+                <div className="col-span-8 space-y-8">
+                  {/* Section 1: Client Information */}
+                  <div>
+                    <div className="h-10 mb-4"></div> {/* Spacer to align with section header */}
+                    <div className="space-y-4">
+                      <Input
+                        value={currentMember.clientName}
+                        onChange={(e) => updateFamilyMember(currentMember.id, 'clientName', e.target.value)}
+                        placeholder="Enter client name"
                       />
-                      <Label htmlFor={`paperFiled-${member.id}`}>Paper Filed (instead of electronic)</Label>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label>Tax Installments</Label>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`installments-${member.id}`}
-                        checked={member.installmentsRequired}
-                        onCheckedChange={(checked) => updateFamilyMember(member.id, 'installmentsRequired', checked)}
+                      <Input
+                        value={currentMember.signingPerson}
+                        onChange={(e) => updateFamilyMember(currentMember.id, 'signingPerson', e.target.value)}
+                        placeholder="Enter signing person"
                       />
-                      <Label htmlFor={`installments-${member.id}`}>Installments Required</Label>
+                      <Input
+                        value={currentMember.signingEmail}
+                        onChange={(e) => updateFamilyMember(currentMember.id, 'signingEmail', e.target.value)}
+                        placeholder="Enter email for signing"
+                      />
+                      <div className="space-y-2">
+                        {currentMember.additionalEmails.map((email, index) => (
+                          <div key={index} className="flex gap-2">
+                            <Input
+                              value={email}
+                              onChange={(e) => {
+                                const newEmails = [...currentMember.additionalEmails];
+                                newEmails[index] = e.target.value;
+                                updateFamilyMember(currentMember.id, 'additionalEmails', newEmails);
+                              }}
+                              placeholder="Additional email"
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const newEmails = currentMember.additionalEmails.filter((_, i) => i !== index);
+                                updateFamilyMember(currentMember.id, 'additionalEmails', newEmails);
+                              }}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            updateFamilyMember(currentMember.id, 'additionalEmails', [...currentMember.additionalEmails, '']);
+                          }}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          Add Email
+                        </Button>
+                      </div>
+                      <div className="flex gap-4">
+                        <label className="flex items-center">
+                          <Checkbox
+                            checked={currentMember.isT1}
+                            onCheckedChange={(checked) => updateFamilyMember(currentMember.id, 'isT1', checked)}
+                          />
+                          <span className="ml-2">T1</span>
+                        </label>
+                        <label className="flex items-center">
+                          <Checkbox
+                            checked={currentMember.isS216}
+                            onCheckedChange={(checked) => updateFamilyMember(currentMember.id, 'isS216', checked)}
+                          />
+                          <span className="ml-2">S216</span>
+                        </label>
+                        <label className="flex items-center">
+                          <Checkbox
+                            checked={currentMember.isS116}
+                            onCheckedChange={(checked) => updateFamilyMember(currentMember.id, 'isS116', checked)}
+                          />
+                          <span className="ml-2">S116</span>
+                        </label>
+                      </div>
+                      <label className="flex items-center">
+                        <Checkbox
+                          checked={currentMember.isPaperFiled}
+                          onCheckedChange={(checked) => updateFamilyMember(currentMember.id, 'isPaperFiled', checked)}
+                        />
+                        <span className="ml-2">Paper Filed</span>
+                      </label>
+                      <label className="flex items-center">
+                        <Checkbox
+                          checked={currentMember.installmentsRequired}
+                          onCheckedChange={(checked) => updateFamilyMember(currentMember.id, 'installmentsRequired', checked)}
+                        />
+                        <span className="ml-2">Tax Installments Required</span>
+                      </label>
+                      <Input
+                        value={currentMember.personalTaxPayment}
+                        onChange={(e) => updateFamilyMember(currentMember.id, 'personalTaxPayment', e.target.value)}
+                        placeholder="$0.00"
+                      />
+                      <div className="space-y-2">
+                        <Button variant="outline" className="w-full">
+                          <Upload className="w-4 h-4 mr-2" />
+                          Upload T1C1 PDF
+                        </Button>
+                        <p className="text-xs text-gray-600">Auto-populates tax details below</p>
+                        {currentMember.installmentsRequired && (
+                          <InstallmentAttachmentUpload
+                            attachment={currentMember.installmentAttachment}
+                            onAttachmentChange={(attachment) => updateFamilyMember(currentMember.id, 'installmentAttachment', attachment)}
+                          />
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor={`taxPayment-${member.id}`}>Personal Tax Payment</Label>
-                    <Input
-                      id={`taxPayment-${member.id}`}
-                      value={member.personalTaxPayment}
-                      onChange={(e) => updateFamilyMember(member.id, 'personalTaxPayment', e.target.value)}
-                      placeholder="$0.00"
-                      className="w-full"
-                    />
+                  {/* Section 2: General Information */}
+                  <div>
+                    <div className="h-10 mb-4"></div> {/* Spacer to align with section header */}
+                    <div className="space-y-4">
+                      <Input
+                        value={formData.filePath}
+                        onChange={(e) => updateFormField('filePath', e.target.value)}
+                        placeholder="File path"
+                      />
+                      <Input
+                        value={formData.partner}
+                        onChange={(e) => updateFormField('partner', e.target.value)}
+                        placeholder="Partner"
+                      />
+                      <Input
+                        value={formData.manager}
+                        onChange={(e) => updateFormField('manager', e.target.value)}
+                        placeholder="Manager"
+                      />
+                      <Input
+                        value={formData.years}
+                        onChange={(e) => updateFormField('years', e.target.value)}
+                        placeholder="Year(s)"
+                      />
+                      <Input
+                        value={formData.jobNumber}
+                        onChange={(e) => updateFormField('jobNumber', e.target.value)}
+                        placeholder="Job number"
+                      />
+                      <Input
+                        value={formData.invoiceAmount}
+                        onChange={(e) => updateFormField('invoiceAmount', e.target.value)}
+                        placeholder="Invoice amount"
+                      />
+                      <Textarea
+                        value={formData.billDetail}
+                        onChange={(e) => updateFormField('billDetail', e.target.value)}
+                        placeholder="Bill detail"
+                        rows={3}
+                      />
+                      <label className="flex items-center">
+                        <Checkbox
+                          checked={formData.paymentRequired}
+                          onCheckedChange={(checked) => updateFormField('paymentRequired', checked)}
+                        />
+                        <span className="ml-2">Payment Required Before Filing</span>
+                      </label>
+                      <Input
+                        value={formData.wipRecovery}
+                        onChange={(e) => updateFormField('wipRecovery', e.target.value)}
+                        placeholder="WIP Recovery %"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Section 3: Filing Details */}
+                  <div>
+                    <div className="h-10 mb-4"></div> {/* Spacer to align with section header */}
+                    <div className="space-y-4">
+                      <label className="flex items-center">
+                        <Checkbox
+                          checked={formData.t2091PrincipalResidence}
+                          onCheckedChange={(checked) => updateFormField('t2091PrincipalResidence', checked)}
+                        />
+                        <span className="ml-2">T2091 Principal Residence</span>
+                      </label>
+                      <label className="flex items-center">
+                        <Checkbox
+                          checked={formData.t1135ForeignProperty}
+                          onCheckedChange={(checked) => updateFormField('t1135ForeignProperty', checked)}
+                        />
+                        <span className="ml-2">T1135 Foreign Property</span>
+                      </label>
+                      <label className="flex items-center">
+                        <Checkbox
+                          checked={formData.t1032PensionSplit}
+                          onCheckedChange={(checked) => updateFormField('t1032PensionSplit', checked)}
+                        />
+                        <span className="ml-2">T1032 Pension Split</span>
+                      </label>
+                      <Select value={formData.hstDraftOrFinal} onValueChange={(value) => updateFormField('hstDraftOrFinal', value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="HST Draft/Final" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="N/A">N/A</SelectItem>
+                          <SelectItem value="Draft">Draft</SelectItem>
+                          <SelectItem value="Final">Final</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Textarea
+                        value={formData.otherNotes}
+                        onChange={(e) => updateFormField('otherNotes', e.target.value)}
+                        placeholder="Other notes"
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Section 4: T1 Summary */}
+                  <div>
+                    <div className="h-10 mb-4"></div> {/* Spacer to align with section header */}
+                    <div className="space-y-4">
+                      <Input
+                        value={formData.priorPeriodsBalance}
+                        onChange={(e) => updateFormField('priorPeriodsBalance', e.target.value)}
+                        placeholder="Prior periods balance"
+                      />
+                      <Input
+                        value={formData.taxesPayable}
+                        onChange={(e) => updateFormField('taxesPayable', e.target.value)}
+                        placeholder="Taxes payable"
+                      />
+                      <Input
+                        value={formData.installmentsDuringYear}
+                        onChange={(e) => updateFormField('installmentsDuringYear', e.target.value)}
+                        placeholder="Installments during year"
+                      />
+                      <Input
+                        value={formData.installmentsAfterYear}
+                        onChange={(e) => updateFormField('installmentsAfterYear', e.target.value)}
+                        placeholder="Installments after year"
+                      />
+                      <Input
+                        value={formData.amountOwing}
+                        onChange={(e) => updateFormField('amountOwing', e.target.value)}
+                        placeholder="Amount owing"
+                      />
+                      <Input
+                        value={formData.taxPaymentDueDate}
+                        onChange={(e) => updateFormField('taxPaymentDueDate', e.target.value)}
+                        placeholder="Tax payment due date"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Section 5: HST Summary */}
+                  <div>
+                    <div className="h-10 mb-4"></div> {/* Spacer to align with section header */}
+                    <div className="space-y-4">
+                      <Input
+                        value={formData.hstPriorBalance}
+                        onChange={(e) => updateFormField('hstPriorBalance', e.target.value)}
+                        placeholder="HST prior balance"
+                      />
+                      <Input
+                        value={formData.hstPayable}
+                        onChange={(e) => updateFormField('hstPayable', e.target.value)}
+                        placeholder="HST payable"
+                      />
+                      <Input
+                        value={formData.hstInstallmentsDuring}
+                        onChange={(e) => updateFormField('hstInstallmentsDuring', e.target.value)}
+                        placeholder="HST installments during"
+                      />
+                      <Input
+                        value={formData.hstInstallmentsAfter}
+                        onChange={(e) => updateFormField('hstInstallmentsAfter', e.target.value)}
+                        placeholder="HST installments after"
+                      />
+                      <Input
+                        value={formData.hstPaymentDue}
+                        onChange={(e) => updateFormField('hstPaymentDue', e.target.value)}
+                        placeholder="HST payment due"
+                      />
+                      <Input
+                        value={formData.hstDueDate}
+                        onChange={(e) => updateFormField('hstDueDate', e.target.value)}
+                        placeholder="HST due date"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          )
-        )}
-      </div>
-
-      {/* 6. T1 Summary Section */}
-      <div className="space-y-4">
-        <h3 className="text-xl font-semibold">6. T1 Summary</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-blue-50 rounded-lg">
-          <div className="space-y-2">
-            <Label htmlFor="priorPeriodsBalance">Prior Periods Balance</Label>
-            <Input
-              id="priorPeriodsBalance"
-              value={formData.priorPeriodsBalance}
-              onChange={(e) => updateFormField('priorPeriodsBalance', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="taxesPayable">Taxes Payable</Label>
-            <Input
-              id="taxesPayable"
-              value={formData.taxesPayable}
-              onChange={(e) => updateFormField('taxesPayable', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="installmentsDuringYear">Installments During Year</Label>
-            <Input
-              id="installmentsDuringYear"
-              value={formData.installmentsDuringYear}
-              onChange={(e) => updateFormField('installmentsDuringYear', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="installmentsAfterYear">Installments After Year</Label>
-            <Input
-              id="installmentsAfterYear"
-              value={formData.installmentsAfterYear}
-              onChange={(e) => updateFormField('installmentsAfterYear', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="amountOwing">Amount Owing</Label>
-            <Input
-              id="amountOwing"
-              value={formData.amountOwing}
-              onChange={(e) => updateFormField('amountOwing', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="taxPaymentDueDate">Tax Payment Due Date</Label>
-            <Input
-              id="taxPaymentDueDate"
-              value={formData.taxPaymentDueDate}
-              onChange={(e) => updateFormField('taxPaymentDueDate', e.target.value)}
-              placeholder="April 30, 2024"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="returnFilingDueDate">Return Filing Due Date</Label>
-            <Select 
-              value={formData.returnFilingDueDate} 
-              onValueChange={(value: 'April 30' | 'June 15') => updateFormField('returnFilingDueDate', value)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="April 30">April 30</SelectItem>
-                <SelectItem value="June 15">June 15</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          )}
         </div>
 
-        {/* Multi-year amounts */}
-        {formData.yearlyAmounts.length > 0 && (
-          <div className="mt-6">
-            <h4 className="text-lg font-medium mb-4">Multi-Year Amount Details</h4>
-            <div className="space-y-4">
-              {formData.yearlyAmounts.map((yearData, index) => (
-                <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-blue-100 rounded-lg">
-                  <div className="space-y-2">
-                    <Label>Year: {yearData.year}</Label>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`year-amount-${index}`}>Amount Owing</Label>
-                    <Input
-                      id={`year-amount-${index}`}
-                      value={yearData.amountOwing}
-                      onChange={(e) => updateYearlyAmount(index, 'amountOwing', e.target.value)}
-                      placeholder="$0.00"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor={`year-due-${index}`}>Due Date</Label>
-                    <Input
-                      id={`year-due-${index}`}
-                      value={yearData.dueDate}
-                      onChange={(e) => updateYearlyAmount(index, 'dueDate', e.target.value)}
-                      placeholder="April 30, 2024"
-                    />
-                  </div>
-                </div>
-              ))}
+        {/* Bottom Action Buttons */}
+        {showButtons && (
+          <div className="flex justify-between">
+            <Button variant="outline">Preview Form</Button>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={onCancel}>Save Draft</Button>
+              <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700">
+                Submit Form
+              </Button>
             </div>
           </div>
         )}
-      </div>
-
-      {/* 7. HST Summary Section */}
-      <div className="space-y-4">
-        <h3 className="text-xl font-semibold">7. HST Summary</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 bg-green-50 rounded-lg">
-          <div className="space-y-2">
-            <Label htmlFor="hstPriorBalance">HST Prior Balance</Label>
-            <Input
-              id="hstPriorBalance"
-              value={formData.hstPriorBalance}
-              onChange={(e) => updateFormField('hstPriorBalance', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="hstPayable">HST Payable</Label>
-            <Input
-              id="hstPayable"
-              value={formData.hstPayable}
-              onChange={(e) => updateFormField('hstPayable', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="hstInstallmentsDuring">HST Installments During</Label>
-            <Input
-              id="hstInstallmentsDuring"
-              value={formData.hstInstallmentsDuring}
-              onChange={(e) => updateFormField('hstInstallmentsDuring', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="hstInstallmentsAfter">HST Installments After</Label>
-            <Input
-              id="hstInstallmentsAfter"
-              value={formData.hstInstallmentsAfter}
-              onChange={(e) => updateFormField('hstInstallmentsAfter', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="hstPaymentDue">HST Payment Due</Label>
-            <Input
-              id="hstPaymentDue"
-              value={formData.hstPaymentDue}
-              onChange={(e) => updateFormField('hstPaymentDue', e.target.value)}
-              placeholder="$0.00"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="hstDueDate">HST Due Date</Label>
-            <Input
-              id="hstDueDate"
-              value={formData.hstDueDate}
-              onChange={(e) => updateFormField('hstDueDate', e.target.value)}
-              placeholder="June 15, 2024"
-            />
-          </div>
-        </div>
       </div>
     </div>
   );
