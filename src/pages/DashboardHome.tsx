@@ -1,16 +1,14 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import DashboardCards from '@/components/Dashboard/DashboardCards';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import CloseoutFormCreate from '@/components/CloseoutForms/CloseoutFormCreate';
 
 const DashboardHome = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   // Redirect super admin to user management
   useEffect(() => {
@@ -38,7 +36,7 @@ const DashboardHome = () => {
           </div>
           
           {user?.role === 'preparer' && (
-            <Button onClick={() => setCreateDialogOpen(true)}>
+            <Button onClick={() => navigate('/dashboard/create-form')}>
               <Plus className="mr-2 h-4 w-4" />
               Create Closeout Form
             </Button>
@@ -47,11 +45,6 @@ const DashboardHome = () => {
       </div>
       
       <DashboardCards />
-      
-      <CloseoutFormCreate
-        open={createDialogOpen}
-        onOpenChange={setCreateDialogOpen}
-      />
     </div>
   );
 };

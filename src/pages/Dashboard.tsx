@@ -7,6 +7,7 @@ import DashboardHome from './DashboardHome';
 import SettingsPage from './SettingsPage';
 import UsersPage from './UsersPage';
 import CloseoutFormsPage from './CloseoutFormsPage';
+import CloseoutFormCreatePage from './CloseoutFormCreatePage';
 import NotFound from './NotFound';
 import { DataProvider } from '@/contexts/DataContext';
 
@@ -28,6 +29,8 @@ const Dashboard = () => {
           <Route path="/closeout-forms/active" element={<CloseoutFormsPage />} />
           <Route path="/closeout-forms/rejected" element={<CloseoutFormsPage />} />
           <Route path="/closeout-forms/completed" element={<CloseoutFormsPage />} />
+          <Route path="/create-form" element={<CloseoutFormCreatePage />} />
+          <Route path="/edit-form/:id" element={<CloseoutFormCreatePage />} />
           
           {/* Super Admin only routes */}
           {user?.role === 'superadmin' && (
