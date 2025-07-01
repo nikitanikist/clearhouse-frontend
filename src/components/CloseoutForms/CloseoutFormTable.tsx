@@ -118,6 +118,7 @@ const CloseoutFormTable = ({
   showButtons = true,
   formType = 'personal' 
 }: CloseoutFormTableProps) => {
+  const [selectedMemberTab, setSelectedMemberTab] = useState<string>('1');
   const [formData, setFormData] = useState<CloseoutFormTableData>({
     formType: formType,
     filePath: initialData?.filePath || '\\\\Clearhouse\\Clients\\ClientName_2024\\T1',
@@ -585,147 +586,200 @@ const CloseoutFormTable = ({
           </Button>
         </div>
 
-        <div className="border rounded-lg overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-gray-50">
-                <TableHead className="min-w-[200px] font-semibold">Client Name</TableHead>
-                <TableHead className="min-w-[200px] font-semibold">Person Signing</TableHead>
-                <TableHead className="min-w-[250px] font-semibold">Email</TableHead>
-                <TableHead className="min-w-[200px] font-semibold">Additional Emails</TableHead>
-                <TableHead className="min-w-[120px] text-center font-semibold">Return Type</TableHead>
-                <TableHead className="min-w-[100px] text-center font-semibold">Paper Filed</TableHead>
-                <TableHead className="min-w-[120px] text-center font-semibold">Installments</TableHead>
-                <TableHead className="min-w-[180px] font-semibold">Personal Tax Payment</TableHead>
-                <TableHead className="min-w-[80px] text-center font-semibold">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {formData.familyMembers.map((member, index) => (
-                <TableRow key={member.id} className="hover:bg-gray-50">
-                  <TableCell className="p-3">
+        {/* Blue Header */}
+        <div className="bg-blue-600 text-white p-3 rounded-t-lg">
+          <h4 className="font-medium">Family Members & Signature Information</h4>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex space-x-1 bg-gray-100 p-1 rounded-lg">
+          {formData.familyMembers.map((member, index) => (
+            <div key={member.id} className="flex items-center">
+              <button
+                type="button"
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  selectedMemberTab === member.id
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+                onClick={() => setSelectedMemberTab(member.id)}
+              >
+                {index === 0 && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2">
+                    Primary
+                  </span>
+                )}
+                {member.clientName || `Member ${index + 1}`}
+              </button>
+              {formData.familyMembers.length > 1 && index > 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeFamilyMember(member.id)}
+                  className="ml-2 text-red-600 hover:text-red-700 p-1"
+                >
+                  <Minus className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Form Content for Selected Member */}
+        {formData.familyMembers.map((member) => 
+          member.id === selectedMemberTab && (
+            <div key={member.id} className="border rounded-lg p-6 bg-white">
+              {/* 2-Column Layout */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Left Column */}
+                <div className="space-y-4">
+                  <h5 className="font-medium text-gray-900 border-b pb-2">Client Information</h5>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor={`clientName-${member.id}`}>Client Name *</Label>
                     <Input
+                      id={`clientName-${member.id}`}
                       value={member.clientName}
                       onChange={(e) => updateFamilyMember(member.id, 'clientName', e.target.value)}
-                      placeholder={`${index + 1}ClientName`}
-                      className="w-full min-w-[180px]"
+                      placeholder="Enter client name"
+                      className="w-full"
                     />
-                  </TableCell>
-                  <TableCell className="p-3">
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`signingPerson-${member.id}`}>Person Signing *</Label>
                     <Input
+                      id={`signingPerson-${member.id}`}
                       value={member.signingPerson}
                       onChange={(e) => updateFamilyMember(member.id, 'signingPerson', e.target.value)}
-                      placeholder="Person signing"
-                      className="w-full min-w-[180px]"
+                      placeholder="Person who will sign"
+                      className="w-full"
                     />
-                  </TableCell>
-                  <TableCell className="p-3">
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`signingEmail-${member.id}`}>Signing Email *</Label>
                     <Input
+                      id={`signingEmail-${member.id}`}
                       value={member.signingEmail}
                       onChange={(e) => updateFamilyMember(member.id, 'signingEmail', e.target.value)}
-                      placeholder="Email address"
+                      placeholder="email@example.com"
                       type="email"
-                      className="w-full min-w-[220px]"
+                      className="w-full"
                     />
-                  </TableCell>
-                  <TableCell className="p-3">
-                    <div className="space-y-2 min-w-[180px]">
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Additional Delivery Emails</Label>
+                    <div className="space-y-2">
                       {member.additionalEmails.map((email, emailIndex) => (
                         <div key={emailIndex} className="flex gap-2">
                           <Input
                             value={email}
                             onChange={(e) => updateMemberEmail(member.id, emailIndex, e.target.value)}
-                            placeholder="Additional email"
+                            placeholder="additional@example.com"
                             type="email"
                             className="flex-1"
                           />
                           <Button
-                            variant="ghost"
+                            type="button"
+                            variant="outline"
                             size="sm"
                             onClick={() => removeMemberEmail(member.id, emailIndex)}
-                            className="text-red-600 hover:text-red-700 px-2"
+                            className="text-red-600 hover:text-red-700"
                           >
                             <Minus className="h-4 w-4" />
                           </Button>
                         </div>
                       ))}
                       <Button
-                        variant="ghost"
+                        type="button"
+                        variant="outline"
                         size="sm"
                         onClick={() => addEmailToMember(member.id)}
-                        className="text-blue-600 hover:text-blue-700 w-full justify-center"
+                        className="w-full"
                       >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add Email
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Additional Email
                       </Button>
                     </div>
-                  </TableCell>
-                  <TableCell className="p-3">
+                  </div>
+                </div>
+
+                {/* Right Column */}
+                <div className="space-y-4">
+                  <h5 className="font-medium text-gray-900 border-b pb-2">Return & Filing Details</h5>
+                  
+                  <div className="space-y-3">
+                    <Label>Return Types</Label>
                     <div className="space-y-2">
                       <div className="flex items-center space-x-2">
                         <Checkbox
+                          id={`t1-${member.id}`}
                           checked={member.isT1}
                           onCheckedChange={(checked) => updateFamilyMember(member.id, 'isT1', checked)}
                         />
-                        <Label className="text-sm">T1</Label>
+                        <Label htmlFor={`t1-${member.id}`}>T1 (Personal Tax Return)</Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Checkbox
+                          id={`s216-${member.id}`}
                           checked={member.isS216}
                           onCheckedChange={(checked) => updateFamilyMember(member.id, 'isS216', checked)}
                         />
-                        <Label className="text-sm">S216</Label>
+                        <Label htmlFor={`s216-${member.id}`}>S216 (Non-Resident Tax Return)</Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Checkbox
+                          id={`s116-${member.id}`}
                           checked={member.isS116}
                           onCheckedChange={(checked) => updateFamilyMember(member.id, 'isS116', checked)}
                         />
-                        <Label className="text-sm">S116</Label>
+                        <Label htmlFor={`s116-${member.id}`}>S116 (Certificate of Compliance)</Label>
                       </div>
                     </div>
-                  </TableCell>
-                  <TableCell className="p-3 text-center">
-                    <div className="flex justify-center">
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label>Filing Options</Label>
+                    <div className="flex items-center space-x-2">
                       <Checkbox
+                        id={`paperFiled-${member.id}`}
                         checked={member.isPaperFiled}
                         onCheckedChange={(checked) => updateFamilyMember(member.id, 'isPaperFiled', checked)}
                       />
+                      <Label htmlFor={`paperFiled-${member.id}`}>Paper Filed (instead of electronic)</Label>
                     </div>
-                  </TableCell>
-                  <TableCell className="p-3 text-center">
-                    <div className="flex justify-center">
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label>Tax Installments</Label>
+                    <div className="flex items-center space-x-2">
                       <Checkbox
+                        id={`installments-${member.id}`}
                         checked={member.installmentsRequired}
                         onCheckedChange={(checked) => updateFamilyMember(member.id, 'installmentsRequired', checked)}
                       />
+                      <Label htmlFor={`installments-${member.id}`}>Installments Required</Label>
                     </div>
-                  </TableCell>
-                  <TableCell className="p-3">
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor={`taxPayment-${member.id}`}>Personal Tax Payment</Label>
                     <Input
+                      id={`taxPayment-${member.id}`}
                       value={member.personalTaxPayment}
                       onChange={(e) => updateFamilyMember(member.id, 'personalTaxPayment', e.target.value)}
                       placeholder="$0.00"
-                      className="w-full min-w-[150px]"
+                      className="w-full"
                     />
-                  </TableCell>
-                  <TableCell className="p-3 text-center">
-                    {formData.familyMembers.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeFamilyMember(member.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Minus className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        )}
       </div>
 
       {/* 6. T1 Summary Section */}
