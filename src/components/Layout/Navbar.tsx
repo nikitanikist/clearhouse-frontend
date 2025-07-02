@@ -1,7 +1,6 @@
 
 import { useAuth } from '../../contexts/AuthContext';
 import { Link } from 'react-router-dom';
-import { Bell } from 'lucide-react';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +12,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import NotificationCenter from '@/components/Notifications/NotificationCenter';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -49,10 +49,8 @@ const Navbar = () => {
         </div>
         
         <div className="flex items-center space-x-4">
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell size={20} />
-            <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-          </Button>
+          <NotificationCenter />
+          
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
