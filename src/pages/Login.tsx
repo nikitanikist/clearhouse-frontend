@@ -112,7 +112,7 @@ const Login: React.FC = () => {
           </div>
           
           <div className="text-center">
-            <p className="text-gray-500 text-sm">Version: v1</p>
+            <p className="text-gray-500 text-sm">Version: Nikita</p>
           </div>
         </div>
       </div>
