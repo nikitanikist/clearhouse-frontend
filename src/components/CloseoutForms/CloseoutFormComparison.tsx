@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CloseoutForm } from '@/contexts/DataContext';
-import { useIsMobile } from '@/hooks/use-mobile';
+
 import CloseoutFormTable, { CloseoutFormTableData } from './CloseoutFormTable';
 import CloseoutFormView from './CloseoutFormView';
 import { ArrowLeft, Save } from 'lucide-react';
@@ -22,71 +22,6 @@ const CloseoutFormComparison = ({
   onSubmit, 
   onCancel 
 }: CloseoutFormComparisonProps) => {
-  const isMobile = useIsMobile();
-
-  if (isMobile) {
-    // Mobile layout - stacked vertically with natural page scroll
-    return (
-      <div className="bg-gray-50">
-        {/* Header */}
-        <div className="bg-white border-b p-4">
-          <h1 className="text-xl font-semibold">Form Comparison</h1>
-          <p className="text-sm text-gray-600 mt-1">Compare and edit your form using the reference data</p>
-        </div>
-
-        {/* Content - Natural page scroll */}
-        <div className="p-4 space-y-4">
-          {/* Current form - editable */}
-          <Card className="shadow-sm">
-            <CardHeader className="pb-4 bg-blue-50">
-              <CardTitle className="flex items-center justify-between text-lg">
-                <span>📝 Current Form</span>
-                <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-200">
-                  Editing
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              <CloseoutFormTable
-                initialData={extractedData}
-                onSubmit={onSubmit}
-                onCancel={onCancel}
-                showButtons={false}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Reference form */}
-          <Card className="shadow-sm">
-            <CardHeader className="pb-4 bg-gray-50">
-              <CardTitle className="flex items-center justify-between text-lg">
-                <span>📋 Reference Form</span>
-                <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-200">
-                  Reference
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              <CloseoutFormView form={previousForm} />
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Bottom buttons - in normal document flow */}
-        <div className="bg-white border-t p-4 flex gap-3 mt-6">
-          <Button variant="outline" onClick={onCancel} className="flex-1">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Cancel
-          </Button>
-          <Button onClick={() => onSubmit(extractedData as CloseoutFormTableData)} className="flex-1 bg-green-600 hover:bg-green-700">
-            <Save className="h-4 w-4 mr-2" />
-            Resubmit Form
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
   // Desktop layout - side by side with natural page scroll
   return (
     <div className="bg-gray-50">

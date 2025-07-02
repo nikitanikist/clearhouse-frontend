@@ -14,7 +14,7 @@ import { CloseoutFormTableData } from './CloseoutFormTable';
 import { Client } from './ClientSearch';
 import { useFormSteps } from './hooks/useFormSteps';
 import { mapTableDataToCloseoutForm } from './utils/formDataMapper';
-import { useIsMobile } from '@/hooks/use-mobile';
+
 import FormTypeSelection from './FormTypeSelection';
 import ClientSearchStep from './steps/ClientSearchStep';
 import DocumentUploadStep from './steps/DocumentUploadStep';
@@ -33,7 +33,6 @@ const CloseoutFormCreate = ({
 }: CloseoutFormCreateProps) => {
   const { user } = useAuth();
   const { createForm, updateForm, forms } = useData();
-  const isMobile = useIsMobile();
   
   const {
     step,
@@ -176,8 +175,8 @@ const CloseoutFormCreate = ({
         shouldUseFullScreen
           ? "w-screen h-screen max-w-none max-h-none m-0 rounded-none overflow-y-auto"
           : step === 4 
-          ? "sm:max-w-7xl max-h-[90vh] overflow-y-auto" 
-          : "sm:max-w-2xl"
+          ? "max-w-7xl max-h-[90vh] overflow-y-auto" 
+          : "max-w-2xl"
       }>
         <DialogHeader className={shouldUseFullScreen ? "p-6 border-b" : ""}>
           <DialogTitle>{editForm ? 'Edit Closeout Form' : getStepTitle()}</DialogTitle>
