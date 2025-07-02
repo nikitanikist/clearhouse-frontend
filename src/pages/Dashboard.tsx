@@ -5,6 +5,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import MainLayout from '@/components/Layout/MainLayout';
 import DashboardHome from './DashboardHome';
 import SettingsPage from './SettingsPage';
+import ProfilePage from './ProfilePage';
 import UsersPage from './UsersPage';
 import CloseoutFormsPage from './CloseoutFormsPage';
 import CloseoutFormCreatePage from './CloseoutFormCreatePage';
@@ -23,6 +24,8 @@ const Dashboard = () => {
       <MainLayout>
         <Routes>
           <Route path="/" element={<DashboardHome />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           
           {/* Closeout Forms routes for all users */}
           <Route path="/closeout-forms/pending" element={<CloseoutFormsPage />} />
@@ -36,7 +39,6 @@ const Dashboard = () => {
           {user?.role === 'superadmin' && (
             <>
               <Route path="/users" element={<UsersPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
             </>
           )}
           

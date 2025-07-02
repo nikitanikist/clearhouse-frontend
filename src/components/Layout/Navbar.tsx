@@ -1,5 +1,6 @@
 
 import { useAuth } from '../../contexts/AuthContext';
+import { Link } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import { 
   DropdownMenu,
@@ -70,11 +71,11 @@ const Navbar = () => {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                <span>Profile</span>
+              <DropdownMenuItem asChild>
+                <Link to="/dashboard/profile">Profile</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <span>Settings</span>
+              <DropdownMenuItem asChild>
+                <Link to="/dashboard/settings">Settings</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => logout()}>
