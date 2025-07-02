@@ -1,12 +1,21 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { CardSkeleton } from '@/components/ui/skeleton';
 import { FileText, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 
 const DashboardCards = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Simulate loading state
+  useEffect(() => {
+    const timer = setTimeout(() => setIsLoading(false), 1200);
+    return () => clearTimeout(timer);
+  }, []);
+
   const { user } = useAuth();
   const { forms } = useData();
   const navigate = useNavigate();
@@ -63,6 +72,17 @@ const DashboardCards = () => {
     console.log('DashboardCards - About to navigate with status:', status);
     navigate(targetPath);
   };
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <CardSkeleton />
+        <CardSkeleton />
+        <CardSkeleton />
+        <CardSkeleton />
+      </div>
+    );
+  }
 
   const getFormCards = () => {
     if (user?.role === 'preparer') {

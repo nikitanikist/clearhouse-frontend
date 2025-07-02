@@ -1,9 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Save, Clock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
+import { useAutoSave } from '@/hooks/useAutoSave';
+import { UnsavedChangesDialog } from '@/components/ui/confirm-dialog';
+import LoadingSpinner, { ButtonLoading } from '@/components/ui/loading';
 import CloseoutFormTable, { CloseoutFormTableData } from '@/components/CloseoutForms/CloseoutFormTable';
 import { useFormSteps } from '@/components/CloseoutForms/hooks/useFormSteps';
 import { mapTableDataToCloseoutForm } from '@/components/CloseoutForms/utils/formDataMapper';
@@ -30,6 +33,9 @@ const CloseoutFormCreatePage = () => {
   } = useFormSteps();
 
   const [formType, setFormType] = React.useState<'personal' | 'corporate' | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
   
   // Get form for editing if ID provided
   const editForm = id ? forms.find(form => form.id === id) : null;
@@ -100,29 +106,78 @@ const CloseoutFormCreatePage = () => {
     setStep(2);
   };
 
-  const handleFormSubmit = (formData: CloseoutFormTableData) => {
+  // Auto-save functionality
+  const { isAutoSaving, hasUnsavedChanges, manualSave } = useAutoSave({
+    data: extractedData,
+    onSave: async (data) => {
+      // Save to localStorage as draft
+      localStorage.setItem(`form-draft-${user?.id}`, JSON.stringify({
+        formType,
+        selectedClient,
+        extractedData: data,
+        timestamp: new Date().toISOString()
+      }));
+    },
+    enabled: step === 4 && !!extractedData,
+    delay: 2000
+  });
+
+  const handleFormSubmit = async (formData: CloseoutFormTableData) => {
     if (!user) return;
     
-    const mappedFormData = mapTableDataToCloseoutForm(formData, user, formType || 'personal');
-    
-    if (editForm) {
-      const updatedFormData = {
-        ...editForm,
-        ...mappedFormData,
-        status: 'pending' as const
-      };
-      updateForm(editForm.id, updatedFormData);
-    } else {
-      createForm(mappedFormData);
+    setIsSubmitting(true);
+    try {
+      const mappedFormData = mapTableDataToCloseoutForm(formData, user, formType || 'personal');
+      
+      if (editForm) {
+        const updatedFormData = {
+          ...editForm,
+          ...mappedFormData,
+          status: 'pending' as const
+        };
+        updateForm(editForm.id, updatedFormData);
+      } else {
+        createForm(mappedFormData);
+      }
+      
+      // Clear draft from localStorage
+      localStorage.removeItem(`form-draft-${user?.id}`);
+      
+      navigate('/dashboard');
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    navigate('/dashboard');
   };
 
   const handleCancel = () => {
+    if (hasUnsavedChanges && step === 4) {
+      setShowUnsavedDialog(true);
+      setPendingNavigation('/dashboard');
+    } else {
+      resetForm();
+      setFormType(null);
+      navigate('/dashboard');
+    }
+  };
+
+  const handleBackToDashboard = () => {
+    if (hasUnsavedChanges && step === 4) {
+      setShowUnsavedDialog(true);
+      setPendingNavigation('/dashboard');
+    } else {
+      navigate('/dashboard');
+    }
+  };
+
+  const confirmNavigation = () => {
     resetForm();
     setFormType(null);
-    navigate('/dashboard');
+    localStorage.removeItem(`form-draft-${user?.id}`);
+    if (pendingNavigation) {
+      navigate(pendingNavigation);
+    }
+    setShowUnsavedDialog(false);
+    setPendingNavigation(null);
   };
 
   const getPageTitle = () => {
@@ -135,14 +190,14 @@ const CloseoutFormCreatePage = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="border-b bg-card">
+          <div className="border-b bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
               <Button 
                 variant="ghost" 
                 size="sm"
-                onClick={() => navigate('/dashboard')}
+                onClick={handleBackToDashboard}
                 className="flex items-center"
               >
                 <ArrowLeft className="h-4 w-4 mr-2" />
@@ -151,6 +206,32 @@ const CloseoutFormCreatePage = () => {
               <div className="border-l border-border h-6"></div>
               <h1 className="text-xl font-semibold">{getPageTitle()}</h1>
             </div>
+            
+            {step === 4 && extractedData && (
+              <div className="flex items-center gap-3">
+                {isAutoSaving && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <LoadingSpinner size="sm" />
+                    <span>Auto-saving...</span>
+                  </div>
+                )}
+                {hasUnsavedChanges && !isAutoSaving && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    <span>Unsaved changes</span>
+                  </div>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={manualSave}
+                  disabled={isAutoSaving || !hasUnsavedChanges}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Draft
+                </Button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -198,6 +279,16 @@ const CloseoutFormCreatePage = () => {
           />
         )}
       </div>
+
+      <UnsavedChangesDialog
+        open={showUnsavedDialog}
+        onOpenChange={setShowUnsavedDialog}
+        onConfirm={confirmNavigation}
+        onCancel={() => {
+          setShowUnsavedDialog(false);
+          setPendingNavigation(null);
+        }}
+      />
     </div>
   );
 };
