@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,6 +9,7 @@ import { Check, X, Play, FileX, UserPlus, CheckCircle } from 'lucide-react';
 import { CloseoutForm } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
+import { fetchAdminUsers } from '@/services/api';
 
 interface CloseoutFormAdminViewProps {
   form: CloseoutForm;
@@ -21,13 +22,29 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
   const [amendmentNote, setAmendmentNote] = useState('');
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [selectedAssignee, setSelectedAssignee] = useState('');
+  const [availableAdmins, setAvailableAdmins] = useState<Array<{id: string, name: string, email: string}>>([]);
+  const [loadingAdmins, setLoadingAdmins] = useState(false);
 
-  // Available admins for assignment
-  const availableAdmins = [
-    { id: 'admin-1', name: 'Jordan Lee' },
-    { id: 'admin-2', name: 'Sarah Chen' },
-    { id: 'admin-3', name: 'Mike Davis' },
-  ];
+  // Fetch admin users for assignment
+  useEffect(() => {
+    const loadAdminUsers = async () => {
+      if (user?.role === 'admin' || user?.role === 'superadmin') {
+        setLoadingAdmins(true);
+        try {
+          const adminUsers = await fetchAdminUsers();
+          setAvailableAdmins(adminUsers);
+        } catch (error) {
+          console.error('Failed to load admin users:', error);
+          // Fallback to empty array if API fails
+          setAvailableAdmins([]);
+        } finally {
+          setLoadingAdmins(false);
+        }
+      }
+    };
+
+    loadAdminUsers();
+  }, [user?.role]);
 
   const handleStartWorking = () => {
     updateFormStatus(form.id, 'active', 'Admin started working on this form');
@@ -37,20 +54,30 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
     updateFormStatus(form.id, 'completed', 'Form marked as completed by admin');
   };
 
-  const submitAmendment = () => {
+  const submitAmendment = async () => {
     if (amendmentNote.trim()) {
-      updateFormStatus(form.id, 'rejected', amendmentNote);
-      setShowAmendmentDialog(false);
-      setAmendmentNote('');
+      try {
+        await updateFormStatus(form.id, 'rejected', undefined, amendmentNote);
+        setShowAmendmentDialog(false);
+        setAmendmentNote('');
+      } catch (error) {
+        console.error('Error submitting amendment:', error);
+        // Error is already handled in updateFormStatus function
+      }
     }
   };
 
-  const submitAssignment = () => {
+  const submitAssignment = async () => {
     if (selectedAssignee) {
       const assigneeName = availableAdmins.find(admin => admin.id === selectedAssignee)?.name || '';
-      assignForm(form.id, selectedAssignee, assigneeName);
-      setShowAssignDialog(false);
-      setSelectedAssignee('');
+      try {
+        await assignForm(form.id, selectedAssignee, assigneeName);
+        setShowAssignDialog(false);
+        setSelectedAssignee('');
+      } catch (error) {
+        console.error('Error assigning form:', error);
+        // Error is already handled in assignForm function
+      }
     }
   };
 
@@ -80,6 +107,20 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
         <h1 className="text-2xl font-bold">CLOSEOUT FORM</h1>
         <p className="text-gray-600 mt-2">Administrative Review</p>
       </div>
+
+      {/* Amendment Note Display - Show only for rejected forms */}
+      {form.status === 'rejected' && form.rejectionReason && (
+        <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6 mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <FileX className="h-5 w-5 text-red-600" />
+            <h3 className="text-lg font-bold text-red-800">Amendment Required</h3>
+          </div>
+          <div className="bg-white p-4 rounded-lg border border-red-200">
+            <h4 className="font-semibold text-red-800 mb-2">Amendment Note:</h4>
+            <p className="text-gray-800 whitespace-pre-wrap">{form.rejectionReason}</p>
+          </div>
+        </div>
+      )}
 
       {/* 1. Client & Signer Details */}
       <div className="space-y-4">

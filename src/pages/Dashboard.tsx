@@ -9,6 +9,7 @@ import ProfilePage from './ProfilePage';
 import UsersPage from './UsersPage';
 import CloseoutFormsPage from './CloseoutFormsPage';
 import CloseoutFormCreatePage from './CloseoutFormCreatePage';
+import CloseoutFormPreviewPage from './CloseoutFormPreviewPage';
 import NotFound from './NotFound';
 import { DataProvider } from '@/contexts/DataContext';
 

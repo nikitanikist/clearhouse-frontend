@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, X, Upload } from 'lucide-react';
+import { Plus, X, Upload, Eye } from 'lucide-react';
 import InstallmentAttachmentUpload from './InstallmentAttachmentUpload';
+import FamilyMemberPDFUpload from './FamilyMemberPDFUpload';
 import {
   Select,
   SelectContent,
@@ -13,6 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import CloseoutFormView from './CloseoutFormView';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { mapTableDataToCloseoutForm } from './utils/formDataMapper';
+import { useAuth } from '@/contexts/AuthContext';
+import { useData } from '@/contexts/DataContext';
+import { Client } from './ClientSearch';
 
 export interface FamilyMember {
   id: string;
@@ -31,9 +38,23 @@ export interface FamilyMember {
     fileUrl: string;
     uploadedAt: string;
   } | null;
+  // Add fields for Section 3 checkboxes
+  isT1135?: boolean;
+  isT2091?: boolean;
+  isT1032?: boolean;
+  // New fields for tax summary colors
+  taxesPayableColor?: 'green' | 'red';
+  amountOwingColor?: 'green' | 'red';
+  // Add missing fields for mapping
+  t1135ForeignProperty?: boolean;
+  t1032PensionSplit?: boolean;
+  otherNotes?: string;
+  taxesPayable?: string;
+  amountOwing?: string;
 }
 
 export interface CloseoutFormTableData {
+  clientEmail: string;
   formType: 'personal' | 'corporate';
   filePath: string;
   partner: string;
@@ -101,6 +122,9 @@ interface CloseoutFormTableProps {
   onCancel: () => void;
   showButtons?: boolean;
   formType?: 'personal' | 'corporate';
+  selectedClientEmail?: string;
+  selectedClient?: Client;
+  isNewClient?: boolean;
 }
 
 const CloseoutFormTable = ({ 
@@ -108,49 +132,44 @@ const CloseoutFormTable = ({
   onSubmit, 
   onCancel, 
   showButtons = true,
-  formType = 'personal' 
+  formType = 'personal',
+  selectedClientEmail,
+  selectedClient,
+  isNewClient = false
 }: CloseoutFormTableProps) => {
-  const [clientEmail, setClientEmail] = useState('');
+  const [clientEmail, setClientEmail] = useState(initialData?.clientEmail || selectedClientEmail || '');
+  const [section2Email, setSection2Email] = useState(initialData?.familyMembers?.[0]?.signingEmail || selectedClientEmail || '');
   const [formData, setFormData] = useState<CloseoutFormTableData>({
+    clientEmail: initialData?.clientEmail || '',
     formType: formType,
-    filePath: initialData?.filePath || '\\\\Clearhouse\\Clients\\ClientName_2024\\T1',
-    partner: initialData?.partner || 'Priya S.',
-    manager: initialData?.manager || 'Deepak Jain',
-    years: initialData?.years || '2024',
-    jobNumber: initialData?.jobNumber || '10254-T1',
-    invoiceAmount: initialData?.invoiceAmount || '$348 CAD',
-    billDetail: initialData?.billDetail || 'Personal T1 + Foreign Income + Donation Sched.',
+    // ONLY CHANGING VALUES - Using initialData or empty values
+    filePath: initialData?.filePath || '',
+    partner: initialData?.partner || '',
+    manager: initialData?.manager || '',
+    years: initialData?.years || '',
+    jobNumber: initialData?.jobNumber || '',
+    invoiceAmount: initialData?.invoiceAmount || '',
+    billDetail: initialData?.billDetail || '',
     paymentRequired: initialData?.paymentRequired || false,
-    wipRecovery: initialData?.wipRecovery || '100%',
+    wipRecovery: initialData?.wipRecovery || '',
     recoveryReason: initialData?.recoveryReason || '',
     familyMembers: initialData?.familyMembers || [
       {
         id: '1',
-        clientName: 'Amit Kumar',
-        signingPerson: 'Amit Kumar',
-        signingEmail: 'amit.kumar@email.com',
-        additionalEmails: [],
-        isT1: true,
-        isS216: false,
-        isS116: false,
-        isPaperFiled: false,
-        installmentsRequired: true,
-        personalTaxPayment: '$1,250.00',
-        installmentAttachment: null
-      },
-      {
-        id: '2',
-        clientName: 'Rohit Kumar',
-        signingPerson: 'Rohit Kumar',
-        signingEmail: 'rohit.kumar@email.com',
+        clientName: '',
+        signingPerson: '',
+        signingEmail: '',
         additionalEmails: [],
         isT1: true,
         isS216: false,
         isS116: false,
         isPaperFiled: false,
         installmentsRequired: false,
-        personalTaxPayment: '$800.00',
-        installmentAttachment: null
+        personalTaxPayment: '$0.00',
+        installmentAttachment: null,
+        isT1135: false,
+        isT2091: false,
+        isT1032: false
       }
     ],
     
@@ -198,6 +217,151 @@ const CloseoutFormTable = ({
     yearlyAmounts: initialData?.yearlyAmounts || []
   });
 
+  const [showPreview, setShowPreview] = useState(false);
+  const { user } = useAuth();
+  const { getPreviousYearForms } = useData();
+
+  useEffect(() => {
+    console.log('DEBUG: initialData.otherNotes in form table:', initialData?.otherNotes);
+    console.log('DEBUG: formData.otherNotes in form table:', formData.otherNotes);
+  }, [initialData, formData.otherNotes]);
+
+  // Helper to check if a value is blank or default
+  function isBlankOrDefault(val: string, def: string = '') {
+    return !val || val.trim() === '' || val === def;
+  }
+
+  // Robust mapping: only set from selectedClientEmail if fields are blank or default
+  useEffect(() => {
+    if (selectedClientEmail) {
+      setClientEmail(prev => (isBlankOrDefault(prev) ? selectedClientEmail : prev));
+      setSection2Email(prev => (isBlankOrDefault(prev) ? selectedClientEmail : prev));
+      setFormData(prev => ({
+        ...prev,
+        clientEmail: isBlankOrDefault(prev.clientEmail) ? selectedClientEmail : prev.clientEmail,
+        familyMembers: prev.familyMembers.map((member, idx) =>
+          idx === 0 ? { ...member, signingEmail: isBlankOrDefault(member.signingEmail) ? selectedClientEmail : member.signingEmail } : member
+        )
+      }));
+    }
+  }, [selectedClientEmail]);
+
+  // 3. When clientEmail changes, update formData.clientEmail
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, clientEmail }));
+  }, [clientEmail]);
+
+  // 4. When section2Email changes, update formData.familyMembers[0].signingEmail
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      familyMembers: prev.familyMembers.map((member, idx) =>
+        idx === 0 ? { ...member, signingEmail: section2Email } : member
+      )
+    }));
+  }, [section2Email]);
+
+  // Add this useEffect after formData and updateFamilyMember are defined
+  useEffect(() => {
+    // Helper to parse currency or number strings
+    function parseAmount(val: string | undefined): number {
+      if (!val) return 0;
+      // Remove currency symbols, commas, spaces
+      return parseFloat(val.replace(/[^\d.-]/g, '')) || 0;
+    }
+    setFormData(prev => {
+      const updatedMembers = prev.familyMembers.map(member => {
+        // Use member.taxesPayable if present, else fallback to prev.taxesPayable
+        const priorPeriodsBalance = parseAmount(prev.priorPeriodsBalance);
+        const taxesPayable = parseAmount(member.taxesPayable ?? prev.taxesPayable);
+        const installmentsDuringYear = parseAmount(prev.installmentsDuringYear);
+        const installmentsAfterYear = parseAmount(prev.installmentsAfterYear);
+        const amountOwing = priorPeriodsBalance + taxesPayable - installmentsDuringYear - installmentsAfterYear;
+        return {
+          ...member,
+          amountOwing: amountOwing === 0 ? '' : amountOwing.toLocaleString('en-CA', { style: 'currency', currency: 'CAD' })
+        };
+      });
+      return { ...prev, familyMembers: updatedMembers };
+    });
+  }, [formData.familyMembers.map(m => m.taxesPayable).join(), formData.priorPeriodsBalance, formData.installmentsDuringYear, formData.installmentsAfterYear, formData.taxesPayable]);
+
+  // Add this useEffect after the previous useEffect for amountOwing
+  useEffect(() => {
+    function parseAmount(val: string | undefined): number {
+      if (!val) return 0;
+      return parseFloat(val.replace(/[^\d.-]/g, '')) || 0;
+    }
+    setFormData(prev => {
+      const hstPriorBalance = parseAmount(prev.hstPriorBalance);
+      const hstPayable = parseAmount(prev.hstPayable);
+      const hstInstallmentsDuring = parseAmount(prev.hstInstallmentsDuring);
+      const hstInstallmentsAfter = parseAmount(prev.hstInstallmentsAfter);
+      const hstPaymentDue = hstPriorBalance + hstPayable - hstInstallmentsDuring - hstInstallmentsAfter;
+      return {
+        ...prev,
+        hstPaymentDue: hstPaymentDue === 0 ? '' : hstPaymentDue.toLocaleString('en-CA', { style: 'currency', currency: 'CAD' })
+      };
+    });
+  }, [formData.hstPriorBalance, formData.hstPayable, formData.hstInstallmentsDuring, formData.hstInstallmentsAfter]);
+
+  // Auto-set return filing due date based on HST Payable
+  useEffect(() => {
+    // Auto-set return filing due date based on HST Payable
+    const hstPayableNum = parseFloat((formData.hstPayable || '0').toString().replace(/[^\d.\-]/g, ''));
+    if (hstPayableNum > 0 && formData.returnFilingDueDate !== 'June 15') {
+      setFormData(prev => ({ ...prev, returnFilingDueDate: 'June 15' }));
+    } else if ((hstPayableNum === 0 || isNaN(hstPayableNum)) && formData.returnFilingDueDate !== 'April 30') {
+      setFormData(prev => ({ ...prev, returnFilingDueDate: 'April 30' }));
+    }
+  }, [formData.hstPayable]);
+
+  // Auto-sync HST Due Date with Return Filing Due Date
+  useEffect(() => {
+    setFormData(prev => ({ ...prev, hstDueDate: prev.returnFilingDueDate }));
+  }, [formData.returnFilingDueDate]);
+
+  // Handler for Section 2 PDF data extraction
+  const handleSection2DataExtracted = (familyMemberIndex: number, extractedData: any) => {
+    const updatedMembers = [...formData.familyMembers];
+    const member = updatedMembers[familyMemberIndex];
+    
+    if (member) {
+      // Update Section 2 - Client Details
+      member.signingPerson = extractedData.signingPerson || member.signingPerson;
+      member.signingEmail = extractedData.signingEmail || member.signingEmail;
+      // Update Section 3 - Filing Details
+      member.isT1135 = extractedData.isT1135;
+      member.isT1032 = extractedData.isT1032;
+      // T2091 will be handled later as mentioned
+      // Also update the old field names for compatibility
+      member.t1135ForeignProperty = extractedData.isT1135;
+      member.t1032PensionSplit = extractedData.isT1032;
+      // Update Other Notes field for deceased info
+      member.otherNotes = extractedData.otherNotes || member.otherNotes;
+
+      // Map only to taxesPayable, not amountOwing
+      if (typeof extractedData.taxPayable48500 === 'number' && extractedData.taxPayable48500 !== null) {
+        member.taxesPayable = extractedData.taxPayable48500.toLocaleString('en-CA', { style: 'currency', currency: 'CAD' });
+        member.taxesPayableColor = 'red';
+      } else if (typeof extractedData.taxPayable48400 === 'number' && extractedData.taxPayable48400 !== null) {
+        member.taxesPayable = extractedData.taxPayable48400.toLocaleString('en-CA', { style: 'currency', currency: 'CAD' });
+        member.taxesPayableColor = 'green';
+      }
+      member.amountOwing = '';
+      member.amountOwingColor = undefined;
+
+      // Promote deceased note to top-level Other Notes if present
+      setFormData(prev => ({
+        ...prev,
+        familyMembers: updatedMembers,
+        otherNotes: extractedData.otherNotes && extractedData.otherNotes.includes('deceased')
+          ? extractedData.otherNotes
+          : prev.otherNotes
+      }));
+    }
+  };
+
   const addFamilyMember = () => {
     const newMember: FamilyMember = {
       id: Date.now().toString(),
@@ -211,7 +375,10 @@ const CloseoutFormTable = ({
       isPaperFiled: false,
       installmentsRequired: false,
       personalTaxPayment: '$0.00',
-      installmentAttachment: null
+      installmentAttachment: null,
+      isT1135: false,
+      isT2091: false,
+      isT1032: false
     };
     const newId = (formData.familyMembers.length + 1).toString();
     setFormData(prev => ({
@@ -235,7 +402,11 @@ const CloseoutFormTable = ({
       familyMembers: prev.familyMembers.map(member => {
         if (member.id === id) {
           const updatedMember = { ...member, [field]: value };
-          
+          // If changing T1135, sync both fields
+          if (field === 'isT1135' || field === 't1135ForeignProperty') {
+            updatedMember.isT1135 = value;
+            updatedMember.t1135ForeignProperty = value;
+          }
           // If changing return type, reset others to false
           if (field === 'isT1' && value) {
             updatedMember.isS216 = false;
@@ -264,7 +435,40 @@ const CloseoutFormTable = ({
   };
 
   const handleSubmit = () => {
+    console.log('DEBUG: CloseoutFormTable handleSubmit called with formData:', formData);
+    setShowPreview(false); // Close the preview modal first
     onSubmit(formData);
+  };
+
+
+
+  // Function to handle client selection or addition
+  const handleClientSelected = (email: string) => {
+    setClientEmail(email);
+    setSection2Email(email);
+  };
+
+  // Function to handle viewing previous closeout form
+  const handleViewPreviousForm = () => {
+    if (!selectedClient) return;
+    
+    try {
+      // Get previous forms for this client
+      const previousForms = getPreviousYearForms(selectedClient.name);
+      
+      if (previousForms && previousForms.length > 0) {
+        // Get the most recent form (first in the array)
+        const lastForm = previousForms[0];
+        
+        // Open in new tab
+        window.open(`/preview-form/${lastForm.id}`, '_blank');
+      } else {
+        alert('No previous closeout forms found for this client.');
+      }
+    } catch (error) {
+      console.error('Error viewing previous form:', error);
+      alert('Error viewing previous form. Please try again.');
+    }
   };
 
   return (
@@ -273,13 +477,25 @@ const CloseoutFormTable = ({
       <div className="bg-blue-600 text-white p-3">
         <div className="flex justify-between items-center">
           <h1 className="text-lg font-semibold">Personal Tax Closeout Form</h1>
-          <Button 
-            onClick={addFamilyMember}
-            className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 text-sm"
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Add Family Member
-          </Button>
+          <div className="flex gap-2">
+            {/* NEW: View Previous Closeout Form Button */}
+            {selectedClient && !isNewClient && (
+              <Button 
+                onClick={handleViewPreviousForm}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 text-sm"
+              >
+                <Eye className="w-4 h-4 mr-1" />
+                View Previous Closeout Form
+              </Button>
+            )}
+            <Button 
+              onClick={addFamilyMember}
+              className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 text-sm"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              Add Family Member
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -463,6 +679,7 @@ const CloseoutFormTable = ({
                             value={member.signingPerson}
                             onChange={(e) => updateFamilyMember(member.id, 'signingPerson', e.target.value)}
                             className="h-8 text-sm"
+                            placeholder="Will be auto-filled from PDF"
                           />
                         </td>
                       ))}
@@ -472,9 +689,13 @@ const CloseoutFormTable = ({
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Input
-                            value={member.signingEmail}
-                            onChange={(e) => updateFamilyMember(member.id, 'signingEmail', e.target.value)}
+                            value={section2Email}
+                            onChange={(e) => {
+                              setSection2Email(e.target.value);
+                              updateFamilyMember(formData.familyMembers[0].id, 'signingEmail', e.target.value);
+                            }}
                             className="h-8 text-sm"
+                            placeholder="Will be auto-filled from PDF"
                           />
                         </td>
                       ))}
@@ -526,13 +747,13 @@ const CloseoutFormTable = ({
                     </tr>
                     <tr>
                       <td className="p-2 border font-medium text-xs">Upload T1C1 PDF</td>
-                      {formData.familyMembers.map((member) => (
+                      {formData.familyMembers.map((member, index) => (
                         <td key={member.id} className="p-2 border">
-                          <Button variant="outline" className="w-full h-8 text-xs">
-                            <Upload className="w-3 h-3 mr-1" />
-                            Upload PDF
-                          </Button>
-                          <p className="text-xs text-gray-500 mt-1">Auto-populates tax details below</p>
+                          <FamilyMemberPDFUpload
+                            familyMemberIndex={index}
+                            familyMemberName={member.clientName || `Family Member ${index + 1}`}
+                            onDataExtracted={handleSection2DataExtracted}
+                          />
                         </td>
                       ))}
                     </tr>
@@ -584,34 +805,35 @@ const CloseoutFormTable = ({
                       ))}
                     </tr>
                     <tr>
-                      <td className="p-2 border font-medium text-xs">T1135</td>
+                      <td className="p-2 border font-medium text-xs">T1135 Foreign Property</td>
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Checkbox
-                            checked={formData.t1135ForeignProperty}
-                            onCheckedChange={(checked) => updateFormField('t1135ForeignProperty', checked)}
+                            checked={member.isT1135 || false}
+                            onCheckedChange={(checked) => updateFamilyMember(member.id, 'isT1135', checked)}
                           />
                         </td>
                       ))}
                     </tr>
                     <tr>
-                      <td className="p-2 border font-medium text-xs">T2091</td>
+                      <td className="p-2 border font-medium text-xs">T2091 Principal Residence</td>
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Checkbox
-                            checked={formData.t2091PrincipalResidence}
-                            onCheckedChange={(checked) => updateFormField('t2091PrincipalResidence', checked)}
+                            checked={member.isT2091 || false}
+                            onCheckedChange={(checked) => updateFamilyMember(member.id, 'isT2091', checked)}
+                           // To be implemented later
                           />
                         </td>
                       ))}
                     </tr>
                     <tr>
-                      <td className="p-2 border font-medium text-xs">T1032</td>
+                      <td className="p-2 border font-medium text-xs">T1032 Pension Split</td>
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Checkbox
-                            checked={formData.t1032PensionSplit}
-                            onCheckedChange={(checked) => updateFormField('t1032PensionSplit', checked)}
+                            checked={member.isT1032 || false}
+                            onCheckedChange={(checked) => updateFamilyMember(member.id, 'isT1032', checked)}
                           />
                         </td>
                       ))}
@@ -782,9 +1004,10 @@ const CloseoutFormTable = ({
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Input
-                            value={formData.taxesPayable}
-                            onChange={(e) => updateFormField('taxesPayable', e.target.value)}
+                            value={member.taxesPayable ?? ''}
+                            onChange={(e) => updateFamilyMember(member.id, 'taxesPayable', e.target.value)}
                             className="h-8 text-sm"
+                            style={{ color: member.taxesPayableColor === 'green' ? 'green' : 'red' }}
                           />
                         </td>
                       ))}
@@ -818,9 +1041,10 @@ const CloseoutFormTable = ({
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Input
-                            value={formData.amountOwing}
-                            onChange={(e) => updateFormField('amountOwing', e.target.value)}
+                            value={member.amountOwing ?? ''}
+                            onChange={(e) => updateFamilyMember(member.id, 'amountOwing', e.target.value)}
                             className="h-8 text-sm"
+                            style={{ color: 'black' }}
                           />
                         </td>
                       ))}
@@ -929,9 +1153,10 @@ const CloseoutFormTable = ({
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Input
-                            value={formData.hstPaymentDue}
+                            value={formData.hstPaymentDue ?? ''}
                             onChange={(e) => updateFormField('hstPaymentDue', e.target.value)}
                             className="h-8 text-sm"
+                            style={{ color: 'black' }}
                           />
                         </td>
                       ))}
@@ -958,15 +1183,102 @@ const CloseoutFormTable = ({
         {/* Bottom Action Buttons */}
         {showButtons && (
           <div className="flex justify-between">
-            <Button variant="outline">Preview Form</Button>
+            <Button variant="outline" onClick={() => setShowPreview(true)}>Preview Form</Button>
             <div className="flex gap-3">
               <Button variant="outline" onClick={onCancel}>Save Draft</Button>
-              <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700">
+              <Button onClick={() => setShowPreview(true)} className="bg-green-600 hover:bg-green-700">
                 Submit Form
               </Button>
             </div>
           </div>
         )}
+
+        {/* Preview Modal */}
+        <Dialog open={showPreview} onOpenChange={setShowPreview}>
+          <DialogContent className="max-w-4xl w-full">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold">Preview Closeout Form</h2>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => setShowPreview(false)}>Close</Button>
+                <Button 
+                  onClick={handleSubmit} 
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                  size="sm"
+                >
+                  Submit Form
+                </Button>
+              </div>
+            </div>
+            <div className="overflow-y-auto max-h-[70vh]">
+              {user && (
+                <CloseoutFormView form={{
+                  id: 'preview',
+                  clientName: formData.familyMembers[0]?.clientName || '',
+                  filePath: formData.filePath,
+                  signingPerson: formData.familyMembers[0]?.signingPerson || '',
+                  signingEmail: formData.familyMembers[0]?.signingEmail || '',
+                  additionalEmails: formData.familyMembers[0]?.additionalEmails || [],
+                  partner: formData.partner,
+                  manager: formData.manager,
+                  years: formData.years,
+                  jobNumber: formData.jobNumber,
+                  invoiceAmount: formData.invoiceAmount,
+                  invoiceDescription: formData.billDetail,
+                  billDetail: formData.billDetail,
+                  paymentRequired: formData.paymentRequired,
+                  wipRecovery: formData.wipRecovery,
+                  recoveryReason: formData.recoveryReason,
+                  isT1: formData.familyMembers[0]?.isT1 || true,
+                  isS216: formData.familyMembers[0]?.isS216 || false,
+                  isS116: formData.familyMembers[0]?.isS116 || false,
+                  isPaperFiled: false,
+                  installmentsRequired: formData.familyMembers[0]?.installmentsRequired || false,
+                  t106: false,
+                  t1134: false,
+                  ontarioAnnualReturn: formData.ontarioAnnualReturn,
+                  tSlips: false,
+                  quebecReturn: false,
+                  albertaReturn: false,
+                  t2091PrincipalResidence: formData.t2091PrincipalResidence,
+                  t1135ForeignProperty: formData.t1135ForeignProperty,
+                  t1032PensionSplit: formData.t1032PensionSplit,
+                  hstDraftOrFinal: formData.hstDraftOrFinal,
+                  otherNotes: formData.otherNotes,
+                  otherDocuments: formData.otherDocuments,
+                  corporateInstallmentsRequired: false,
+                  fedScheduleAttached: false,
+                  hstInstallmentRequired: formData.hstInstallmentsRequired,
+                  hstTabCompleted: false,
+                  priorPeriodsBalance: formData.priorPeriodsBalance,
+                  taxesPayable: formData.taxesPayable,
+                  installmentsDuringYear: formData.installmentsDuringYear,
+                  installmentsAfterYear: formData.installmentsAfterYear,
+                  amountOwing: formData.amountOwing,
+                  dueDate: formData.taxPaymentDueDate,
+                  hstPriorBalance: formData.hstPriorBalance,
+                  hstPayable: formData.hstPayable,
+                  hstInstallmentsDuring: formData.hstInstallmentsDuring,
+                  hstInstallmentsAfter: formData.hstInstallmentsAfter,
+                  hstPaymentDue: formData.hstPaymentDue,
+                  hstDueDate: formData.hstDueDate,
+                  installmentAttachment: formData.familyMembers[0]?.installmentAttachment || null,
+                  familyMembers: formData.familyMembers,
+                  status: 'pending',
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                  comments: [],
+                  history: [],
+                  createdBy: {
+                    id: user.id,
+                    name: user.name,
+                    role: user.role
+                  },
+                  assignedTo: null
+                }} />
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

@@ -2,6 +2,21 @@
 import { CloseoutFormTableData } from '../CloseoutFormTable';
 import { User } from '@/contexts/AuthContext';
 
+// Utility to clean currency strings to numbers
+function cleanCurrency(value: string | number | null | undefined): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  if (typeof value === 'number') return value;
+  const cleaned = value.replace(/[$,]/g, '').trim();
+  const parsed = parseFloat(cleaned);
+  return isNaN(parsed) ? null : parsed;
+}
+
+// Utility to clean date fields
+function cleanDate(value: string | null | undefined): string | null {
+  if (!value || value === 'N/A' || value === '' || value === 'null') return null;
+  return value;
+}
+
 export const mapTableDataToCloseoutForm = (
   formData: CloseoutFormTableData, 
   user: User,
@@ -14,11 +29,23 @@ export const mapTableDataToCloseoutForm = (
   };
   
   const primaryMember = formData.familyMembers[0];
+  // Get taxesPayable and amountOwing from primary member if present, fallback to top-level
+  const taxesPayable = primaryMember?.taxesPayable ?? formData.taxesPayable ?? '0';
+  const amountOwing = primaryMember?.amountOwing ?? formData.amountOwing ?? '0';
+  
+  // Get filing details from primary member if present, fallback to top-level
+  const t1135ForeignProperty = (primaryMember?.t1135ForeignProperty ?? primaryMember?.isT1135 ?? formData.t1135ForeignProperty) ?? false;
+  console.log('[DEBUG] Final t1135ForeignProperty for preview:', t1135ForeignProperty);
+  const t2091PrincipalResidence = (primaryMember?.isT2091 ?? formData.t2091PrincipalResidence) ?? false;
+  const t1032PensionSplit = (primaryMember?.t1032PensionSplit ?? primaryMember?.isT1032 ?? formData.t1032PensionSplit) ?? false;
+  
+  // Map formType to database-compatible values
+  const mappedFormType = formType === 'personal' ? 'T1' : formType === 'corporate' ? 'Corporate' : 'T1';
   
   return {
-    formType: formType,
-    clientName: primaryMember.clientName,
-    filePath: formData.filePath,
+    formType: mappedFormType,
+    clientName: primaryMember.signingPerson || primaryMember.clientName || '',
+    filePath: formData.filePath && formData.filePath.trim() !== '' ? formData.filePath : 'not_provided',
     signingPerson: primaryMember.signingPerson,
     signingEmail: primaryMember.signingEmail,
     additionalEmails: primaryMember.additionalEmails,
@@ -31,7 +58,7 @@ export const mapTableDataToCloseoutForm = (
     billDetail: formData.billDetail,
     paymentRequired: formData.paymentRequired,
     wipRecovery: formData.wipRecovery,
-    recoveryReason: formData.recoveryReason,
+    recoveryReason: formData.recoveryReason ?? '',
     returnType: primaryMember.isT1 ? 'T1' : primaryMember.isS216 ? 'S216' : primaryMember.isS116 ? 'S116' : 'T1',
     
     // Individual boolean fields for return types
@@ -51,9 +78,9 @@ export const mapTableDataToCloseoutForm = (
     albertaReturn: false,
     
     // Tax forms
-    t2091PrincipalResidence: formData.t2091PrincipalResidence,
-    t1135ForeignProperty: formData.t1135ForeignProperty,
-    t1032PensionSplit: formData.t1032PensionSplit,
+    t2091PrincipalResidence: t2091PrincipalResidence,
+    t1135ForeignProperty: t1135ForeignProperty,
+    t1032PensionSplit: t1032PensionSplit,
     hstDraftOrFinal: formData.hstDraftOrFinal,
     tSlipType: formData.tSlipType,
     
@@ -75,29 +102,29 @@ export const mapTableDataToCloseoutForm = (
     outstandingTaxBalance: formData.outstandingTaxBalance,
     
     // T1 Summary fields
-    priorPeriodsBalance: formData.priorPeriodsBalance,
-    taxesPayable: formData.taxesPayable,
-    installmentsDuringYear: formData.installmentsDuringYear,
-    installmentsAfterYear: formData.installmentsAfterYear,
-    amountOwing: formData.amountOwing,
-    dueDate: formData.taxPaymentDueDate, // Map taxPaymentDueDate to dueDate for backward compatibility
-    taxPaymentDueDate: formData.taxPaymentDueDate,
-    returnFilingDueDate: formData.returnFilingDueDate,
+    priorPeriodsBalance: cleanCurrency(formData.priorPeriodsBalance)?.toString() || '',
+    taxesPayable: cleanCurrency(taxesPayable)?.toString() || '',
+    installmentsDuringYear: cleanCurrency(formData.installmentsDuringYear)?.toString() || '',
+    installmentsAfterYear: cleanCurrency(formData.installmentsAfterYear)?.toString() || '',
+    amountOwing: cleanCurrency(amountOwing)?.toString() || '',
+    dueDate: cleanDate(formData.taxPaymentDueDate),
+    taxPaymentDueDate: cleanDate(formData.taxPaymentDueDate),
+    returnFilingDueDate: cleanDate(formData.returnFilingDueDate),
     
     // HST Summary fields
-    hstPriorBalance: formData.hstPriorBalance,
-    hstPayable: formData.hstPayable,
-    hstInstallmentsDuring: formData.hstInstallmentsDuring,
-    hstInstallmentsAfter: formData.hstInstallmentsAfter,
-    hstPaymentDue: formData.hstPaymentDue,
-    hstDueDate: formData.hstDueDate,
+    hstPriorBalance: cleanCurrency(formData.hstPriorBalance)?.toString() || '',
+    hstPayable: cleanCurrency(formData.hstPayable)?.toString() || '',
+    hstInstallmentsDuring: cleanCurrency(formData.hstInstallmentsDuring)?.toString() || '',
+    hstInstallmentsAfter: cleanCurrency(formData.hstInstallmentsAfter)?.toString() || '',
+    hstPaymentDue: cleanCurrency(formData.hstPaymentDue)?.toString() || '',
+    hstDueDate: cleanDate(formData.hstDueDate),
     
     // Multi-year support
     yearlyAmounts: formData.yearlyAmounts,
     
     installmentAttachment: primaryMember.installmentAttachment,
     status: 'pending' as const,
-    assignedTo: null,
+    assignedTo: null, // Will be assigned to admin by backend logic
     createdBy: createdByInfo,
     familyMembers: formData.familyMembers.map(member => ({
       id: member.id,
@@ -110,7 +137,9 @@ export const mapTableDataToCloseoutForm = (
       isS116: member.isS116,
       isPaperFiled: member.isPaperFiled,
       installmentsRequired: member.installmentsRequired,
-      personalTaxPayment: member.personalTaxPayment,
+      personalTaxPayment: cleanCurrency(member.personalTaxPayment)?.toString() || '',
+      taxesPayable: cleanCurrency(member.taxesPayable)?.toString() || '',
+      amountOwing: cleanCurrency(member.amountOwing)?.toString() || '',
       installmentAttachment: member.installmentAttachment,
     })),
   };

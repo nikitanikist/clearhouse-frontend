@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
-import { useAuth } from './AuthContext';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { toast } from 'sonner';
+import { useAuth } from './AuthContext';
+import { createForm, updateFormStatus as updateFormStatusAPI, updateForm as updateFormAPI, fetchAdminUsers, reassignForm, fetchForms as fetchFormsAPI } from '@/services/api';
 
 // Types for our data models
 export type FormStatus = 'pending' | 'active' | 'completed' | 'rejected';
@@ -46,6 +47,15 @@ export interface CloseoutForm {
   fedScheduleAttached: boolean; // NEW FIELD
   hstInstallmentRequired: boolean; // NEW FIELD
   hstTabCompleted: boolean; // NEW FIELD
+  // Additional fields from form components
+  tSlipType?: string;
+  personalTaxInstallmentsRequired?: boolean;
+  hstInstallmentsRequired?: boolean;
+  outstandingTaxBalance?: string;
+  yearlyAmounts?: Array<{
+    year: string;
+    amount: string;
+  }>;
   // T1 Summary fields
   priorPeriodsBalance: string;
   taxesPayable: string;
@@ -53,6 +63,8 @@ export interface CloseoutForm {
   installmentsAfterYear: string;
   amountOwing: string;
   dueDate: string;
+  taxPaymentDueDate?: string;
+  returnFilingDueDate?: 'April 30' | 'June 15';
   // HST Summary fields
   hstPriorBalance: string;
   hstPayable: string;
@@ -96,6 +108,11 @@ export interface CloseoutForm {
     name: string;
     role: string;
   } | null;
+  amendmentSentBy?: {
+    id: string;
+    name: string;
+    role: string;
+  } | null;
   createdAt: string;
   updatedAt: string;
   comments: {
@@ -110,6 +127,7 @@ export interface CloseoutForm {
     performedBy: string;
     timestamp: string;
   }[];
+  rejectionReason?: string;
 }
 
 export type EmailStatus = 'pending' | 'replied' | 'we-replied';
@@ -152,10 +170,11 @@ export interface EmailThread {
 interface DataContextType {
   forms: CloseoutForm[];
   emails: EmailThread[];
-  createForm: (form: Omit<CloseoutForm, 'id' | 'createdAt' | 'updatedAt' | 'comments' | 'history'>) => void;
-  updateFormStatus: (formId: string, status: FormStatus, comment?: string) => void;
+  createForm: (form: Omit<CloseoutForm, 'id' | 'createdAt' | 'updatedAt' | 'comments' | 'history'>) => Promise<void>;
+  updateFormStatus: (formId: string, status: FormStatus, comment?: string, amendmentNote?: string) => Promise<void>;
   updateForm: (formId: string, updatedForm: CloseoutForm) => void;
-  assignForm: (formId: string, assigneeId: string, assigneeName: string) => void;
+  assignForm: (formId: string, assigneeId: string, assigneeName: string) => Promise<void>;
+  reassignForm: (formId: string, assignedToId: string) => Promise<void>;
   createEmail: (email: Omit<EmailThread, 'id' | 'createdAt' | 'updatedAt' | 'messages' | 'notes'>) => void;
   addEmailReply: (emailId: string, message: { content: string }) => void;
   addEmailNote: (emailId: string, note: string) => void;
@@ -213,6 +232,8 @@ const initialForms: CloseoutForm[] = [
     installmentsAfterYear: '0',
     amountOwing: '-1,250.00',
     dueDate: 'April 30, 2023',
+    taxPaymentDueDate: 'April 30, 2023',
+    returnFilingDueDate: 'April 30',
     // HST Summary fields
     hstPriorBalance: '0',
     hstPayable: '0',
@@ -1412,138 +1433,530 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [forms, setForms] = useState<CloseoutForm[]>(initialForms);
+  const [forms, setForms] = useState<CloseoutForm[]>([]); // Start with empty, not initialForms
   const [emails, setEmails] = useState<EmailThread[]>(sampleEmails);
 
-  const createForm = useCallback((form: Omit<CloseoutForm, 'id' | 'createdAt' | 'updatedAt' | 'comments' | 'history'>) => {
+  // Fetch real forms from backend on mount
+  useEffect(() => {
+    fetchFormsAPI()
+      .then((data) => {
+        setForms(data.map(form => ({
+          ...form,
+          // Map backend fields to frontend structure
+          clientName: form.client_name || form.clientName || form.form_data?.clientName || '',
+          signingEmail: form.client_email || form.signingEmail || form.form_data?.signingEmail || '',
+          signingPerson: form.form_data?.signingPerson || '',
+          additionalEmails: form.form_data?.additionalEmails || [],
+          partner: form.partner || form.form_data?.partner || '',
+          manager: form.manager || form.form_data?.manager || '',
+          years: form.years || form.form_data?.years || '',
+          jobNumber: form.job_number || form.form_data?.jobNumber || '',
+          invoiceAmount: form.invoice_amount || form.form_data?.invoiceAmount || '',
+          invoiceDescription: form.invoice_description || form.form_data?.invoiceDescription || '',
+          billDetail: form.bill_detail || form.form_data?.billDetail || '',
+          paymentRequired: form.payment_required || form.form_data?.paymentRequired || false,
+          wipRecovery: form.wip_recovery || form.form_data?.wipRecovery || '',
+          recoveryReason: form.recovery_reason || form.form_data?.recoveryReason || '',
+          isT1: form.is_t1 || form.form_data?.isT1 || false,
+          isS216: form.is_s216 || form.form_data?.isS216 || false,
+          isS116: form.is_s116 || form.form_data?.isS116 || false,
+          isPaperFiled: form.is_paper_filed || form.form_data?.isPaperFiled || false,
+          installmentsRequired: form.installments_required || form.form_data?.installmentsRequired || false,
+          t106: form.t106 || form.form_data?.t106 || false,
+          t1134: form.t1134 || form.form_data?.t1134 || false,
+          ontarioAnnualReturn: form.ontario_annual_return || form.form_data?.ontarioAnnualReturn || false,
+          tSlips: form.t_slips || form.form_data?.tSlips || false,
+          quebecReturn: form.quebec_return || form.form_data?.quebecReturn || false,
+          albertaReturn: form.alberta_return || form.form_data?.albertaReturn || false,
+          t2091PrincipalResidence: form.t2091_principal_residence || form.form_data?.t2091PrincipalResidence || false,
+          t1135ForeignProperty: form.t1135_foreign_property || form.form_data?.t1135ForeignProperty || false,
+          t1032PensionSplit: form.t1032_pension_split || form.form_data?.t1032PensionSplit || false,
+          hstDraftOrFinal: form.hst_draft_or_final || form.form_data?.hstDraftOrFinal || '',
+          otherNotes: form.other_notes || form.form_data?.otherNotes || '',
+          otherDocuments: form.other_documents || form.form_data?.otherDocuments || '',
+          corporateInstallmentsRequired: form.corporate_installments_required || form.form_data?.corporateInstallmentsRequired || false,
+          fedScheduleAttached: form.fed_schedule_attached || form.form_data?.fedScheduleAttached || false,
+          hstInstallmentRequired: form.hst_installment_required || form.form_data?.hstInstallmentRequired || false,
+          hstTabCompleted: form.hst_tab_completed || form.form_data?.hstTabCompleted || false,
+          tSlipType: form.form_data?.tSlipType || '',
+          personalTaxInstallmentsRequired: form.form_data?.personalTaxInstallmentsRequired || false,
+          hstInstallmentsRequired: form.form_data?.hstInstallmentsRequired || false,
+          outstandingTaxBalance: form.form_data?.outstandingTaxBalance || '$0.00',
+          yearlyAmounts: form.form_data?.yearlyAmounts || [],
+          priorPeriodsBalance: form.prior_periods_balance?.toString() || form.form_data?.priorPeriodsBalance || '',
+          taxesPayable: form.taxes_payable?.toString() || form.form_data?.taxesPayable || '',
+          installmentsDuringYear: form.installments_during_year?.toString() || form.form_data?.installmentsDuringYear || '',
+          installmentsAfterYear: form.installments_after_year?.toString() || form.form_data?.installmentsAfterYear || '',
+          amountOwing: form.amount_owing?.toString() || form.form_data?.amountOwing || '',
+          dueDate: form.due_date || form.form_data?.dueDate || '',
+          taxPaymentDueDate: form.form_data?.taxPaymentDueDate || '',
+          returnFilingDueDate: form.form_data?.returnFilingDueDate || 'April 30',
+          hstPriorBalance: form.hst_prior_balance?.toString() || form.form_data?.hstPriorBalance || '',
+          hstPayable: form.hst_payable?.toString() || form.form_data?.hstPayable || '',
+          hstInstallmentsDuring: form.hst_installments_during?.toString() || form.form_data?.hstInstallmentsDuring || '',
+          hstInstallmentsAfter: form.hst_installments_after?.toString() || form.form_data?.hstInstallmentsAfter || '',
+          hstPaymentDue: form.hst_payment_due?.toString() || form.form_data?.hstPaymentDue || '',
+          hstDueDate: form.hst_due_date || form.form_data?.hstDueDate || '',
+          createdAt: form.created_at || '',
+          updatedAt: form.updated_at || '',
+          createdBy: form.form_data?.createdBy || { 
+            id: form.created_by, 
+            name: form.created_by_name || 'Unknown',
+            role: 'admin'
+          },
+          assignedTo: form.assigned_to ? {
+            id: form.assigned_to,
+            name: form.assigned_to_name || 'Unknown',
+            role: 'admin'
+          } : null,
+          amendmentSentBy: form.amendment_sent_by ? {
+            id: form.amendment_sent_by,
+            name: form.amendment_sent_by_name || 'Unknown',
+            role: 'admin'
+          } : null,
+          comments: form.comments || [],
+          history: form.history || [],
+          rejectionReason: form.rejection_reason || '',
+        })));
+      })
+      .catch((err) => {
+        toast.error('Failed to load forms from server: ' + err.message);
+      });
+  }, []);
+
+  // Add reassignForm function
+  const reassignForm = useCallback(async (formId: string, assignedToId: string) => {
     if (!user) return;
     
-    const now = new Date().toISOString();
-    const newForm: CloseoutForm = {
-      ...form,
-      id: `form-${Date.now()}`,
-      createdAt: now,
-      updatedAt: now,
-      comments: [],
-      history: [
-        {
-          id: `hist-${Date.now()}`,
-          action: 'Created form',
-          performedBy: user.name,
-          timestamp: now,
+    try {
+      const response = await fetch(`http://localhost:5005/api/forms/${formId}/reassign`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
-      ],
-    };
-    
-    setForms(prevForms => [...prevForms, newForm]);
-    toast.success('Closeout form created successfully!');
+        body: JSON.stringify({ assignedToId })
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to reassign form: ${response.status} - ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log('Form reassigned:', result);
+      
+      // Refresh forms from backend to get updated data
+      const updatedForms = await fetchFormsAPI();
+      setForms(updatedForms.map(form => ({
+        ...form,
+        // Map backend fields to frontend structure
+        clientName: form.client_name || form.clientName || form.form_data?.clientName || '',
+        signingEmail: form.client_email || form.signingEmail || form.form_data?.signingEmail || '',
+        signingPerson: form.form_data?.signingPerson || '',
+        additionalEmails: form.form_data?.additionalEmails || [],
+        partner: form.partner || form.form_data?.partner || '',
+        manager: form.manager || form.form_data?.manager || '',
+        years: form.years || form.form_data?.years || '',
+        jobNumber: form.job_number || form.form_data?.jobNumber || '',
+        invoiceAmount: form.invoice_amount || form.form_data?.invoiceAmount || '',
+        invoiceDescription: form.invoice_description || form.form_data?.invoiceDescription || '',
+        billDetail: form.bill_detail || form.form_data?.billDetail || '',
+        paymentRequired: form.payment_required || form.form_data?.paymentRequired || false,
+        wipRecovery: form.wip_recovery || form.form_data?.wipRecovery || '',
+        recoveryReason: form.recovery_reason || form.form_data?.recoveryReason || '',
+        isT1: form.is_t1 || form.form_data?.isT1 || false,
+        isS216: form.is_s216 || form.form_data?.isS216 || false,
+        isS116: form.is_s116 || form.form_data?.isS116 || false,
+        isPaperFiled: form.is_paper_filed || form.form_data?.isPaperFiled || false,
+        installmentsRequired: form.installments_required || form.form_data?.installmentsRequired || false,
+        t106: form.t106 || form.form_data?.t106 || false,
+        t1134: form.t1134 || form.form_data?.t1134 || false,
+        ontarioAnnualReturn: form.ontario_annual_return || form.form_data?.ontarioAnnualReturn || false,
+        tSlips: form.t_slips || form.form_data?.tSlips || false,
+        quebecReturn: form.quebec_return || form.form_data?.quebecReturn || false,
+        albertaReturn: form.alberta_return || form.form_data?.albertaReturn || false,
+        t2091PrincipalResidence: form.t2091_principal_residence || form.form_data?.t2091PrincipalResidence || false,
+        t1135ForeignProperty: form.t1135_foreign_property || form.form_data?.t1135ForeignProperty || false,
+        t1032PensionSplit: form.t1032_pension_split || form.form_data?.t1032PensionSplit || false,
+        hstDraftOrFinal: form.hst_draft_or_final || form.form_data?.hstDraftOrFinal || '',
+        otherNotes: form.other_notes || form.form_data?.otherNotes || '',
+        otherDocuments: form.other_documents || form.form_data?.otherDocuments || '',
+        corporateInstallmentsRequired: form.corporate_installments_required || form.form_data?.corporateInstallmentsRequired || false,
+        fedScheduleAttached: form.fed_schedule_attached || form.form_data?.fedScheduleAttached || false,
+        hstInstallmentRequired: form.hst_installment_required || form.form_data?.hstInstallmentRequired || false,
+        hstTabCompleted: form.hst_tab_completed || form.form_data?.hstTabCompleted || false,
+        tSlipType: form.form_data?.tSlipType || '',
+        personalTaxInstallmentsRequired: form.form_data?.personalTaxInstallmentsRequired || false,
+        hstInstallmentsRequired: form.form_data?.hstInstallmentsRequired || false,
+        outstandingTaxBalance: form.form_data?.outstandingTaxBalance || '$0.00',
+        yearlyAmounts: form.form_data?.yearlyAmounts || [],
+        priorPeriodsBalance: form.prior_periods_balance?.toString() || form.form_data?.priorPeriodsBalance || '',
+        taxesPayable: form.taxes_payable?.toString() || form.form_data?.taxesPayable || '',
+        installmentsDuringYear: form.installments_during_year?.toString() || form.form_data?.installmentsDuringYear || '',
+        installmentsAfterYear: form.installments_after_year?.toString() || form.form_data?.installmentsAfterYear || '',
+        amountOwing: form.amount_owing?.toString() || form.form_data?.amountOwing || '',
+        dueDate: form.due_date || form.form_data?.dueDate || '',
+        taxPaymentDueDate: form.form_data?.taxPaymentDueDate || '',
+        returnFilingDueDate: form.form_data?.returnFilingDueDate || 'April 30',
+        hstPriorBalance: form.hst_prior_balance?.toString() || form.form_data?.hstPriorBalance || '',
+        hstPayable: form.hst_payable?.toString() || form.form_data?.hstPayable || '',
+        hstInstallmentsDuring: form.hst_installments_during?.toString() || form.form_data?.hstInstallmentsDuring || '',
+        hstInstallmentsAfter: form.hst_installments_after?.toString() || form.form_data?.hstInstallmentsAfter || '',
+        hstPaymentDue: form.hst_payment_due?.toString() || form.form_data?.hstPaymentDue || '',
+        hstDueDate: form.hst_due_date || form.form_data?.hstDueDate || '',
+        createdAt: form.created_at || '',
+        updatedAt: form.updated_at || '',
+        createdBy: form.form_data?.createdBy || { 
+          id: form.created_by, 
+          name: form.created_by_name || 'Unknown',
+          role: 'admin'
+        },
+        assignedTo: form.assigned_to ? {
+          id: form.assigned_to,
+          name: form.assigned_to_name || 'Unknown',
+          role: 'admin'
+        } : null,
+        comments: form.comments || [],
+        history: form.history || [],
+        rejectionReason: form.rejection_reason || '',
+      })));
+      
+      toast.success(`Form reassigned to ${result.assignedToName} successfully!`);
+    } catch (error) {
+      console.error('Error reassigning form:', error);
+      toast.error('Failed to reassign form. Please try again.');
+    }
   }, [user]);
 
-  const updateFormStatus = useCallback((formId: string, status: FormStatus, comment?: string) => {
+  const createForm = useCallback(async (form: Omit<CloseoutForm, 'id' | 'createdAt' | 'updatedAt' | 'comments' | 'history'>) => {
     if (!user) return;
     
-    const now = new Date().toISOString();
+    try {
+      // First, save to backend
+      const backendFormData = {
+        clientEmail: form.signingEmail,
+        clientName: form.clientName,
+        formType: 'T1', // Default to T1 for now
+        filePath: form.filePath,
+        formData: form // Send the entire form data
+      };
+      
+      console.log('DEBUG: Sending form data to backend:', JSON.stringify(backendFormData, null, 2));
+      
+      const response = await fetch('http://localhost:5005/api/forms', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(backendFormData)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Backend response error:', response.status, errorText);
+        throw new Error(`Failed to save form to database: ${response.status} - ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log('Form saved to backend:', result);
+      
+      // Then update frontend state
+      const now = new Date().toISOString();
+      const newForm: CloseoutForm = {
+        ...form,
+        id: result.formId || `form-${Date.now()}`,
+        createdAt: now,
+        updatedAt: now,
+        comments: [],
+        history: [
+          {
+            id: `hist-${Date.now()}`,
+            action: 'Created form',
+            performedBy: user.name,
+            timestamp: now,
+          },
+        ],
+      };
+      
+      setForms(prevForms => [...prevForms, newForm]);
+      toast.success('Closeout form created successfully!');
+    } catch (error) {
+      console.error('Error creating form:', error);
+      toast.error('Failed to create form. Please try again.');
+    }
+  }, [user]);
+
+  const updateFormStatus = useCallback(async (formId: string, status: FormStatus, comment?: string, amendmentNote?: string) => {
+    if (!user) return;
     
-    setForms(prevForms => {
-      return prevForms.map(form => {
-        if (form.id === formId) {
-          const updatedForm = { 
-            ...form, 
-            status, 
-            updatedAt: now,
-            history: [
-              ...form.history,
-              {
-                id: `hist-${Date.now()}`,
-                action: `Status changed to ${status}`,
-                performedBy: user.name,
-                timestamp: now,
+    try {
+      // Call backend API to update form status
+      const response = await updateFormStatusAPI(formId, status, comment, amendmentNote);
+      
+      const now = new Date().toISOString();
+      
+      // Update frontend state with the response from backend
+      setForms(prevForms => {
+        return prevForms.map(form => {
+          if (form.id === formId) {
+            const updatedForm = { 
+              ...form, 
+              status, 
+              updatedAt: now,
+              history: [
+                ...form.history,
+                {
+                  id: `hist-${Date.now()}`,
+                  action: amendmentNote ? `Form sent back for amendment: ${amendmentNote}` : `Status changed to ${status}`,
+                  performedBy: user.name,
+                  timestamp: now,
+                }
+              ]
+            };
+            
+            // Use the backend response to update the form data correctly
+            if (response.form) {
+              // Update assignedTo from backend response
+              if (response.form.assigned_to) {
+                updatedForm.assignedTo = {
+                  id: response.form.assigned_to,
+                  name: response.form.assigned_to_name || 'Unknown',
+                  role: 'admin' // Assuming assigned_to is always an admin
+                };
               }
-            ]
-          };
-          
-          if (comment) {
-            updatedForm.comments = [
-              ...form.comments,
-              {
-                id: `comment-${Date.now()}`,
-                text: comment,
-                createdBy: user.name,
-                createdAt: now,
+              
+              // Update amendmentSentBy from backend response
+              if (response.form.amendment_sent_by) {
+                updatedForm.amendmentSentBy = {
+                  id: response.form.amendment_sent_by,
+                  name: response.form.amendment_sent_by_name || 'Unknown',
+                  role: 'admin'
+                };
+              } else {
+                updatedForm.amendmentSentBy = null;
               }
-            ];
+              
+              // Update rejection reason if present
+              if (response.form.rejection_reason) {
+                updatedForm.rejectionReason = response.form.rejection_reason;
+              }
+            }
+            
+            if (comment) {
+              updatedForm.comments = [
+                ...form.comments,
+                {
+                  id: `comment-${Date.now()}`,
+                  text: comment,
+                  createdBy: user.name,
+                  createdAt: now,
+                }
+              ];
+            }
+            
+            return updatedForm;
           }
-          
-          return updatedForm;
-        }
-        return form;
+          return form;
+        });
       });
-    });
-    
-    toast.success(`Form status updated to ${status}`);
+      
+      const successMessage = amendmentNote 
+        ? 'Form sent back for amendment successfully' 
+        : `Form status updated to ${status}`;
+      toast.success(successMessage);
+    } catch (error) {
+      console.error('Error updating form status:', error);
+      toast.error('Failed to update form status. Please try again.');
+    }
   }, [user]);
 
-  const updateForm = useCallback((formId: string, updatedForm: CloseoutForm) => {
+  const updateForm = useCallback(async (formId: string, updatedForm: CloseoutForm) => {
     if (!user) return;
     
-    const now = new Date().toISOString();
-    
-    setForms(prevForms => {
-      return prevForms.map(form => {
-        if (form.id === formId) {
-          return {
-            ...updatedForm,
-            updatedAt: now,
-            history: [
-              ...form.history,
-              {
-                id: `hist-${Date.now()}`,
-                action: 'Form updated',
-                performedBy: user.name,
-                timestamp: now,
-              }
-            ]
-          };
-        }
-        return form;
-      });
+    console.log('DEBUG: updateForm called with:', { formId, updatedForm });
+    console.log('DEBUG: Updated form data:', {
+      years: updatedForm.years,
+      jobNumber: updatedForm.jobNumber,
+      partner: updatedForm.partner,
+      manager: updatedForm.manager,
+      clientName: updatedForm.clientName
     });
     
-    toast.success('Form updated successfully');
+    try {
+      // Call backend API to update form
+      const response = await updateFormAPI(formId, updatedForm);
+      
+      console.log('DEBUG: Backend response:', response);
+      console.log('DEBUG: Response form data:', response.form);
+      
+      const now = new Date().toISOString();
+      
+      // Update frontend state with the actual updated data from backend
+      setForms(prevForms => {
+        return prevForms.map(form => {
+          if (form.id === formId) {
+            // Use the same comprehensive mapping logic as fetchFormsAPI
+            let formDataToUse = form; // Use existing form data as fallback, not updatedForm
+            
+            if (response.form) {
+              console.log('DEBUG: Mapping backend data to frontend format');
+              // Map backend database field names to frontend field names using the same logic as fetchFormsAPI
+              // First, merge the updatedForm (sent data) with response.form (returned data) to ensure all updates are preserved
+              const mergedFormData = {
+                ...response.form,
+                // Prioritize the sent data for fields that were actually updated
+                years: updatedForm.years !== undefined ? updatedForm.years : (response.form.years || response.form.form_data?.years || ''),
+                jobNumber: updatedForm.jobNumber !== undefined ? updatedForm.jobNumber : (response.form.job_number || response.form.form_data?.jobNumber || ''),
+                partner: updatedForm.partner !== undefined ? updatedForm.partner : (response.form.partner || response.form.form_data?.partner || ''),
+                manager: updatedForm.manager !== undefined ? updatedForm.manager : (response.form.manager || response.form.form_data?.manager || ''),
+                clientName: updatedForm.clientName !== undefined ? updatedForm.clientName : (response.form.client_name || response.form.clientName || response.form.form_data?.clientName || ''),
+                signingEmail: updatedForm.signingEmail !== undefined ? updatedForm.signingEmail : (response.form.client_email || response.form.signingEmail || response.form.form_data?.signingEmail || ''),
+                signingPerson: updatedForm.signingPerson !== undefined ? updatedForm.signingPerson : (response.form.form_data?.signingPerson || ''),
+                additionalEmails: updatedForm.additionalEmails !== undefined ? updatedForm.additionalEmails : (response.form.form_data?.additionalEmails || []),
+                invoiceAmount: updatedForm.invoiceAmount !== undefined ? updatedForm.invoiceAmount : (response.form.invoice_amount || response.form.form_data?.invoiceAmount || ''),
+                invoiceDescription: updatedForm.invoiceDescription !== undefined ? updatedForm.invoiceDescription : (response.form.invoice_description || response.form.form_data?.invoiceDescription || ''),
+                billDetail: updatedForm.billDetail !== undefined ? updatedForm.billDetail : (response.form.bill_detail || response.form.form_data?.billDetail || ''),
+                paymentRequired: updatedForm.paymentRequired !== undefined ? updatedForm.paymentRequired : (response.form.payment_required || response.form.form_data?.paymentRequired || false),
+                wipRecovery: updatedForm.wipRecovery !== undefined ? updatedForm.wipRecovery : (response.form.wip_recovery || response.form.form_data?.wipRecovery || ''),
+                recoveryReason: updatedForm.recoveryReason !== undefined ? updatedForm.recoveryReason : (response.form.recovery_reason || response.form.form_data?.recoveryReason || ''),
+                isT1: updatedForm.isT1 !== undefined ? updatedForm.isT1 : (response.form.is_t1 || response.form.form_data?.isT1 || false),
+                isS216: updatedForm.isS216 !== undefined ? updatedForm.isS216 : (response.form.is_s216 || response.form.form_data?.isS216 || false),
+                isS116: updatedForm.isS116 !== undefined ? updatedForm.isS116 : (response.form.is_s116 || response.form.form_data?.isS116 || false),
+                isPaperFiled: updatedForm.isPaperFiled !== undefined ? updatedForm.isPaperFiled : (response.form.is_paper_filed || response.form.form_data?.isPaperFiled || false),
+                installmentsRequired: updatedForm.installmentsRequired !== undefined ? updatedForm.installmentsRequired : (response.form.installments_required || response.form.form_data?.installmentsRequired || false),
+                t106: updatedForm.t106 !== undefined ? updatedForm.t106 : (response.form.t106 || response.form.form_data?.t106 || false),
+                t1134: updatedForm.t1134 !== undefined ? updatedForm.t1134 : (response.form.t1134 || response.form.form_data?.t1134 || false),
+                ontarioAnnualReturn: updatedForm.ontarioAnnualReturn !== undefined ? updatedForm.ontarioAnnualReturn : (response.form.ontario_annual_return || response.form.form_data?.ontarioAnnualReturn || false),
+                tSlips: updatedForm.tSlips !== undefined ? updatedForm.tSlips : (response.form.t_slips || response.form.form_data?.tSlips || false),
+                quebecReturn: updatedForm.quebecReturn !== undefined ? updatedForm.quebecReturn : (response.form.quebec_return || response.form.form_data?.quebecReturn || false),
+                albertaReturn: updatedForm.albertaReturn !== undefined ? updatedForm.albertaReturn : (response.form.alberta_return || response.form.form_data?.albertaReturn || false),
+                t2091PrincipalResidence: updatedForm.t2091PrincipalResidence !== undefined ? updatedForm.t2091PrincipalResidence : (response.form.t2091_principal_residence || response.form.form_data?.t2091PrincipalResidence || false),
+                t1135ForeignProperty: updatedForm.t1135ForeignProperty !== undefined ? updatedForm.t1135ForeignProperty : (response.form.t1135_foreign_property || response.form.form_data?.t1135ForeignProperty || false),
+                t1032PensionSplit: updatedForm.t1032PensionSplit !== undefined ? updatedForm.t1032PensionSplit : (response.form.t1032_pension_split || response.form.form_data?.t1032PensionSplit || false),
+                hstDraftOrFinal: updatedForm.hstDraftOrFinal !== undefined ? updatedForm.hstDraftOrFinal : (response.form.hst_draft_or_final || response.form.form_data?.hstDraftOrFinal || ''),
+                otherNotes: updatedForm.otherNotes !== undefined ? updatedForm.otherNotes : (response.form.other_notes || response.form.form_data?.otherNotes || ''),
+                otherDocuments: updatedForm.otherDocuments !== undefined ? updatedForm.otherDocuments : (response.form.other_documents || response.form.form_data?.otherDocuments || ''),
+                corporateInstallmentsRequired: updatedForm.corporateInstallmentsRequired !== undefined ? updatedForm.corporateInstallmentsRequired : (response.form.corporate_installments_required || response.form.form_data?.corporateInstallmentsRequired || false),
+                fedScheduleAttached: updatedForm.fedScheduleAttached !== undefined ? updatedForm.fedScheduleAttached : (response.form.fed_schedule_attached || response.form.form_data?.fedScheduleAttached || false),
+                hstInstallmentRequired: updatedForm.hstInstallmentRequired !== undefined ? updatedForm.hstInstallmentRequired : (response.form.hst_installment_required || response.form.form_data?.hstInstallmentRequired || false),
+                hstTabCompleted: updatedForm.hstTabCompleted !== undefined ? updatedForm.hstTabCompleted : (response.form.hst_tab_completed || response.form.form_data?.hstTabCompleted || false),
+                tSlipType: updatedForm.tSlipType !== undefined ? updatedForm.tSlipType : (response.form.form_data?.tSlipType || ''),
+                personalTaxInstallmentsRequired: updatedForm.personalTaxInstallmentsRequired !== undefined ? updatedForm.personalTaxInstallmentsRequired : (response.form.form_data?.personalTaxInstallmentsRequired || false),
+                hstInstallmentsRequired: updatedForm.hstInstallmentsRequired !== undefined ? updatedForm.hstInstallmentsRequired : (response.form.form_data?.hstInstallmentsRequired || false),
+                outstandingTaxBalance: updatedForm.outstandingTaxBalance !== undefined ? updatedForm.outstandingTaxBalance : (response.form.form_data?.outstandingTaxBalance || '$0.00'),
+                yearlyAmounts: updatedForm.yearlyAmounts !== undefined ? updatedForm.yearlyAmounts : (response.form.form_data?.yearlyAmounts || []),
+                priorPeriodsBalance: updatedForm.priorPeriodsBalance !== undefined ? updatedForm.priorPeriodsBalance : (response.form.prior_periods_balance?.toString() || response.form.form_data?.priorPeriodsBalance || ''),
+                taxesPayable: updatedForm.taxesPayable !== undefined ? updatedForm.taxesPayable : (response.form.taxes_payable?.toString() || response.form.form_data?.taxesPayable || ''),
+                installmentsDuringYear: updatedForm.installmentsDuringYear !== undefined ? updatedForm.installmentsDuringYear : (response.form.installments_during_year?.toString() || response.form.form_data?.installmentsDuringYear || ''),
+                installmentsAfterYear: updatedForm.installmentsAfterYear !== undefined ? updatedForm.installmentsAfterYear : (response.form.installments_after_year?.toString() || response.form.form_data?.installmentsAfterYear || ''),
+                amountOwing: updatedForm.amountOwing !== undefined ? updatedForm.amountOwing : (response.form.amount_owing?.toString() || response.form.form_data?.amountOwing || ''),
+                dueDate: updatedForm.dueDate !== undefined ? updatedForm.dueDate : (response.form.due_date || response.form.form_data?.dueDate || ''),
+                taxPaymentDueDate: updatedForm.taxPaymentDueDate !== undefined ? updatedForm.taxPaymentDueDate : (response.form.form_data?.taxPaymentDueDate || ''),
+                returnFilingDueDate: updatedForm.returnFilingDueDate !== undefined ? updatedForm.returnFilingDueDate : (response.form.form_data?.returnFilingDueDate || 'April 30'),
+                hstPriorBalance: updatedForm.hstPriorBalance !== undefined ? updatedForm.hstPriorBalance : (response.form.hst_prior_balance?.toString() || response.form.form_data?.hstPriorBalance || ''),
+                hstPayable: updatedForm.hstPayable !== undefined ? updatedForm.hstPayable : (response.form.hst_payable?.toString() || response.form.form_data?.hstPayable || ''),
+                hstInstallmentsDuring: updatedForm.hstInstallmentsDuring !== undefined ? updatedForm.hstInstallmentsDuring : (response.form.hst_installments_during?.toString() || response.form.form_data?.hstInstallmentsDuring || ''),
+                hstInstallmentsAfter: updatedForm.hstInstallmentsAfter !== undefined ? updatedForm.hstInstallmentsAfter : (response.form.hst_installments_after?.toString() || response.form.form_data?.hstInstallmentsAfter || ''),
+                hstPaymentDue: updatedForm.hstPaymentDue !== undefined ? updatedForm.hstPaymentDue : (response.form.hst_payment_due?.toString() || response.form.form_data?.hstPaymentDue || ''),
+                hstDueDate: updatedForm.hstDueDate !== undefined ? updatedForm.hstDueDate : (response.form.hst_due_date || response.form.form_data?.hstDueDate || ''),
+                status: response.form.status,
+                assignedTo: response.form.assigned_to ? {
+                  id: response.form.assigned_to,
+                  name: response.form.assigned_to_name || 'Unknown',
+                  role: 'admin'
+                } : null,
+                amendmentSentBy: response.form.amendment_sent_by ? {
+                  id: response.form.amendment_sent_by,
+                  name: response.form.amendment_sent_by_name || 'Unknown',
+                  role: 'admin'
+                } : null,
+                rejectionReason: response.form.rejection_reason || '',
+                updatedAt: response.form.updated_at
+              };
+
+              formDataToUse = {
+                ...form, // Keep existing form structure
+                ...mergedFormData // Use the merged data
+              };
+              
+              console.log('DEBUG: Mapped form data:', {
+                years: formDataToUse.years,
+                jobNumber: formDataToUse.jobNumber,
+                partner: formDataToUse.partner,
+                manager: formDataToUse.manager
+              });
+            } else {
+              console.log('DEBUG: No response.form, using existing form data');
+            }
+            
+            return {
+              ...formDataToUse,
+              updatedAt: now,
+              history: [
+                ...form.history,
+                {
+                  id: `hist-${Date.now()}`,
+                  action: 'Form updated',
+                  performedBy: user.name,
+                  timestamp: now,
+                }
+              ]
+            };
+          }
+          return form;
+        });
+      });
+      
+      toast.success('Form updated successfully');
+    } catch (error) {
+      console.error('Error updating form:', error);
+      toast.error('Failed to update form. Please try again.');
+    }
   }, [user]);
 
-  const assignForm = useCallback((formId: string, assigneeId: string, assigneeName: string) => {
+  const assignForm = useCallback(async (formId: string, assigneeId: string, assigneeName: string) => {
     if (!user) return;
     
-    const now = new Date().toISOString();
-    
-    setForms(prevForms => {
-      return prevForms.map(form => {
-        if (form.id === formId) {
-          return {
-            ...form,
-            assignedTo: {
-              id: assigneeId,
-              name: assigneeName,
-              role: 'admin',
-            },
-            updatedAt: now,
-            history: [
-              ...form.history,
-              {
-                id: `hist-${Date.now()}`,
-                action: `Assigned to ${assigneeName}`,
-                performedBy: user.name,
-                timestamp: now,
-              }
-            ]
-          };
-        }
-        return form;
+    try {
+      // Call backend API to reassign the form
+      await reassignForm(formId, assigneeId);
+      
+      const now = new Date().toISOString();
+      
+      // Update frontend state
+      setForms(prevForms => {
+        return prevForms.map(form => {
+          if (form.id === formId) {
+            return {
+              ...form,
+              assignedTo: {
+                id: assigneeId,
+                name: assigneeName,
+                role: 'admin',
+              },
+              updatedAt: now,
+              history: [
+                ...form.history,
+                {
+                  id: `hist-${Date.now()}`,
+                  action: `Assigned to ${assigneeName}`,
+                  performedBy: user.name,
+                  timestamp: now,
+                }
+              ]
+            };
+          }
+          return form;
+        });
       });
-    });
-    
-    toast.success(`Form assigned to ${assigneeName}`);
+      
+      toast.success(`Form assigned to ${assigneeName}`);
+    } catch (error) {
+      console.error('Error assigning form:', error);
+      toast.error('Failed to assign form. Please try again.');
+    }
   }, [user]);
 
   const createEmail = useCallback((emailData: Omit<EmailThread, 'id' | 'createdAt' | 'updatedAt' | 'messages' | 'notes'>) => {
@@ -1684,6 +2097,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       updateFormStatus,
       updateForm,
       assignForm,
+      reassignForm,
       createEmail,
       addEmailReply,
       addEmailNote,

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Save, Clock } from 'lucide-react';
@@ -13,6 +14,7 @@ import { mapTableDataToCloseoutForm } from '@/components/CloseoutForms/utils/for
 import FormTypeSelection from '@/components/CloseoutForms/FormTypeSelection';
 import ClientSearchStep from '@/components/CloseoutForms/steps/ClientSearchStep';
 import DocumentUploadStep from '@/components/CloseoutForms/steps/DocumentUploadStep';
+import { fetchAdmins } from '@/services/api';
 
 const CloseoutFormCreatePage = () => {
   const navigate = useNavigate();
@@ -36,6 +38,10 @@ const CloseoutFormCreatePage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [admins, setAdmins] = useState([]);
+  const [selectedAdmin, setSelectedAdmin] = useState(null);
+  const [pendingFormData, setPendingFormData] = useState(null);
   
   // Get form for editing if ID provided
   const editForm = id ? forms.find(form => form.id === id) : null;
@@ -45,7 +51,7 @@ const CloseoutFormCreatePage = () => {
     if (editForm) {
       setFormType('personal');
       handleClientSelect({ 
-        id: editForm.id || 'temp-id', 
+        id: `client-${editForm.signingEmail}`, 
         name: editForm.clientName, 
         email: editForm.signingEmail 
       });
@@ -122,31 +128,66 @@ const CloseoutFormCreatePage = () => {
     delay: 2000
   });
 
+  const openAdminModal = async () => {
+    setShowAdminModal(true);
+    try {
+      const adminList = await fetchAdmins();
+      setAdmins(adminList);
+      
+      // Set Laureen as default selected admin
+      const laureen = adminList.find(admin => admin.name === 'Laureen');
+      if (laureen) {
+        setSelectedAdmin(laureen);
+      }
+    } catch (err) {
+      console.error('Error fetching admins:', err);
+    }
+  };
+
   const handleFormSubmit = async (formData: CloseoutFormTableData) => {
-    if (!user) return;
-    
+    setPendingFormData(formData);
+    openAdminModal();
+  };
+
+  const handleAdminModalSubmit = async () => {
+    if (!user || !selectedAdmin || !pendingFormData) {
+      console.error('Missing required data:', { user: !!user, selectedAdmin: !!selectedAdmin, pendingFormData: !!pendingFormData });
+      return;
+    }
     setIsSubmitting(true);
     try {
-      const mappedFormData = mapTableDataToCloseoutForm(formData, user, formType || 'personal');
+      console.log('DEBUG: Starting form submission with:', { user, selectedAdmin, pendingFormData });
+      const mappedFormData = mapTableDataToCloseoutForm(pendingFormData, user, formType || 'personal');
+      console.log('DEBUG: Mapped form data:', mappedFormData);
       
-      if (editForm) {
-        const updatedFormData = {
-          ...editForm,
-          ...mappedFormData,
-          status: 'pending' as const
-        };
-        updateForm(editForm.id, updatedFormData);
-      } else {
-        createForm(mappedFormData);
-      }
-      
-      // Clear draft from localStorage
+      // Assign the form to the selected admin
+      mappedFormData.assignedTo = {
+        id: selectedAdmin.id,
+        name: selectedAdmin.name,
+        role: selectedAdmin.role || 'admin',
+      };
+
+      console.log('DEBUG: Calling createForm with:', mappedFormData);
+      await createForm(mappedFormData);
+      console.log('DEBUG: Form created successfully');
       localStorage.removeItem(`form-draft-${user?.id}`);
-      
       navigate('/dashboard');
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      // Show error to user
+      alert(`Failed to submit form: ${error.message}`);
     } finally {
       setIsSubmitting(false);
+      setShowAdminModal(false);
+      setSelectedAdmin(null);
+      setPendingFormData(null);
     }
+  };
+
+  const handleAdminModalCancel = () => {
+    setShowAdminModal(false);
+    setSelectedAdmin(null);
+    setPendingFormData(null);
   };
 
   const handleCancel = () => {
@@ -270,15 +311,57 @@ const CloseoutFormCreatePage = () => {
         )}
         
         {step === 4 && extractedData && (
+          (() => { console.log('DEBUG: extractedData passed to CloseoutFormTable:', extractedData); return null; })()
+        )}
+        {step === 4 && extractedData && (
           <CloseoutFormTable
             initialData={extractedData}
             onSubmit={handleFormSubmit}
             onCancel={handleCancel}
             showButtons={true}
             formType={formType || 'personal'}
+            selectedClientEmail={selectedClient?.email}
+            selectedClient={selectedClient}
+            isNewClient={isNewClient}
           />
         )}
       </div>
+
+            {showAdminModal && createPortal(
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-[60]">
+          <div className="bg-white rounded shadow-lg p-6 min-w-[300px]">
+            <div className="mb-4">
+              <label className="font-medium mr-2">Submit to:</label>
+              <select
+                value={selectedAdmin?.id || ''}
+                onChange={e => setSelectedAdmin(admins.find(a => a.id === e.target.value))}
+                className="border rounded px-2 py-1 w-full mt-2"
+              >
+                <option value="" disabled>Select admin</option>
+                {admins.map(admin => (
+                  <option key={admin.id} value={admin.id}>{admin.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                className="px-4 py-2 bg-blue-600 text-white rounded"
+                onClick={handleAdminModalSubmit}
+                disabled={!selectedAdmin || isSubmitting}
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit'}
+              </button>
+              <button
+                className="px-4 py-2 bg-gray-300 rounded"
+                onClick={handleAdminModalCancel}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       <UnsavedChangesDialog
         open={showUnsavedDialog}

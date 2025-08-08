@@ -1,10 +1,11 @@
-
-import React, { useState } from 'react';
-import { Upload, FileText, Check, Loader2 } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { Upload, FileText, Check, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Client } from '../ClientSearch';
 import { CloseoutFormTableData } from '../CloseoutFormTable';
+import { toast } from 'sonner';
+import api from '@/services/api';
 
 interface DocumentUploadStepProps {
   selectedClient: Client | { email: string; name?: string };
@@ -19,8 +20,18 @@ const DocumentUploadStep = ({ selectedClient, onDataExtracted }: DocumentUploadS
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      if (file.type !== 'application/pdf') {
+        toast.error('Please upload a PDF file');
+        return;
+      }
       setUploadedFile(file);
+      setIsComplete(false);
     }
+  };
+
+  const removeFile = () => {
+    setUploadedFile(null);
+    setIsComplete(false);
   };
 
   const handleGenerateForm = async () => {
@@ -28,115 +39,96 @@ const DocumentUploadStep = ({ selectedClient, onDataExtracted }: DocumentUploadS
 
     setIsProcessing(true);
     
-    // Simulate processing time
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      // Create FormData
+      const formData = new FormData();
+      formData.append('file', uploadedFile);
 
-    // Generate realistic demo data for Rohit Sharma's 2024 tax year
-    const isRohitSharma = selectedClient && 
-      ('name' in selectedClient ? selectedClient.name === 'Rohit Sharma' : false) ||
-      ('email' in selectedClient && selectedClient.email === 'rohit@gmail.com');
+      // Call the extraction API using the api instance (which handles 401 errors)
+      const response = await api.post('/extract-pdf', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
-    let extractedData: Partial<CloseoutFormTableData>;
+      const result = response.data;
+      const extractedData = result.data || {};
+      console.log('DEBUG: extractedData from backend:', extractedData); // Debug log
+      console.log('DEBUG: extractedData.notes =', extractedData.notes); // Direct debug log
 
-    if (isRohitSharma) {
-      // Demo data for Rohit Sharma - 2024 tax year with some changes from 2023
-      extractedData = {
-        filePath: '\\\\Clearhouse\\Clients\\Rohit_2024\\T1',
-        partner: 'Priya S.',
-        manager: 'Deepak Jain',
-        years: '2024',
-        jobNumber: '10354-T1',
-        invoiceAmount: '$375 CAD', // Increased from previous year
-        billDetail: 'Personal T1 + Foreign Income + Capital Gains + Donation Sched.',
-        paymentRequired: true,
-        wipRecovery: '100%',
-        recoveryReason: 'N/A',
-        t2091PrincipalResidence: true, // Changed from false
-        t1135ForeignProperty: true,
-        t1032PensionSplit: false,
-        hstDraftOrFinal: 'Final',
-        otherNotes: 'Client sold investment property during year - capital gains reported',
-        // T1 Summary - Updated values for 2024
-        priorPeriodsBalance: '0',
-        taxesPayable: '4,250.00', // Higher than 2023 due to capital gains
-        installmentsDuringYear: '2,500.00',
-        installmentsAfterYear: '500.00',
-        amountOwing: '2,250.00',
-        taxPaymentDueDate: 'April 30, 2025',
-        // HST Summary - New HST obligations
-        hstPriorBalance: '0',
-        hstPayable: '750.00',
-        hstInstallmentsDuring: '250.00',
-        hstInstallmentsAfter: '0',
-        hstPaymentDue: '500.00',
-        hstDueDate: 'June 15, 2025',
-        familyMembers: [{
-          id: '1',
-          clientName: 'Rohit Sharma',
-          signingPerson: 'Rohit Sharma',
-          signingEmail: 'rohit@gmail.com',
-          additionalEmails: ['accountant@sharma.com'],
-          isT1: true,
-          isS216: false,
-          isS116: false,
-          isPaperFiled: false,
-          installmentsRequired: true,
-          personalTaxPayment: '$2,500.00',
-          installmentAttachment: null
-        }]
-      };
-    } else {
-      // Default demo data for other clients
-      extractedData = {
-        filePath: '\\\\Clearhouse\\Clients\\Demo_2024\\T1',
-        partner: 'Priya S.',
-        manager: 'Deepak Jain',
-        years: '2024',
-        jobNumber: '10999-T1',
-        invoiceAmount: '$295 CAD',
-        billDetail: 'Personal T1 + Employment Income',
+      // Map the extracted data to form fields
+      // IMPORTANT: Only changing the VALUES - keeping all fields same
+      const mappedData: Partial<CloseoutFormTableData> = {
+        formType: 'personal',
+        filePath: '', // Empty for manual entry
+        partner: extractedData.partner || '',
+        manager: extractedData.manager || '',
+        years: extractedData.years || '',
+        jobNumber: extractedData.jobNumber || '', // Just number without -T1
+        invoiceAmount: extractedData.invoiceAmount || '',
+        billDetail: '', // Empty instead of "Personal T1 Tax Return"
         paymentRequired: false,
-        wipRecovery: '100%',
+        wipRecovery: extractedData.wipRecovery || '100%',
         recoveryReason: '',
-        t2091PrincipalResidence: false,
-        t1135ForeignProperty: false,
-        t1032PensionSplit: false,
-        hstDraftOrFinal: 'Final',
-        otherNotes: 'Standard return',
-        priorPeriodsBalance: '0',
-        taxesPayable: '-850.00',
-        installmentsDuringYear: '0',
-        installmentsAfterYear: '0',
-        amountOwing: '-850.00',
-        taxPaymentDueDate: 'April 30, 2025',
-        hstPriorBalance: '0',
-        hstPayable: '0',
-        hstInstallmentsDuring: '0',
-        hstInstallmentsAfter: '0',
-        hstPaymentDue: '0',
-        hstDueDate: 'June 15, 2025',
-        familyMembers: [{
-          id: '1',
-          clientName: selectedClient && 'name' in selectedClient ? selectedClient.name : 'Demo Client',
-          signingPerson: selectedClient && 'name' in selectedClient ? selectedClient.name : 'Demo Client',
-          signingEmail: selectedClient && 'email' in selectedClient ? selectedClient.email : 'demo@example.com',
-          additionalEmails: [],
-          isT1: true,
-          isS216: false,
-          isS116: false,
-          isPaperFiled: false,
-          installmentsRequired: false,
-          personalTaxPayment: '$0.00',
-          installmentAttachment: null
-        }]
+        // Section 2 - Empty for manual entry/separate upload
+        familyMembers: [
+          {
+            id: '1',
+            clientName: '', // Empty
+            signingPerson: extractedData.name || '',
+            signingEmail: extractedData.email || '',
+            additionalEmails: [],
+            isT1: true,
+            isS216: false,
+            isS116: false,
+            isPaperFiled: false,
+            installmentsRequired: false,
+            personalTaxPayment: '$0.00',
+            installmentAttachment: null
+          }
+        ],
+        // Filing Details
+        t2091PrincipalResidence: extractedData.t2091PrincipalResidence || false,
+        t1135ForeignProperty: extractedData.t1135ForeignProperty || false,
+        t1032PensionSplit: extractedData.t1032PensionSplit || false,
+        hstDraftOrFinal: extractedData.hstDraftOrFinal || 'Final',
+        // Set otherNotes at the top level for the main form
+        otherNotes: (typeof extractedData.notes === 'string' && extractedData.notes.length > 0) ? extractedData.notes : (extractedData.otherNotes || ''),
+        ontarioAnnualReturn: extractedData.ontarioAnnualReturn || false,
+        // Additional fields
+        tSlipType: extractedData.tSlipType || '',
+        otherDocuments: extractedData.otherDocuments || '',
+        personalTaxInstallmentsRequired: extractedData.personalTaxInstallmentsRequired || false,
+        hstInstallmentsRequired: extractedData.hstInstallmentsRequired || false,
+        outstandingTaxBalance: extractedData.outstandingTaxBalance || '0',
+        // T1 Summary fields
+        priorPeriodsBalance: extractedData.priorPeriodsBalance || '0',
+        taxesPayable: extractedData.taxesPayable || '0',
+        installmentsDuringYear: extractedData.installmentsDuringYear || '0',
+        installmentsAfterYear: extractedData.installmentsAfterYear || '0',
+        amountOwing: extractedData.amountOwing || '0',
+        taxPaymentDueDate: extractedData.taxPaymentDueDate || 'April 30, 2025',
+        returnFilingDueDate: 'April 30' as 'April 30' | 'June 15',
+        // HST Summary fields
+        hstPriorBalance: extractedData.hstPriorBalance || '0',
+        hstPayable: extractedData.hstPayable || '0',
+        hstInstallmentsDuring: extractedData.hstInstallmentsDuring || '0',
+        hstInstallmentsAfter: extractedData.hstInstallmentsAfter || '0',
+        hstPaymentDue: extractedData.hstPaymentDue || '0',
+        hstDueDate: extractedData.hstDueDate || 'N/A',
+        yearlyAmounts: extractedData.yearlyAmounts || []
       };
+      console.log('DEBUG: mappedData to be sent to onDataExtracted:', mappedData); // Debug log
+      setIsComplete(true);
+      onDataExtracted(mappedData);
+      
+      toast.success('PDF data extracted successfully!');
+    } catch (error) {
+      console.error('PDF extraction error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to extract PDF data');
+    } finally {
+      setIsProcessing(false);
     }
-
-    setIsProcessing(false);
-    setIsComplete(true);
-    
-    // Pass extracted data to parent
-    onDataExtracted(extractedData);
   };
 
   const clientName = selectedClient && 'name' in selectedClient ? selectedClient.name : 
@@ -170,7 +162,7 @@ const DocumentUploadStep = ({ selectedClient, onDataExtracted }: DocumentUploadS
               onChange={handleFileUpload}
               className="hidden"
               id="file-upload"
-              multiple
+              disabled={isProcessing}
             />
             <label htmlFor="file-upload" className="cursor-pointer">
               <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -178,72 +170,89 @@ const DocumentUploadStep = ({ selectedClient, onDataExtracted }: DocumentUploadS
                 Click to upload PDF files
               </p>
               <p className="text-sm text-gray-500">
-                Support for multiple PDF files. Maximum 10MB per file.
+                Support for PDF files. Maximum 10MB per file.
               </p>
             </label>
           </div>
 
+          {/* Uploaded File Display */}
           {uploadedFile && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-center gap-3">
-                <FileText className="h-6 w-6 text-blue-600" />
-                <div className="flex-1">
-                  <p className="font-medium text-blue-900">{uploadedFile.name}</p>
-                  <p className="text-sm text-blue-700">
-                    {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <FileText className="h-10 w-10 text-blue-500" />
+                  <div>
+                    <p className="font-medium text-sm">{uploadedFile.name}</p>
+                    <p className="text-xs text-gray-500">
+                      {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
                 </div>
-                {isComplete && <Check className="h-6 w-6 text-green-600" />}
+                <div className="flex items-center gap-2">
+                  {isComplete && (
+                    <Check className="h-5 w-5 text-green-500" />
+                  )}
+                  {!isProcessing && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={removeFile}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
+            </div>
+          )}
+
+          {/* Generate Button */}
+          {uploadedFile && !isComplete && (
+            <Button 
+              onClick={handleGenerateForm}
+              disabled={isProcessing}
+              className="w-full"
+            >
+              {isProcessing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing Documents...
+                </>
+              ) : (
+                <>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Generate Form from PDF
+                </>
+              )}
+            </Button>
+          )}
+
+          {/* Success Message */}
+          {isComplete && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+              <Check className="h-8 w-8 text-green-500 mx-auto mb-2" />
+              <p className="text-sm font-medium text-green-800">
+                Data extracted successfully!
+              </p>
+              <p className="text-xs text-green-600 mt-1">
+                You can now proceed to review and edit the form
+              </p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Generate Form Button */}
-      {uploadedFile && !isComplete && (
-        <div className="text-center">
-          <Button 
-            onClick={handleGenerateForm} 
-            disabled={isProcessing}
-            className="bg-blue-600 hover:bg-blue-700"
-            size="lg"
-          >
-            {isProcessing ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Processing Documents...
-              </>
-            ) : (
-              <>
-                <FileText className="h-4 w-4 mr-2" />
-                Generate Form from PDF
-              </>
-            )}
-          </Button>
-          {isProcessing && (
-            <p className="text-sm text-muted-foreground mt-2">
-              Extracting data from uploaded documents...
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Success Message */}
-      {isComplete && (
-        <Card className="border-green-200 bg-green-50">
-          <CardContent className="pt-6">
-            <div className="text-center space-y-2">
-              <Check className="h-12 w-12 text-green-600 mx-auto" />
-              <h4 className="font-medium text-green-900">Data Extraction Complete!</h4>
-              <p className="text-sm text-green-700">
-                Form data has been successfully extracted from the uploaded documents.
-                You can now review and edit the form details.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* Instructions */}
+      <div className="text-sm text-gray-600 space-y-2">
+        <p className="font-medium">Note:</p>
+        <ul className="list-disc list-inside space-y-1">
+          <li>Upload CCH iFirm PDF documents for best results</li>
+          <li>The system will extract job details, partner, manager, and invoice information</li>
+          <li>Year will be extracted from the "Period Ended" field</li>
+          <li>File path must be entered manually after extraction</li>
+          <li>You can edit all extracted information before saving</li>
+        </ul>
+      </div>
     </div>
   );
 };

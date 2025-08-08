@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import CloseoutFormTable, { CloseoutFormTableData } from '../CloseoutFormTable';
 import PreviousYearForms from '../PreviousYearForms';
 import CloseoutFormComparison from '../CloseoutFormComparison';
@@ -69,6 +69,9 @@ const FormCompletionStep = ({
           onCancel={onCancel}
           showButtons={true}
           formType={formType}
+          selectedClientEmail={selectedClient?.email}
+          selectedClient={'id' in selectedClient ? selectedClient : undefined}
+          isNewClient={isNewClient}
         />
       </div>
 

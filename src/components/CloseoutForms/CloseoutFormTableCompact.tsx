@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 import { Plus, X } from 'lucide-react';
 import { CloseoutFormTableData } from './CloseoutFormTable';
+import FamilyMemberPDFUpload from './FamilyMemberPDFUpload';
 
 interface FamilyMember {
   id: string;
@@ -44,6 +45,10 @@ interface FamilyMember {
   hstInstallmentsRequired?: boolean;
   otherDocuments?: string;
   otherNotes?: string;
+  // Add fields for PDF extracted values
+  isT1135?: boolean;
+  isT2091?: boolean;
+  isT1032?: boolean;
 }
 
 interface CloseoutFormTableCompactProps {
@@ -63,13 +68,13 @@ const CloseoutFormTableCompact = ({
 }: CloseoutFormTableCompactProps) => {
   // General Information (applies to all family members)
   const [generalInfo, setGeneralInfo] = useState({
-    filePath: initialData?.filePath || '',
+    filePath: initialData?.filePath || '', // Should be empty for manual entry
     partner: initialData?.partner || '',
     manager: initialData?.manager || '',
     years: initialData?.years || '',
-    jobNumber: initialData?.jobNumber || '',
+    jobNumber: initialData?.jobNumber || '', // Should be just number without -T1
     invoiceAmount: initialData?.invoiceAmount || '',
-    billDetail: initialData?.billDetail || '',
+    billDetail: initialData?.billDetail || '', // Should be empty, not pre-filled
     wipRecovery: initialData?.wipRecovery || '',
     paymentRequired: initialData?.paymentRequired || false,
   });
@@ -79,9 +84,9 @@ const CloseoutFormTableCompact = ({
     initialData?.familyMembers || [
       {
         id: '1',
-        clientName: '',
-        signingPerson: '',
-        signingEmail: '',
+        clientName: '', // Empty for manual entry
+        signingPerson: '', // Empty - NOT "Job Type"
+        signingEmail: '', // Empty for manual entry
         additionalEmails: [],
         isT1: true,
         isS216: false,
@@ -109,12 +114,41 @@ const CloseoutFormTableCompact = ({
         personalTaxInstallmentsRequired: false,
         hstInstallmentsRequired: false,
         otherDocuments: '',
-        otherNotes: ''
+        otherNotes: '',
+        // Initialize checkbox fields
+        isT1135: false,
+        isT2091: false,
+        isT1032: false
       }
     ]
   );
 
   const [activeTab, setActiveTab] = useState('0');
+
+  // Handler for Section 2 PDF data extraction
+  const handleSection2DataExtracted = (familyMemberIndex: number, extractedData: any) => {
+    const updatedMembers = [...familyMembers];
+    const member = updatedMembers[familyMemberIndex];
+    
+    if (member) {
+      // Update Section 2 - Client Details
+      member.signingPerson = extractedData.signingPerson || member.signingPerson;
+      member.signingEmail = extractedData.signingEmail || member.signingEmail;
+      
+      // Update Section 3 - Filing Details
+      member.isT1135 = extractedData.isT1135;
+      member.isT1032 = extractedData.isT1032;
+      // T2091 will be handled later as mentioned
+      
+      // Also update the old field names for compatibility
+      member.t1135ForeignProperty = extractedData.isT1135;
+      member.t1032PensionSplit = extractedData.isT1032;
+      
+      // Update Other Notes field for deceased info
+      member.otherNotes = extractedData.otherNotes || member.otherNotes;
+      setFamilyMembers(updatedMembers);
+    }
+  };
 
   const addFamilyMember = () => {
     const newMember: FamilyMember = {
@@ -149,7 +183,10 @@ const CloseoutFormTableCompact = ({
       personalTaxInstallmentsRequired: false,
       hstInstallmentsRequired: false,
       otherDocuments: '',
-      otherNotes: ''
+      otherNotes: '',
+      isT1135: false,
+      isT2091: false,
+      isT1032: false
     };
     setFamilyMembers([...familyMembers, newMember]);
     setActiveTab((familyMembers.length).toString());
@@ -168,6 +205,18 @@ const CloseoutFormTableCompact = ({
   const updateFamilyMember = (index: number, field: keyof FamilyMember, value: any) => {
     const newMembers = [...familyMembers];
     newMembers[index] = { ...newMembers[index], [field]: value };
+    
+    // Keep the fields synchronized
+    if (field === 'isT1135') {
+      newMembers[index].t1135ForeignProperty = value;
+    } else if (field === 't1135ForeignProperty') {
+      newMembers[index].isT1135 = value;
+    } else if (field === 'isT1032') {
+      newMembers[index].t1032PensionSplit = value;
+    } else if (field === 't1032PensionSplit') {
+      newMembers[index].isT1032 = value;
+    }
+    
     setFamilyMembers(newMembers);
   };
 
@@ -199,7 +248,7 @@ const CloseoutFormTableCompact = ({
       {/* General Information Section */}
       <Card className="p-4">
         <h3 className="text-lg font-medium mb-3 text-primary border-b border-border pb-2">
-          General Information
+          1. General Information
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           <div className="space-y-1">
@@ -208,6 +257,7 @@ const CloseoutFormTableCompact = ({
               value={generalInfo.filePath}
               onChange={(e) => setGeneralInfo(prev => ({ ...prev, filePath: e.target.value }))}
               className="h-8"
+              placeholder="Enter file path manually"
             />
           </div>
           <div className="space-y-1">
@@ -240,6 +290,7 @@ const CloseoutFormTableCompact = ({
               value={generalInfo.jobNumber}
               onChange={(e) => setGeneralInfo(prev => ({ ...prev, jobNumber: e.target.value }))}
               className="h-8"
+              placeholder="e.g. 10254"
             />
           </div>
           <div className="space-y-1">
@@ -256,6 +307,7 @@ const CloseoutFormTableCompact = ({
               value={generalInfo.billDetail}
               onChange={(e) => setGeneralInfo(prev => ({ ...prev, billDetail: e.target.value }))}
               className="h-8"
+              placeholder="Enter bill details"
             />
           </div>
           <div className="space-y-1">
@@ -279,7 +331,7 @@ const CloseoutFormTableCompact = ({
       {/* Family Members Tabs */}
       <Card className="p-4">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-medium text-primary">Family Members</h3>
+          <h3 className="text-lg font-medium text-primary">2. Client Details & Tax Return Upload</h3>
           <Button
             size="sm"
             variant="outline"
@@ -289,6 +341,12 @@ const CloseoutFormTableCompact = ({
             <Plus className="h-3 w-3 mr-1" />
             Add Member
           </Button>
+        </div>
+
+        <div className="bg-amber-50 border border-amber-200 rounded p-2 mb-3">
+          <p className="text-xs text-amber-800">
+            <strong>Note:</strong> Upload individual tax returns for each family member to auto-populate their details
+          </p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -319,10 +377,19 @@ const CloseoutFormTableCompact = ({
 
           {familyMembers.map((member, index) => (
             <TabsContent key={member.id} value={index.toString()} className="space-y-4">
+              {/* PDF Upload Section - NEW */}
+              <div className="mb-4">
+                <FamilyMemberPDFUpload
+                  familyMemberIndex={index}
+                  familyMemberName={member.clientName || `Family Member ${index + 1}`}
+                  onDataExtracted={handleSection2DataExtracted}
+                />
+              </div>
+
               {/* Client Details Section */}
               <div className="space-y-3">
                 <h4 className="text-sm font-medium text-primary border-b border-border pb-1">
-                  Client Details & Tax Return Upload
+                  Client Details
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="space-y-1">
@@ -331,6 +398,7 @@ const CloseoutFormTableCompact = ({
                       value={member.signingPerson}
                       onChange={(e) => updateFamilyMember(index, 'signingPerson', e.target.value)}
                       className="h-8"
+                      placeholder="Will be auto-filled from PDF"
                     />
                   </div>
                   <div className="space-y-1">
@@ -339,6 +407,7 @@ const CloseoutFormTableCompact = ({
                       value={member.signingEmail}
                       onChange={(e) => updateFamilyMember(index, 'signingEmail', e.target.value)}
                       className="h-8"
+                      placeholder="Will be auto-filled from PDF"
                     />
                   </div>
                   <div className="space-y-1">
@@ -347,14 +416,8 @@ const CloseoutFormTableCompact = ({
                       value={member.clientName}
                       onChange={(e) => updateFamilyMember(index, 'clientName', e.target.value)}
                       className="h-8"
+                      placeholder="Enter client name"
                     />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">Upload Tax Return</Label>
-                    <div className="space-y-1">
-                      <Button variant="outline" size="sm" className="h-8 w-full">Upload</Button>
-                      <p className="text-xs text-muted-foreground">Auto-populates tax details below</p>
-                    </div>
                   </div>
                 </div>
               </div>
@@ -362,7 +425,7 @@ const CloseoutFormTableCompact = ({
               {/* Filing Details Section */}
               <div className="space-y-3">
                 <h4 className="text-sm font-medium text-primary border-b border-border pb-1">
-                  Filing Details
+                  3. Filing Details
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div className="space-y-1">
@@ -393,27 +456,28 @@ const CloseoutFormTableCompact = ({
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox
-                      checked={member.t1135ForeignProperty}
-                      onCheckedChange={(checked) => updateFamilyMember(index, 't1135ForeignProperty', !!checked)}
+                      checked={member.isT1135 || false}
+                      onCheckedChange={(checked) => updateFamilyMember(index, 'isT1135', !!checked)}
                     />
-                    <Label className="text-xs font-medium">T1135</Label>
+                    <Label className="text-xs font-medium">T1135 Foreign Property</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox
-                      checked={member.t2091PrincipalResidence}
-                      onCheckedChange={(checked) => updateFamilyMember(index, 't2091PrincipalResidence', !!checked)}
+                      checked={member.isT2091 || false}
+                      onCheckedChange={(checked) => updateFamilyMember(index, 'isT2091', !!checked)}
+                      disabled // To be implemented later
                     />
-                    <Label className="text-xs font-medium">T2091</Label>
+                    <Label className="text-xs font-medium text-gray-400">T2091 Principal Residence</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox
-                      checked={member.t1032PensionSplit}
-                      onCheckedChange={(checked) => updateFamilyMember(index, 't1032PensionSplit', !!checked)}
+                      checked={member.isT1032 || false}
+                      onCheckedChange={(checked) => updateFamilyMember(index, 'isT1032', !!checked)}
                     />
-                    <Label className="text-xs font-medium">T1032</Label>
+                    <Label className="text-xs font-medium">T1032 Pension Split</Label>
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs font-medium">HST</Label>
+                    <Label className="text-xs font-medium">HST Draft/Final</Label>
                     <Select
                       value={member.hstDraftOrFinal}
                       onValueChange={(value) => updateFamilyMember(index, 'hstDraftOrFinal', value)}
@@ -434,25 +498,22 @@ const CloseoutFormTableCompact = ({
               {/* Installments Section */}
               <div className="space-y-3">
                 <h4 className="text-sm font-medium text-primary border-b border-border pb-1">
-                  Installments
+                  4. Installments
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="flex items-center space-x-2">
                     <Checkbox
-                      checked={member.personalTaxInstallmentsRequired}
+                      checked={member.personalTaxInstallmentsRequired || false}
                       onCheckedChange={(checked) => updateFamilyMember(index, 'personalTaxInstallmentsRequired', !!checked)}
                     />
                     <Label className="text-xs font-medium">Personal Tax Installments Required</Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox
-                      checked={member.hstInstallmentsRequired}
+                      checked={member.hstInstallmentsRequired || false}
                       onCheckedChange={(checked) => updateFamilyMember(index, 'hstInstallmentsRequired', !!checked)}
                     />
                     <Label className="text-xs font-medium">HST Installments Required</Label>
-                  </div>
-                  <div className="space-y-1">
-                    <Button variant="outline" size="sm" className="h-8 w-full">Upload Documents</Button>
                   </div>
                 </div>
               </div>
@@ -460,19 +521,17 @@ const CloseoutFormTableCompact = ({
               {/* Documents Section */}
               <div className="space-y-3">
                 <h4 className="text-sm font-medium text-primary border-b border-border pb-1">
-                  Documents
+                  5. Documents
                 </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">Other Documents</Label>
-                    <Button variant="outline" size="sm" className="h-8 w-full">Upload</Button>
-                  </div>
+                <div className="space-y-2">
                   <div className="space-y-1">
                     <Label className="text-xs font-medium">Other Notes</Label>
                     <Textarea
-                      value={member.otherNotes}
+                      value={member.otherNotes || ''}
                       onChange={(e) => updateFamilyMember(index, 'otherNotes', e.target.value)}
-                      className="min-h-[80px]"
+                      className="text-xs"
+                      rows={2}
+                      placeholder="Enter any additional notes"
                     />
                   </div>
                 </div>
@@ -481,13 +540,13 @@ const CloseoutFormTableCompact = ({
               {/* Personal Tax Summary Section */}
               <div className="space-y-3">
                 <h4 className="text-sm font-medium text-primary border-b border-border pb-1">
-                  Personal Tax Summary
+                  6. Personal Tax Summary
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div className="space-y-1">
                     <Label className="text-xs font-medium">Prior Periods Balance</Label>
                     <Input
-                      value={member.priorPeriodsBalance}
+                      value={member.priorPeriodsBalance || ''}
                       onChange={(e) => updateFamilyMember(index, 'priorPeriodsBalance', e.target.value)}
                       className="h-8"
                     />
@@ -495,31 +554,15 @@ const CloseoutFormTableCompact = ({
                   <div className="space-y-1">
                     <Label className="text-xs font-medium">Taxes Payable</Label>
                     <Input
-                      value={member.taxesPayable}
+                      value={member.taxesPayable || ''}
                       onChange={(e) => updateFamilyMember(index, 'taxesPayable', e.target.value)}
-                      className="h-8"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">Installments During Year</Label>
-                    <Input
-                      value={member.installmentsDuringYear}
-                      onChange={(e) => updateFamilyMember(index, 'installmentsDuringYear', e.target.value)}
-                      className="h-8"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">Installments After Year</Label>
-                    <Input
-                      value={member.installmentsAfterYear}
-                      onChange={(e) => updateFamilyMember(index, 'installmentsAfterYear', e.target.value)}
                       className="h-8"
                     />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs font-medium">Amount Owing</Label>
                     <Input
-                      value={member.amountOwing}
+                      value={member.amountOwing || ''}
                       onChange={(e) => updateFamilyMember(index, 'amountOwing', e.target.value)}
                       className="h-8"
                     />
@@ -527,7 +570,7 @@ const CloseoutFormTableCompact = ({
                   <div className="space-y-1">
                     <Label className="text-xs font-medium">Tax Payment Due Date</Label>
                     <Input
-                      value={member.taxPaymentDueDate}
+                      value={member.taxPaymentDueDate || ''}
                       onChange={(e) => updateFamilyMember(index, 'taxPaymentDueDate', e.target.value)}
                       className="h-8"
                     />
@@ -535,7 +578,7 @@ const CloseoutFormTableCompact = ({
                   <div className="space-y-1">
                     <Label className="text-xs font-medium">Return Filing Due Date</Label>
                     <Select
-                      value={member.returnFilingDueDate}
+                      value={member.returnFilingDueDate || 'April 30'}
                       onValueChange={(value) => updateFamilyMember(index, 'returnFilingDueDate', value)}
                     >
                       <SelectTrigger className="h-8">
@@ -544,7 +587,6 @@ const CloseoutFormTableCompact = ({
                       <SelectContent>
                         <SelectItem value="April 30">April 30</SelectItem>
                         <SelectItem value="June 15">June 15</SelectItem>
-                        <SelectItem value="December 31">December 31</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -554,13 +596,13 @@ const CloseoutFormTableCompact = ({
               {/* HST Summary Section */}
               <div className="space-y-3">
                 <h4 className="text-sm font-medium text-primary border-b border-border pb-1">
-                  HST Summary
+                  7. HST Summary
                 </h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                   <div className="space-y-1">
                     <Label className="text-xs font-medium">HST Prior Balance</Label>
                     <Input
-                      value={member.hstPriorBalance}
+                      value={member.hstPriorBalance || ''}
                       onChange={(e) => updateFamilyMember(index, 'hstPriorBalance', e.target.value)}
                       className="h-8"
                     />
@@ -568,31 +610,15 @@ const CloseoutFormTableCompact = ({
                   <div className="space-y-1">
                     <Label className="text-xs font-medium">HST Payable</Label>
                     <Input
-                      value={member.hstPayable}
+                      value={member.hstPayable || ''}
                       onChange={(e) => updateFamilyMember(index, 'hstPayable', e.target.value)}
-                      className="h-8"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">HST Installments During</Label>
-                    <Input
-                      value={member.hstInstallmentsDuring}
-                      onChange={(e) => updateFamilyMember(index, 'hstInstallmentsDuring', e.target.value)}
-                      className="h-8"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-medium">HST Installments After</Label>
-                    <Input
-                      value={member.hstInstallmentsAfter}
-                      onChange={(e) => updateFamilyMember(index, 'hstInstallmentsAfter', e.target.value)}
                       className="h-8"
                     />
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs font-medium">HST Payment Due</Label>
                     <Input
-                      value={member.hstPaymentDue}
+                      value={member.hstPaymentDue || ''}
                       onChange={(e) => updateFamilyMember(index, 'hstPaymentDue', e.target.value)}
                       className="h-8"
                     />
@@ -600,7 +626,7 @@ const CloseoutFormTableCompact = ({
                   <div className="space-y-1">
                     <Label className="text-xs font-medium">HST Due Date</Label>
                     <Input
-                      value={member.hstDueDate}
+                      value={member.hstDueDate || ''}
                       onChange={(e) => updateFamilyMember(index, 'hstDueDate', e.target.value)}
                       className="h-8"
                     />

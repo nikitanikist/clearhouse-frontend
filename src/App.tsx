@@ -8,6 +8,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import ErrorBoundary from "./components/ui/error-boundary";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
+import CloseoutFormPreviewPage from "./pages/CloseoutFormPreviewPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,8 +22,9 @@ const App = () => (
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={<Index />} />
+              <Route path="/preview-form/:formId" element={<CloseoutFormPreviewPage />} />
               <Route path="/dashboard/*" element={<Dashboard />} />
+              <Route path="/*" element={<Index />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

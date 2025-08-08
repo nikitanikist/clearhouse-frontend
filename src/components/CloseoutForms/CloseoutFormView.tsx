@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,9 +19,49 @@ import { FileText, Download, Check, X, Play, FileX, UserPlus, CheckCircle } from
 import { CloseoutForm } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useData } from '@/contexts/DataContext';
+import { fetchAdminUsers } from '@/services/api';
 
 interface CloseoutFormViewProps {
   form: CloseoutForm;
+}
+
+// Add a helper function at the top of the file
+function formatCurrency(val: string | number) {
+  if (typeof val === 'number') val = val.toString();
+  // Remove any leading $ and whitespace, then add a single $
+  return '$' + val.replace(/^\$+/, '').trim();
+}
+
+function formatDate(dateString: string) {
+  if (!dateString || dateString === 'N/A' || dateString === '') return 'N/A';
+  
+  // Handle ISO date strings
+  if (dateString.includes('T') && dateString.includes('Z')) {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return 'N/A';
+      return date.toLocaleDateString('en-CA', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    } catch (error) {
+      return 'N/A';
+    }
+  }
+  
+  // Handle other date formats
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString; // Return original if can't parse
+    return date.toLocaleDateString('en-CA', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  } catch (error) {
+    return dateString; // Return original if can't parse
+  }
 }
 
 const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
@@ -31,13 +71,29 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
   const [amendmentNote, setAmendmentNote] = useState('');
   const [showAssignDialog, setShowAssignDialog] = useState(false);
   const [selectedAssignee, setSelectedAssignee] = useState('');
+  const [availableAdmins, setAvailableAdmins] = useState<Array<{id: string, name: string, email: string}>>([]);
+  const [loadingAdmins, setLoadingAdmins] = useState(false);
 
-  // Available admins for assignment
-  const availableAdmins = [
-    { id: 'admin-1', name: 'Jordan Lee' },
-    { id: 'admin-2', name: 'Sarah Chen' },
-    { id: 'admin-3', name: 'Mike Davis' },
-  ];
+  // Fetch admin users for assignment
+  useEffect(() => {
+    const loadAdminUsers = async () => {
+      if (user?.role === 'admin' || user?.role === 'superadmin') {
+        setLoadingAdmins(true);
+        try {
+          const adminUsers = await fetchAdminUsers();
+          setAvailableAdmins(adminUsers);
+        } catch (error) {
+          console.error('Failed to load admin users:', error);
+          // Fallback to empty array if API fails
+          setAvailableAdmins([]);
+        } finally {
+          setLoadingAdmins(false);
+        }
+      }
+    };
+
+    loadAdminUsers();
+  }, [user?.role]);
 
   const handleStartWorking = () => {
     updateFormStatus(form.id, 'active', 'Admin started working on this form');
@@ -47,20 +103,30 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
     updateFormStatus(form.id, 'completed', 'Form marked as completed by admin');
   };
 
-  const submitAmendment = () => {
+  const submitAmendment = async () => {
     if (amendmentNote.trim()) {
-      updateFormStatus(form.id, 'rejected', amendmentNote);
-      setShowAmendmentDialog(false);
-      setAmendmentNote('');
+      try {
+        await updateFormStatus(form.id, 'rejected', undefined, amendmentNote);
+        setShowAmendmentDialog(false);
+        setAmendmentNote('');
+      } catch (error) {
+        console.error('Error submitting amendment:', error);
+        // Error is already handled in updateFormStatus function
+      }
     }
   };
 
-  const submitAssignment = () => {
+  const submitAssignment = async () => {
     if (selectedAssignee) {
       const assigneeName = availableAdmins.find(admin => admin.id === selectedAssignee)?.name || '';
-      assignForm(form.id, selectedAssignee, assigneeName);
-      setShowAssignDialog(false);
-      setSelectedAssignee('');
+      try {
+        await assignForm(form.id, selectedAssignee, assigneeName);
+        setShowAssignDialog(false);
+        setSelectedAssignee('');
+      } catch (error) {
+        console.error('Error assigning form:', error);
+        // Error is already handled in assignForm function
+      }
     }
   };
 
@@ -70,6 +136,45 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
 
   return (
     <div className="space-y-6">
+      {/* Amendment Note Display - Show only for rejected forms */}
+      {form.status === 'rejected' && form.rejectionReason && (
+        <Card className="border-red-200 bg-red-50">
+          <CardHeader>
+            <CardTitle className="text-red-800 flex items-center gap-2">
+              <FileX className="h-5 w-5" />
+              Amendment Required
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-white p-4 rounded-lg border border-red-200">
+              <h4 className="font-semibold text-red-800 mb-2">Amendment Note from Admin:</h4>
+              <p className="text-gray-800 whitespace-pre-wrap">{form.rejectionReason}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Amendment History Display - Show for pending forms that were previously amended */}
+      {form.status === 'pending' && form.rejectionReason && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardHeader>
+            <CardTitle className="text-orange-800 flex items-center gap-2">
+              <FileX className="h-5 w-5" />
+              Amendment History
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-white p-4 rounded-lg border border-orange-200">
+              <h4 className="font-semibold text-orange-800 mb-2">Previous Amendment Note:</h4>
+              <p className="text-gray-800 whitespace-pre-wrap">{form.rejectionReason}</p>
+              <p className="text-sm text-orange-600 mt-2">
+                This form was previously amended and has been resubmitted for review.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* General Information Table */}
       <Card>
         <CardHeader>
@@ -304,7 +409,7 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
                 <TableCell className="font-medium w-1/4 bg-gray-50">Prior Periods Balance</TableCell>
                 <TableCell className="w-1/4">${form.priorPeriodsBalance}</TableCell>
                 <TableCell className="font-medium w-1/4 bg-gray-50">Taxes Payable</TableCell>
-                <TableCell className="w-1/4">${form.taxesPayable}</TableCell>
+                <TableCell className="w-1/4">{formatCurrency(form.taxesPayable)}</TableCell>
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium bg-gray-50">Installments During Year</TableCell>
@@ -314,9 +419,13 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
               </TableRow>
               <TableRow>
                 <TableCell className="font-medium bg-gray-50">Amount Owing</TableCell>
-                <TableCell>${form.amountOwing}</TableCell>
-                <TableCell className="font-medium bg-gray-50">Due Date</TableCell>
-                <TableCell>{form.dueDate}</TableCell>
+                <TableCell>{formatCurrency(form.amountOwing)}</TableCell>
+                <TableCell className="font-medium bg-gray-50">Tax Payment Due Date</TableCell>
+                <TableCell>{formatDate(form.taxPaymentDueDate || form.dueDate)}</TableCell>
+              </TableRow>
+              <TableRow>
+                <TableCell className="font-medium bg-gray-50">Return Filing Due Date</TableCell>
+                <TableCell colSpan={3}>{formatDate(form.returnFilingDueDate || form.dueDate)}</TableCell>
               </TableRow>
             </TableBody>
           </Table>
@@ -347,7 +456,7 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
                 <TableCell className="font-medium bg-gray-50">HST Payment Due</TableCell>
                 <TableCell>${form.hstPaymentDue}</TableCell>
                 <TableCell className="font-medium bg-gray-50">HST Due Date</TableCell>
-                <TableCell>{form.hstDueDate}</TableCell>
+                <TableCell>{formatDate(form.hstDueDate)}</TableCell>
               </TableRow>
             </TableBody>
           </Table>

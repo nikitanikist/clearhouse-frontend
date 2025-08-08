@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth, UserRole } from '../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -16,9 +15,10 @@ interface LoginFormData {
 }
 
 const Login: React.FC = () => {
-  const { login } = useAuth();
+  const { login, error } = useAuth();
   const [currentStep, setCurrentStep] = useState<LoginStep>('role-selection');
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<LoginFormData>({
     defaultValues: {
@@ -27,20 +27,55 @@ const Login: React.FC = () => {
     },
   });
 
+  const roleCards = [
+    { 
+      role: 'preparer' as UserRole, 
+      title: 'Preparer', 
+      icon: FileText, 
+      description: 'Document preparation and submission'
+    },
+    { 
+      role: 'admin' as UserRole, 
+      title: 'Admin', 
+      icon: User, 
+      description: 'User management and reporting'
+    },
+    { 
+      role: 'superadmin' as UserRole, 
+      title: 'Super Admin', 
+      icon: Settings, 
+      description: 'Full system access and configuration'
+    },
+  ];
+
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
     setCurrentStep('login-form');
-    // Pre-fill demo credentials
-    form.setValue('emailOrKey', '12345');
-    form.setValue('password', '12345');
   };
 
-  const handleLogin = (data: LoginFormData) => {
-    // Demo credentials validation
-    if (data.emailOrKey === '12345' && data.password === '12345' && selectedRole) {
-      login(selectedRole);
-    } else {
-      form.setError('password', { message: 'Invalid credentials. Use demo: 12345/12345' });
+  const handleLogin = async (data: LoginFormData) => {
+    setIsLoading(true);
+    try {
+      // Debug: Log the backend URL being used
+      console.log('Attempting login to backend at port 5005');
+      
+      // Use the actual email and password from the form, with selected role
+      const success = await login(data.emailOrKey, data.password, selectedRole || undefined);
+      
+      if (!success) {
+        // Error is already set in AuthContext
+        form.setError('password', { message: error || 'Invalid credentials' });
+      }
+      // If successful, the Dashboard will be shown automatically
+    } catch (error) {
+      console.error('Login submission error:', error);
+      // More specific error message for network issues
+      const errorMessage = error instanceof Error && error.message.includes('fetch') 
+        ? 'Network error. Please check if the backend server is running on port 5005'
+        : 'Login failed. Please try again.';
+      form.setError('password', { message: errorMessage });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -50,110 +85,81 @@ const Login: React.FC = () => {
     form.reset();
   };
 
-  const getRoleInfo = (role: UserRole) => {
-    switch (role) {
-      case 'preparer':
-        return {
-          title: 'Preparer',
-          icon: FileText,
-        };
-      case 'admin':
-        return {
-          title: 'Admin',
-          icon: User,
-        };
-      case 'superadmin':
-        return {
-          title: 'Super Admin',
-          icon: Settings,
-        };
-    }
+  const getRoleInfo = () => {
+    return roleCards.find(card => card.role === selectedRole);
   };
 
   if (currentStep === 'role-selection') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-4xl w-full px-8">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-50 p-4">
+        <div className="max-w-5xl w-full">
           <div className="text-center mb-12">
-            <div className="flex justify-center mb-6">
-              <img 
-                src="/lovable-uploads/b6db7de0-12ec-47d6-9bfc-6d74cde4f183.png" 
-                alt="ClearHouse Logo" 
-                className="h-16 w-auto"
-              />
+            <div className="inline-flex items-center justify-center mb-6">
+              <img src="/clearhouse-logo.svg" alt="ClearHouse" className="h-16" />
             </div>
-            <h1 className="text-4xl font-bold text-gray-800 mb-4">ClearHouse CRM</h1>
-            <p className="text-gray-600 text-lg">Please select your access role to continue</p>
+            <h1 className="text-4xl font-bold mb-2">ClearHouse CRM</h1>
+            <p className="text-muted-foreground text-lg">Select your role to continue</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            {(['preparer', 'admin', 'superadmin'] as UserRole[]).map((role) => {
-              const roleInfo = getRoleInfo(role);
-              const IconComponent = roleInfo.icon;
-              return (
-                <Card key={role} className="text-center hover:shadow-lg transition-shadow cursor-pointer bg-white border border-gray-200">
-                  <CardContent className="pt-8 pb-6">
-                    <div className="flex justify-center mb-6">
-                      <div className="w-16 h-16 bg-orange-100 rounded-lg flex items-center justify-center">
-                        <IconComponent className="w-8 h-8 text-orange-600" />
-                      </div>
-                    </div>
-                    <h3 className="text-xl font-semibold text-gray-800 mb-6">{roleInfo.title}</h3>
-                    <Button 
-                      onClick={() => handleRoleSelect(role)}
-                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                    >
-                      Continue as {roleInfo.title}
-                    </Button>
-                  </CardContent>
-                </Card>
-              );
-            })}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {roleCards.map((card) => (
+              <Card 
+                key={card.role} 
+                className="cursor-pointer transition-all hover:shadow-xl hover:-translate-y-1 border-2 hover:border-primary"
+                onClick={() => handleRoleSelect(card.role)}
+              >
+                <CardHeader className="text-center">
+                  <div className="mx-auto w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                    <card.icon className="w-8 h-8 text-primary" />
+                  </div>
+                  <CardTitle className="text-2xl">{card.title}</CardTitle>
+                  <CardDescription className="mt-2">{card.description}</CardDescription>
+                </CardHeader>
+                <CardFooter className="justify-center">
+                  <Button variant="outline" className="w-full">
+                    Continue as {card.title}
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
           </div>
           
-          <div className="text-center">
-            <p className="text-gray-500 text-sm">Version: Nikita</p>
-          </div>
+          <p className="text-center text-xs text-muted-foreground mt-12">
+            © 2025 ClearHouse Tax Consultancy
+          </p>
         </div>
       </div>
     );
   }
 
-  // Login form step
-  const roleInfo = selectedRole ? getRoleInfo(selectedRole) : null;
-  const IconComponent = roleInfo?.icon;
+  const roleInfo = getRoleInfo();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-gray-50 p-4">
+      <div className="max-w-md w-full">
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <img 
-              src="/lovable-uploads/b6db7de0-12ec-47d6-9bfc-6d74cde4f183.png" 
-              alt="ClearHouse Logo" 
-              className="h-12 w-auto"
-            />
+          <div className="inline-flex items-center justify-center mb-6">
+            <img src="/clearhouse-logo.svg" alt="ClearHouse" className="h-16" />
           </div>
-          <h1 className="text-3xl font-bold">ClearHouse CRM</h1>
-          <p className="text-gray-500 mt-2">Login as {roleInfo?.title}</p>
+          <h1 className="text-4xl font-bold mb-2">ClearHouse CRM</h1>
+          <p className="text-muted-foreground">Login as {roleInfo?.title}</p>
         </div>
         
-        <Card className="animate-fade-in">
+        <Card>
           <CardHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <Button variant="ghost" size="sm" onClick={handleBack}>
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <div className="flex items-center gap-3">
-                {IconComponent && (
-                  <div className="h-8 w-8 bg-orange-100 rounded-full flex items-center justify-center">
-                    <IconComponent className="h-4 w-4 text-orange-600" />
-                  </div>
-                )}
-                <div>
-                  <CardTitle>Login as {roleInfo?.title}</CardTitle>
-                </div>
-              </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-fit mb-4"
+              onClick={handleBack}
+              disabled={isLoading}
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+            <div className="flex items-center gap-3">
+              {roleInfo && <roleInfo.icon className="w-6 h-6 text-primary" />}
+              <CardTitle>Login as {roleInfo?.title}</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
@@ -164,9 +170,14 @@ const Login: React.FC = () => {
                   name="emailOrKey"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email ID or Access Key</FormLabel>
+                      <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter your email or access key" {...field} />
+                        <Input 
+                          type="email" 
+                          placeholder="Enter your email" 
+                          {...field} 
+                          disabled={isLoading}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -180,26 +191,36 @@ const Login: React.FC = () => {
                     <FormItem>
                       <FormLabel>Password</FormLabel>
                       <FormControl>
-                        <Input type="password" placeholder="Enter your password" {...field} />
+                        <Input 
+                          type="password" 
+                          placeholder="Enter your password" 
+                          {...field} 
+                          disabled={isLoading}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 
-                <Button type="submit" className="w-full">
-                  Login as {roleInfo?.title}
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={isLoading}
+                >
+                  {isLoading ? 'Logging in...' : `Login as ${roleInfo?.title}`}
                 </Button>
               </form>
             </Form>
             
-            <div className="mt-4 p-3 bg-muted rounded-md">
-              <p className="text-xs text-muted-foreground text-center">
-                <strong>Demo Credentials:</strong><br />
-                Email/Key: 12345<br />
-                Password: 12345
-              </p>
-            </div>
+            {roleInfo && (
+              <div className="mt-4 p-3 bg-muted rounded-md">
+                <p className="text-xs text-muted-foreground text-center">
+                  <strong>Login with your assigned credentials</strong><br />
+                  Contact your administrator if you need access
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
         

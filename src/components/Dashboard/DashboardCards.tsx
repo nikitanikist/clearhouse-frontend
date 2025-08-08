@@ -43,11 +43,14 @@ const DashboardCards = () => {
         // Admin sees all pending forms
         return filteredForms;
       } else {
-        // For other statuses, admin sees forms assigned to them
-        filteredForms = filteredForms.filter(form => form.assignedTo && form.assignedTo.id === user.id);
+        // For other statuses, admin sees forms assigned to them OR amendment forms they sent
+        filteredForms = filteredForms.filter(form => 
+          (form.assignedTo && form.assignedTo.id === user.id) ||
+          (form.amendmentSentBy && form.amendmentSentBy.id === user.id)
+        );
       }
     } else if (user?.role === 'preparer') {
-      filteredForms = filteredForms.filter(form => form.createdBy.id === user.id);
+      filteredForms = filteredForms.filter(form => form && form.createdBy && form.createdBy.id === user.id);
     }
     
     return filteredForms;

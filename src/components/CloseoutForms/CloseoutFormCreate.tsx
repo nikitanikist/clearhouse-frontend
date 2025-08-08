@@ -32,7 +32,7 @@ const CloseoutFormCreate = ({
   editForm
 }: CloseoutFormCreateProps) => {
   const { user } = useAuth();
-  const { createForm, updateForm, forms } = useData();
+  const { createForm, updateForm, updateFormStatus, forms } = useData();
   
   const {
     step,
@@ -135,19 +135,59 @@ const CloseoutFormCreate = ({
     return !isNewClient && previousForms.length > 0;
   };
 
-  const handleFormSubmit = (formData: CloseoutFormTableData) => {
+  const handleFormSubmit = async (formData: CloseoutFormTableData) => {
+    console.log('DEBUG: handleFormSubmit called with:', formData);
+    
     if (!user) return;
     
+    // Map the form data to the CloseoutForm format
     const mappedFormData = mapTableDataToCloseoutForm(formData, user, formType || 'personal');
     
+    console.log('DEBUG: Mapped form data:', mappedFormData);
+    
     if (editForm) {
-      // Update existing form - pass the complete form object with required properties
-      const updatedFormData = {
-        ...editForm,
-        ...mappedFormData,
-        status: 'pending' as const
-      };
-      updateForm(editForm.id, updatedFormData);
+      // Check if this is an amendment resubmission
+      const isAmendmentResubmission = editForm.amendmentSentBy && editForm.status === 'rejected';
+      
+      // Check if this is a regular rejected form resubmission
+      const isRejectedFormResubmission = !editForm.amendmentSentBy && editForm.status === 'rejected';
+      
+      if (isAmendmentResubmission) {
+        
+        // First update the form data without changing status
+        const updatedFormData = {
+          ...editForm,
+          ...mappedFormData
+        };
+        
+        console.log('DEBUG: Amendment resubmission - calling updateForm with:', updatedFormData);
+        await updateForm(editForm.id, updatedFormData);
+        
+        // Then update status to trigger amendment workflow
+        await updateFormStatus(editForm.id, 'pending');
+      } else if (isRejectedFormResubmission) {
+        
+        // First update the form data without changing status
+        const updatedFormData = {
+          ...editForm,
+          ...mappedFormData
+        };
+        
+        console.log('DEBUG: Rejected form resubmission - calling updateForm with:', updatedFormData);
+        await updateForm(editForm.id, updatedFormData);
+        
+        // Then update status to trigger resubmission workflow
+        await updateFormStatus(editForm.id, 'pending');
+      } else {
+        // Regular form update - pass the complete form object with required properties
+        const updatedFormData = {
+          ...editForm,
+          ...mappedFormData,
+          status: 'pending' as const
+        };
+        console.log('DEBUG: Regular form update - calling updateForm with:', updatedFormData);
+        await updateForm(editForm.id, updatedFormData);
+      }
     } else {
       // Create new form
       createForm(mappedFormData);

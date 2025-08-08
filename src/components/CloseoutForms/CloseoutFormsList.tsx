@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { fetchAdminUsers } from '@/services/api';
 import {
   Table,
   TableBody,
@@ -29,7 +30,7 @@ interface CloseoutFormsListProps {
 }
 
 const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, onFormSelect }) => {
-  const { forms, updateFormStatus, assignForm } = useData();
+  const { forms, updateFormStatus, assignForm, reassignForm } = useData();
   const { user } = useAuth();
   const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
   const [showFormView, setShowFormView] = useState(false);
@@ -41,13 +42,27 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, o
   const [selectedAssignee, setSelectedAssignee] = useState('');
   const [actionFormId, setActionFormId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [availableAdmins, setAvailableAdmins] = useState<Array<{id: string, name: string, email: string}>>([]);
+  const [loadingAdmins, setLoadingAdmins] = useState(false);
 
-  // Available admins for assignment
-  const availableAdmins = [
-    { id: 'admin-1', name: 'Jordan Lee' },
-    { id: 'admin-2', name: 'Sarah Chen' },
-    { id: 'admin-3', name: 'Mike Davis' },
-  ];
+  // Fetch admin users for reassignment
+  useEffect(() => {
+    const loadAdminUsers = async () => {
+      if (user?.role === 'admin' || user?.role === 'superadmin') {
+        setLoadingAdmins(true);
+        try {
+          const adminUsers = await fetchAdminUsers();
+          setAvailableAdmins(adminUsers);
+        } catch (error) {
+          console.error('Failed to load admin users:', error);
+        } finally {
+          setLoadingAdmins(false);
+        }
+      }
+    };
+
+    loadAdminUsers();
+  }, [user?.role]);
 
   // Filter forms based on user role and status
   const getFilteredForms = () => {
@@ -83,10 +98,13 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, o
         console.log('CloseoutFormsList - Admin sees all pending forms');
         return filteredForms;
       } else {
-        // For other statuses, admin sees forms assigned to them
-        const assignedForms = filteredForms.filter(form => form.assignedTo && form.assignedTo.id === user.id);
-        console.log('CloseoutFormsList - Admin sees assigned forms:', assignedForms);
-        return assignedForms;
+        // For other statuses, admin sees forms assigned to them OR amendment forms they sent
+        const adminForms = filteredForms.filter(form => 
+          (form.assignedTo && form.assignedTo.id === user.id) ||
+          (form.amendmentSentBy && form.amendmentSentBy.id === user.id)
+        );
+        console.log('CloseoutFormsList - Admin sees assigned and amendment forms:', adminForms);
+        return adminForms;
       }
     } else if (user?.role === 'preparer') {
       // Preparer sees forms created by them
@@ -185,12 +203,17 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, o
     setShowAmendmentDialog(true);
   };
 
-  const submitAmendment = () => {
+  const submitAmendment = async () => {
     if (actionFormId && amendmentNote.trim()) {
-      updateFormStatus(actionFormId, 'rejected', amendmentNote);
-      setShowAmendmentDialog(false);
-      setAmendmentNote('');
-      setActionFormId(null);
+      try {
+        await updateFormStatus(actionFormId, 'rejected', undefined, amendmentNote);
+        setShowAmendmentDialog(false);
+        setAmendmentNote('');
+        setActionFormId(null);
+      } catch (error) {
+        console.error('Error submitting amendment:', error);
+        // Error is already handled in updateFormStatus function
+      }
     }
   };
 
@@ -199,13 +222,16 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, o
     setShowAssignDialog(true);
   };
 
-  const submitAssignment = () => {
+  const submitAssignment = async () => {
     if (actionFormId && selectedAssignee) {
-      const assigneeName = availableAdmins.find(admin => admin.id === selectedAssignee)?.name || '';
-      assignForm(actionFormId, selectedAssignee, assigneeName);
-      setShowAssignDialog(false);
-      setSelectedAssignee('');
-      setActionFormId(null);
+      try {
+        await reassignForm(actionFormId, selectedAssignee);
+        setShowAssignDialog(false);
+        setSelectedAssignee('');
+        setActionFormId(null);
+      } catch (error) {
+        console.error('Failed to reassign form:', error);
+      }
     }
   };
 
@@ -375,7 +401,18 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, o
               )}
             </div>
           ) : (
-            <div className="border rounded-lg overflow-hidden">
+            <>
+              {/* Helpful message for preparers viewing rejected forms */}
+              {status === 'rejected' && user?.role === 'preparer' && (
+                <div className="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <p className="text-sm text-orange-800">
+                    <strong>📝 Amendment Instructions:</strong> Review the amendment message in the table below to understand what changes are required. 
+                    Click "Edit" to make the necessary corrections and resubmit the form.
+                  </p>
+                </div>
+              )}
+              
+              <div className="border rounded-lg overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -387,6 +424,9 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, o
                     <TableHead>Partner</TableHead>
                     <TableHead>Invoice Amount</TableHead>
                     <TableHead>Status</TableHead>
+                    {status === 'rejected' && user?.role === 'preparer' && (
+                      <TableHead>Amendment Message</TableHead>
+                    )}
                     {status === 'active' && (user?.role === 'admin' || user?.role === 'superadmin') && (
                       <TableHead>Assigned To</TableHead>
                     )}
@@ -404,7 +444,38 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, o
                       <TableCell>{form.years || 'N/A'}</TableCell>
                       <TableCell>{form.partner || 'N/A'}</TableCell>
                       <TableCell>{form.invoiceAmount || 'N/A'}</TableCell>
-                      <TableCell>{getStatusBadge(form.status)}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col gap-1">
+                          {getStatusBadge(form.status)}
+                          {/* Show amendment indicator for forms that have been amended */}
+                          {form.rejectionReason && (
+                            <Badge variant="outline" className="bg-orange-50 text-orange-700 text-xs border-orange-300">
+                              ⚠️ Amendment Required
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      {status === 'rejected' && user?.role === 'preparer' && (
+                        <TableCell>
+                          {form.rejectionReason ? (
+                            <div className="max-w-xs">
+                              <p className="text-sm text-gray-800 truncate" title={form.rejectionReason}>
+                                {form.rejectionReason.length > 100 
+                                  ? form.rejectionReason.substring(0, 100) + '...' 
+                                  : form.rejectionReason
+                                }
+                              </p>
+                              {form.rejectionReason.length > 100 && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  Hover to see full message
+                                </p>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">No amendment message</span>
+                          )}
+                        </TableCell>
+                      )}
                       {status === 'active' && (user?.role === 'admin' || user?.role === 'superadmin') && (
                         <TableCell>
                           {form.assignedTo ? (
@@ -425,6 +496,7 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, o
                 </TableBody>
               </Table>
             </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -483,21 +555,27 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, o
       <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Assign Form to Admin</DialogTitle>
+            <DialogTitle>Reassign Form to Admin</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
               <Label htmlFor="assignee">Select Admin</Label>
               <Select value={selectedAssignee} onValueChange={setSelectedAssignee}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Choose an admin..." />
+                  <SelectValue placeholder={loadingAdmins ? "Loading admins..." : "Choose an admin..."} />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableAdmins.map((admin) => (
-                    <SelectItem key={admin.id} value={admin.id}>
-                      {admin.name}
-                    </SelectItem>
-                  ))}
+                  {loadingAdmins ? (
+                    <SelectItem value="" disabled>Loading admins...</SelectItem>
+                  ) : availableAdmins.length === 0 ? (
+                    <SelectItem value="" disabled>No admin users found</SelectItem>
+                  ) : (
+                    availableAdmins.map((admin) => (
+                      <SelectItem key={admin.id} value={admin.id}>
+                        {admin.name} ({admin.email})
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -507,10 +585,10 @@ const CloseoutFormsList: React.FC<CloseoutFormsListProps> = ({ status, onBack, o
               </Button>
               <Button 
                 onClick={submitAssignment}
-                disabled={!selectedAssignee}
+                disabled={!selectedAssignee || loadingAdmins}
                 className="bg-blue-600 hover:bg-blue-700 text-white"
               >
-                Assign Form
+                Reassign Form
               </Button>
             </div>
           </div>
