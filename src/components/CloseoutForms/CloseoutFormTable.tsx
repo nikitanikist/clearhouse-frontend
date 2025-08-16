@@ -436,6 +436,46 @@ const CloseoutFormTable = ({
 
   const handleSubmit = () => {
     console.log('DEBUG: CloseoutFormTable handleSubmit called with formData:', formData);
+    
+    // Validate required fields before submission
+    const validationErrors: string[] = [];
+    
+    // 1. Validate Client Email (Top Controls)
+    if (!clientEmail || clientEmail.trim() === '') {
+      validationErrors.push('Client Email is required');
+    }
+    
+    // 2. Validate File Path (Section 1: General Information)
+    if (!formData.filePath || formData.filePath.trim() === '') {
+      validationErrors.push('File Path is required');
+    }
+    
+    // 3. Validate Section 2 Email (Section 2: Client Details)
+    if (!section2Email || section2Email.trim() === '') {
+      validationErrors.push('Email (Section 2) is required');
+    }
+    
+    // 4. Validate ALL Family Members
+    formData.familyMembers.forEach((member, index) => {
+      if (!member.clientName?.trim()) {
+        validationErrors.push(`Family Member ${index + 1}: Client Name is required`);
+      }
+      if (!member.signingPerson?.trim()) {
+        validationErrors.push(`Family Member ${index + 1}: Signing Person is required`);
+      }
+      if (!member.signingEmail?.trim()) {
+        validationErrors.push(`Family Member ${index + 1}: Email is required`);
+      }
+    });
+    
+    // If there are validation errors, show them and prevent submission
+    if (validationErrors.length > 0) {
+      const errorMessage = `Please fill in the following required fields:\n\n${validationErrors.join('\n')}`;
+      alert(errorMessage);
+      return; // Stop submission
+    }
+    
+    // All validation passed - proceed with submission
     setShowPreview(false); // Close the preview modal first
     onSubmit(formData);
   };
@@ -504,7 +544,9 @@ const CloseoutFormTable = ({
         <div className="bg-white rounded shadow-sm border p-3 mb-4">
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <Label htmlFor="clientEmail" className="text-sm font-medium">Client Email</Label>
+              <Label htmlFor="clientEmail" className="text-sm font-medium">
+                Client Email <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="clientEmail"
                 value={clientEmail}
@@ -576,7 +618,9 @@ const CloseoutFormTable = ({
               </div>
               <div className="grid grid-cols-6 gap-3 text-sm">
                 <div>
-                  <Label className="text-xs font-medium text-gray-600">File Path</Label>
+                  <Label className="text-xs font-medium text-gray-600">
+                    File Path <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     value={formData.filePath}
                     onChange={(e) => updateFormField('filePath', e.target.value)}
@@ -628,7 +672,7 @@ const CloseoutFormTable = ({
                 <div className="col-span-2">
                   <Label className="text-xs font-medium text-gray-600">Final Bill Detail</Label>
                   <Textarea
-                    value={formData.billDetail}
+                    value={formData.familyMembers[0]?.isT1 ? 'T1' : formData.familyMembers[0]?.isS216 ? 'S216' : formData.familyMembers[0]?.isS116 ? 'S116' : 'T1'}
                     onChange={(e) => updateFormField('billDetail', e.target.value)}
                     className="text-sm"
                     rows={2}
@@ -685,7 +729,9 @@ const CloseoutFormTable = ({
                       ))}
                     </tr>
                     <tr>
-                      <td className="p-2 border font-medium text-xs">Email</td>
+                      <td className="p-2 border font-medium text-xs">
+                        Email <span className="text-red-500">*</span>
+                      </td>
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Input
@@ -1179,6 +1225,8 @@ const CloseoutFormTable = ({
             </div>
           </div>
         </div>
+
+        
 
         {/* Bottom Action Buttons */}
         {showButtons && (
