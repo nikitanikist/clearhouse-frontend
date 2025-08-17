@@ -321,6 +321,17 @@ const CloseoutFormTable = ({
     setFormData(prev => ({ ...prev, hstDueDate: prev.returnFilingDueDate }));
   }, [formData.returnFilingDueDate]);
 
+  // NEW: Auto-sync clientName with signingPerson for all family members
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      familyMembers: prev.familyMembers.map(member => ({
+        ...member,
+        clientName: member.signingPerson || member.clientName
+      }))
+    }));
+  }, [formData.familyMembers.map(m => m.signingPerson).join()]);
+
   // Handler for Section 2 PDF data extraction
   const handleSection2DataExtracted = (familyMemberIndex: number, extractedData: any) => {
     const updatedMembers = [...formData.familyMembers];
