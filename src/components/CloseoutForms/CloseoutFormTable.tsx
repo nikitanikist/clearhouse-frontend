@@ -138,7 +138,6 @@ const CloseoutFormTable = ({
   isNewClient = false
 }: CloseoutFormTableProps) => {
   const [clientEmail, setClientEmail] = useState(initialData?.clientEmail || selectedClientEmail || '');
-  const [section2Email, setSection2Email] = useState(initialData?.familyMembers?.[0]?.signingEmail || selectedClientEmail || '');
   const [formData, setFormData] = useState<CloseoutFormTableData>({
     clientEmail: initialData?.clientEmail || '',
     formType: formType,
@@ -235,7 +234,6 @@ const CloseoutFormTable = ({
   useEffect(() => {
     if (selectedClientEmail) {
       setClientEmail(prev => (isBlankOrDefault(prev) ? selectedClientEmail : prev));
-      setSection2Email(prev => (isBlankOrDefault(prev) ? selectedClientEmail : prev));
       setFormData(prev => ({
         ...prev,
         clientEmail: isBlankOrDefault(prev.clientEmail) ? selectedClientEmail : prev.clientEmail,
@@ -251,15 +249,7 @@ const CloseoutFormTable = ({
     setFormData(prev => ({ ...prev, clientEmail }));
   }, [clientEmail]);
 
-  // 4. When section2Email changes, update formData.familyMembers[0].signingEmail
-  useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      familyMembers: prev.familyMembers.map((member, idx) =>
-        idx === 0 ? { ...member, signingEmail: section2Email } : member
-      )
-    }));
-  }, [section2Email]);
+  // REMOVED: Email synchronization useEffect - each member now has their own email
 
   // Add this useEffect after formData and updateFamilyMember are defined
   useEffect(() => {
@@ -461,10 +451,12 @@ const CloseoutFormTable = ({
       validationErrors.push('File Path is required');
     }
     
-    // 3. Validate Section 2 Email (Section 2: Client Details)
-    if (!section2Email || section2Email.trim() === '') {
-      validationErrors.push('Email (Section 2) is required');
-    }
+    // 3. Validate Section 2 Email (Section 2: Client Details) - Each member must have an email
+    formData.familyMembers.forEach((member, index) => {
+      if (!member.signingEmail || member.signingEmail.trim() === '') {
+        validationErrors.push(`Family Member ${index + 1}: Email is required`);
+      }
+    });
     
     // 4. Validate ALL Family Members
     formData.familyMembers.forEach((member, index) => {
@@ -474,9 +466,7 @@ const CloseoutFormTable = ({
       if (!member.signingPerson?.trim()) {
         validationErrors.push(`Family Member ${index + 1}: Signing Person is required`);
       }
-      if (!member.signingEmail?.trim()) {
-        validationErrors.push(`Family Member ${index + 1}: Email is required`);
-      }
+      // Email validation is now handled above in the email-specific validation
     });
     
     // If there are validation errors, show them and prevent submission
@@ -496,7 +486,13 @@ const CloseoutFormTable = ({
   // Function to handle client selection or addition
   const handleClientSelected = (email: string) => {
     setClientEmail(email);
-    setSection2Email(email);
+    setFormData(prev => ({
+      ...prev,
+      familyMembers: prev.familyMembers.map(member => ({
+        ...member,
+        signingEmail: email
+      }))
+    }));
   };
 
   // Function to handle viewing previous closeout form
@@ -746,11 +742,8 @@ const CloseoutFormTable = ({
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Input
-                            value={section2Email}
-                            onChange={(e) => {
-                              setSection2Email(e.target.value);
-                              updateFamilyMember(formData.familyMembers[0].id, 'signingEmail', e.target.value);
-                            }}
+                            value={member.signingEmail}
+                            onChange={(e) => updateFamilyMember(member.id, 'signingEmail', e.target.value)}
                             className="h-8 text-sm"
                             placeholder="Will be auto-filled from PDF"
                           />
