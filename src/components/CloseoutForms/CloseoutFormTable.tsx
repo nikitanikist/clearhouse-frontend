@@ -51,6 +51,24 @@ export interface FamilyMember {
   otherNotes?: string;
   taxesPayable?: string;
   amountOwing?: string;
+  // NEW: Individual fields per family member
+  hstDraftOrFinal?: string;
+  hstInstallmentsRequired?: boolean;
+  paymentRequired?: boolean;
+  // NEW: Individual Personal Tax Summary fields per family member
+  priorPeriodsBalance?: string;
+  installmentsDuringYear?: string;
+  installmentsAfterYear?: string;
+  taxPaymentDueDate?: string;
+  returnFilingDueDate?: 'April 30' | 'June 15';
+  // NEW: Individual HST fields per family member
+  hstPayable?: string;
+  hstDueDate?: string;
+  // NEW: Additional HST fields per family member
+  hstPriorBalance?: string;
+  hstInstallmentsDuring?: string;
+  hstInstallmentsAfter?: string;
+  hstPaymentDue?: string;
 }
 
 export interface CloseoutFormTableData {
@@ -168,7 +186,26 @@ const CloseoutFormTable = ({
         installmentAttachment: null,
         isT1135: false,
         isT2091: false,
-        isT1032: false
+        isT1032: false,
+        // NEW: Individual field defaults
+        hstDraftOrFinal: 'N/A',
+        hstInstallmentsRequired: false,
+        paymentRequired: false,
+        otherNotes: '',
+        // NEW: Individual Personal Tax Summary field defaults
+        priorPeriodsBalance: '0',
+        installmentsDuringYear: '0',
+        installmentsAfterYear: '0',
+        taxPaymentDueDate: '',
+        returnFilingDueDate: 'April 30',
+        // NEW: Individual HST field defaults
+        hstPayable: '0',
+        hstDueDate: 'April 30',
+        // NEW: Additional HST field defaults
+        hstPriorBalance: '0',
+        hstInstallmentsDuring: '0',
+        hstInstallmentsAfter: '0',
+        hstPaymentDue: '0'
       }
     ],
     
@@ -261,11 +298,11 @@ const CloseoutFormTable = ({
     }
     setFormData(prev => {
       const updatedMembers = prev.familyMembers.map(member => {
-        // Use member.taxesPayable if present, else fallback to prev.taxesPayable
-        const priorPeriodsBalance = parseAmount(prev.priorPeriodsBalance);
-        const taxesPayable = parseAmount(member.taxesPayable ?? prev.taxesPayable);
-        const installmentsDuringYear = parseAmount(prev.installmentsDuringYear);
-        const installmentsAfterYear = parseAmount(prev.installmentsAfterYear);
+        // ✅ FIXED: Use individual member values for calculation
+        const priorPeriodsBalance = parseAmount(member.priorPeriodsBalance ?? '0');
+        const taxesPayable = parseAmount(member.taxesPayable ?? '0');
+        const installmentsDuringYear = parseAmount(member.installmentsDuringYear ?? '0');
+        const installmentsAfterYear = parseAmount(member.installmentsAfterYear ?? '0');
         const amountOwing = priorPeriodsBalance + taxesPayable - installmentsDuringYear - installmentsAfterYear;
         return {
           ...member,
@@ -274,42 +311,100 @@ const CloseoutFormTable = ({
       });
       return { ...prev, familyMembers: updatedMembers };
     });
-  }, [formData.familyMembers.map(m => m.taxesPayable).join(), formData.priorPeriodsBalance, formData.installmentsDuringYear, formData.installmentsAfterYear, formData.taxesPayable]);
+  }, [formData.familyMembers.map(m => m.taxesPayable).join(), formData.familyMembers.map(m => m.priorPeriodsBalance).join(), formData.familyMembers.map(m => m.installmentsDuringYear).join(), formData.familyMembers.map(m => m.installmentsAfterYear).join()]);
 
-  // Add this useEffect after the previous useEffect for amountOwing
+  // ✅ FIXED: HST Payment Due calculation per member
   useEffect(() => {
     function parseAmount(val: string | undefined): number {
       if (!val) return 0;
       return parseFloat(val.replace(/[^\d.-]/g, '')) || 0;
     }
     setFormData(prev => {
-      const hstPriorBalance = parseAmount(prev.hstPriorBalance);
-      const hstPayable = parseAmount(prev.hstPayable);
-      const hstInstallmentsDuring = parseAmount(prev.hstInstallmentsDuring);
-      const hstInstallmentsAfter = parseAmount(prev.hstInstallmentsAfter);
-      const hstPaymentDue = hstPriorBalance + hstPayable - hstInstallmentsDuring - hstInstallmentsAfter;
-      return {
-        ...prev,
-        hstPaymentDue: hstPaymentDue === 0 ? '' : hstPaymentDue.toLocaleString('en-CA', { style: 'currency', currency: 'CAD' })
-      };
+      const updatedMembers = prev.familyMembers.map(member => {
+        // ✅ FIXED: Calculate HST Payment Due for each member individually
+        const hstPriorBalance = parseAmount(member.hstPriorBalance);
+        const hstPayable = parseAmount(member.hstPayable);
+        const hstInstallmentsDuring = parseAmount(member.hstInstallmentsDuring);
+        const hstInstallmentsAfter = parseAmount(member.hstInstallmentsAfter);
+        const hstPaymentDue = hstPriorBalance + hstPayable - hstInstallmentsDuring - hstInstallmentsAfter;
+        return {
+          ...member,
+          hstPaymentDue: hstPaymentDue === 0 ? '' : hstPaymentDue.toLocaleString('en-CA', { style: 'currency', currency: 'CAD' })
+        };
+      });
+      return { ...prev, familyMembers: updatedMembers };
     });
-  }, [formData.hstPriorBalance, formData.hstPayable, formData.hstInstallmentsDuring, formData.hstInstallmentsAfter]);
+  }, [formData.familyMembers.map(m => m.hstPriorBalance).join(), formData.familyMembers.map(m => m.hstPayable).join(), formData.familyMembers.map(m => m.hstInstallmentsDuring).join(), formData.familyMembers.map(m => m.hstInstallmentsAfter).join()]);
 
-  // Auto-set return filing due date based on HST Payable
+  // Auto-set return filing due date based on HST Payable for each member
   useEffect(() => {
-    // Auto-set return filing due date based on HST Payable
-    const hstPayableNum = parseFloat((formData.hstPayable || '0').toString().replace(/[^\d.\-]/g, ''));
-    if (hstPayableNum > 0 && formData.returnFilingDueDate !== 'June 15') {
-      setFormData(prev => ({ ...prev, returnFilingDueDate: 'June 15' }));
-    } else if ((hstPayableNum === 0 || isNaN(hstPayableNum)) && formData.returnFilingDueDate !== 'April 30') {
-      setFormData(prev => ({ ...prev, returnFilingDueDate: 'April 30' }));
-    }
-  }, [formData.hstPayable]);
+    setFormData(prev => ({
+      ...prev,
+      familyMembers: prev.familyMembers.map(member => {
+        // ✅ FIXED: Calculate HST Return Filing Due Date for each member individually
+        const hstPayableNum = parseFloat((member.hstPayable || '0').toString().replace(/[^\d.\-]/g, ''));
+        let newReturnFilingDueDate = member.returnFilingDueDate || 'April 30';
+        
+        if (hstPayableNum > 0 && member.returnFilingDueDate !== 'June 15') {
+          newReturnFilingDueDate = 'June 15';
+        } else if ((hstPayableNum === 0 || isNaN(hstPayableNum)) && member.returnFilingDueDate !== 'April 30') {
+          newReturnFilingDueDate = 'April 30';
+        }
+        
+        return {
+          ...member,
+          returnFilingDueDate: newReturnFilingDueDate
+        };
+      })
+    }));
+  }, [formData.familyMembers.map(m => m.hstPayable).join()]);
 
-  // Auto-sync HST Due Date with Return Filing Due Date
+  // Auto-sync HST Due Date with Return Filing Due Date for each member
   useEffect(() => {
-    setFormData(prev => ({ ...prev, hstDueDate: prev.returnFilingDueDate }));
-  }, [formData.returnFilingDueDate]);
+    setFormData(prev => ({
+      ...prev,
+      familyMembers: prev.familyMembers.map(member => ({
+        ...member,
+        hstDueDate: member.returnFilingDueDate || 'April 30'
+      }))
+    }));
+  }, [formData.familyMembers.map(m => m.returnFilingDueDate).join()]);
+
+  // Auto-set Tax Payment Due Date to default value for each member
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      familyMembers: prev.familyMembers.map(member => {
+        // ✅ FIXED: Set default Tax Payment Due Date if not already set
+        let newTaxPaymentDueDate = member.taxPaymentDueDate;
+        
+        if (!newTaxPaymentDueDate || newTaxPaymentDueDate.trim() === '') {
+          // Set default to April 30 of current year
+          const currentYear = new Date().getFullYear();
+          newTaxPaymentDueDate = `April 30, ${currentYear}`;
+        }
+        
+        return {
+          ...member,
+          taxPaymentDueDate: newTaxPaymentDueDate
+        };
+      })
+    }));
+  }, [formData.familyMembers.map(m => m.taxPaymentDueDate).join()]);
+
+  // Ensure consistent default values for all Personal Tax Summary fields
+  useEffect(() => {
+    setFormData(prev => ({
+      ...prev,
+      familyMembers: prev.familyMembers.map(member => ({
+        ...member,
+        // ✅ FIXED: Ensure consistent default values for all members
+        priorPeriodsBalance: member.priorPeriodsBalance || '0',
+        installmentsDuringYear: member.installmentsDuringYear || '0',
+        installmentsAfterYear: member.installmentsAfterYear || '0'
+      }))
+    }));
+  }, [formData.familyMembers.map(m => m.priorPeriodsBalance).join(), formData.familyMembers.map(m => m.installmentsDuringYear).join(), formData.familyMembers.map(m => m.installmentsAfterYear).join()]);
 
   // NEW: Auto-sync clientName with signingPerson for all family members
   useEffect(() => {
@@ -352,13 +447,10 @@ const CloseoutFormTable = ({
       member.amountOwing = '';
       member.amountOwingColor = undefined;
 
-      // Promote deceased note to top-level Other Notes if present
+      // Update family members with extracted data
       setFormData(prev => ({
         ...prev,
-        familyMembers: updatedMembers,
-        otherNotes: extractedData.otherNotes && extractedData.otherNotes.includes('deceased')
-          ? extractedData.otherNotes
-          : prev.otherNotes
+        familyMembers: updatedMembers
       }));
     }
   };
@@ -379,7 +471,22 @@ const CloseoutFormTable = ({
       installmentAttachment: null,
       isT1135: false,
       isT2091: false,
-      isT1032: false
+      isT1032: false,
+      otherNotes: '',
+      // NEW: Individual Personal Tax Summary field defaults
+      priorPeriodsBalance: '0',
+      installmentsDuringYear: '0',
+      installmentsAfterYear: '0',
+      taxPaymentDueDate: '',
+      returnFilingDueDate: 'April 30',
+      // NEW: Individual HST field defaults
+      hstPayable: '0',
+      hstDueDate: 'April 30',
+      // NEW: Additional HST field defaults
+      hstPriorBalance: '0',
+      hstInstallmentsDuring: '0',
+      hstInstallmentsAfter: '0',
+      hstPaymentDue: '0'
     };
     const newId = (formData.familyMembers.length + 1).toString();
     setFormData(prev => ({
@@ -892,7 +999,7 @@ const CloseoutFormTable = ({
                       <td className="p-2 border font-medium text-xs">HST Draft/Final</td>
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
-                          <Select value={formData.hstDraftOrFinal} onValueChange={(value) => updateFormField('hstDraftOrFinal', value)}>
+                          <Select value={member.hstDraftOrFinal} onValueChange={(value) => updateFamilyMember(member.id, 'hstDraftOrFinal', value)}>
                             <SelectTrigger className="h-8 text-xs">
                               <SelectValue />
                             </SelectTrigger>
@@ -905,6 +1012,7 @@ const CloseoutFormTable = ({
                         </td>
                       ))}
                     </tr>
+
                   </tbody>
                 </table>
               </div>
@@ -944,8 +1052,8 @@ const CloseoutFormTable = ({
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Checkbox
-                            checked={formData.hstInstallmentsRequired}
-                            onCheckedChange={(checked) => updateFormField('hstInstallmentsRequired', checked)}
+                            checked={member.hstInstallmentsRequired || false}
+                            onCheckedChange={(checked) => updateFamilyMember(member.id, 'hstInstallmentsRequired', checked)}
                           />
                         </td>
                       ))}
@@ -1006,8 +1114,8 @@ const CloseoutFormTable = ({
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Textarea
-                            value={formData.otherNotes}
-                            onChange={(e) => updateFormField('otherNotes', e.target.value)}
+                            value={member.otherNotes || ''}
+                            onChange={(e) => updateFamilyMember(member.id, 'otherNotes', e.target.value)}
                             className="text-xs"
                             rows={2}
                           />
@@ -1042,8 +1150,8 @@ const CloseoutFormTable = ({
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Input
-                            value={formData.priorPeriodsBalance}
-                            onChange={(e) => updateFormField('priorPeriodsBalance', e.target.value)}
+                            value={member.priorPeriodsBalance ?? ''}
+                            onChange={(e) => updateFamilyMember(member.id, 'priorPeriodsBalance', e.target.value)}
                             className="h-8 text-sm"
                           />
                         </td>
@@ -1067,8 +1175,8 @@ const CloseoutFormTable = ({
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Input
-                            value={formData.installmentsDuringYear}
-                            onChange={(e) => updateFormField('installmentsDuringYear', e.target.value)}
+                            value={member.installmentsDuringYear ?? ''}
+                            onChange={(e) => updateFamilyMember(member.id, 'installmentsDuringYear', e.target.value)}
                             className="h-8 text-sm"
                           />
                         </td>
@@ -1079,8 +1187,8 @@ const CloseoutFormTable = ({
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Input
-                            value={formData.installmentsAfterYear}
-                            onChange={(e) => updateFormField('installmentsAfterYear', e.target.value)}
+                            value={member.installmentsAfterYear ?? ''}
+                            onChange={(e) => updateFamilyMember(member.id, 'installmentsAfterYear', e.target.value)}
                             className="h-8 text-sm"
                           />
                         </td>
@@ -1104,8 +1212,8 @@ const CloseoutFormTable = ({
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Input
-                            value={formData.taxPaymentDueDate}
-                            onChange={(e) => updateFormField('taxPaymentDueDate', e.target.value)}
+                            value={member.taxPaymentDueDate ?? ''}
+                            onChange={(e) => updateFamilyMember(member.id, 'taxPaymentDueDate', e.target.value)}
                             className="h-8 text-sm"
                           />
                         </td>
@@ -1115,7 +1223,7 @@ const CloseoutFormTable = ({
                       <td className="p-2 border font-medium text-xs">Return Filing Due Date</td>
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
-                          <Select value={formData.returnFilingDueDate} onValueChange={(value: 'April 30' | 'June 15') => updateFormField('returnFilingDueDate', value)}>
+                          <Select value={member.returnFilingDueDate ?? 'April 30'} onValueChange={(value: 'April 30' | 'June 15') => updateFamilyMember(member.id, 'returnFilingDueDate', value)}>
                             <SelectTrigger className="h-8 text-xs">
                               <SelectValue />
                             </SelectTrigger>
@@ -1155,8 +1263,8 @@ const CloseoutFormTable = ({
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Input
-                            value={formData.hstPriorBalance}
-                            onChange={(e) => updateFormField('hstPriorBalance', e.target.value)}
+                            value={member.hstPriorBalance || '0'}
+                            onChange={(e) => updateFamilyMember(member.id, 'hstPriorBalance', e.target.value)}
                             className="h-8 text-sm"
                           />
                         </td>
@@ -1167,8 +1275,8 @@ const CloseoutFormTable = ({
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Input
-                            value={formData.hstPayable}
-                            onChange={(e) => updateFormField('hstPayable', e.target.value)}
+                            value={member.hstPayable || '0'}
+                            onChange={(e) => updateFamilyMember(member.id, 'hstPayable', e.target.value)}
                             className="h-8 text-sm"
                           />
                         </td>
@@ -1179,8 +1287,8 @@ const CloseoutFormTable = ({
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Input
-                            value={formData.hstInstallmentsDuring}
-                            onChange={(e) => updateFormField('hstInstallmentsDuring', e.target.value)}
+                            value={member.hstInstallmentsDuring || '0'}
+                            onChange={(e) => updateFamilyMember(member.id, 'hstInstallmentsDuring', e.target.value)}
                             className="h-8 text-sm"
                           />
                         </td>
@@ -1191,8 +1299,8 @@ const CloseoutFormTable = ({
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Input
-                            value={formData.hstInstallmentsAfter}
-                            onChange={(e) => updateFormField('hstInstallmentsAfter', e.target.value)}
+                            value={member.hstInstallmentsAfter || '0'}
+                            onChange={(e) => updateFamilyMember(member.id, 'hstInstallmentsAfter', e.target.value)}
                             className="h-8 text-sm"
                           />
                         </td>
@@ -1203,8 +1311,8 @@ const CloseoutFormTable = ({
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Input
-                            value={formData.hstPaymentDue ?? ''}
-                            onChange={(e) => updateFormField('hstPaymentDue', e.target.value)}
+                            value={member.hstPaymentDue || '0'}
+                            onChange={(e) => updateFamilyMember(member.id, 'hstPaymentDue', e.target.value)}
                             className="h-8 text-sm"
                             style={{ color: 'black' }}
                           />
@@ -1216,8 +1324,8 @@ const CloseoutFormTable = ({
                       {formData.familyMembers.map((member) => (
                         <td key={member.id} className="p-2 border">
                           <Input
-                            value={formData.hstDueDate}
-                            onChange={(e) => updateFormField('hstDueDate', e.target.value)}
+                            value={member.hstDueDate || 'April 30'}
+                            onChange={(e) => updateFamilyMember(member.id, 'hstDueDate', e.target.value)}
                             className="h-8 text-sm"
                           />
                         </td>
@@ -1295,7 +1403,7 @@ const CloseoutFormTable = ({
                   t1135ForeignProperty: formData.t1135ForeignProperty,
                   t1032PensionSplit: formData.t1032PensionSplit,
                   hstDraftOrFinal: formData.hstDraftOrFinal,
-                  otherNotes: formData.otherNotes,
+                  otherNotes: formData.familyMembers[0]?.otherNotes || '',
                   otherDocuments: formData.otherDocuments,
                   corporateInstallmentsRequired: false,
                   fedScheduleAttached: false,

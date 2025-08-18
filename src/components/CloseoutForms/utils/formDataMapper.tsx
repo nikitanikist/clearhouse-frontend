@@ -141,6 +141,24 @@ export const mapTableDataToCloseoutForm = (
       taxesPayable: cleanCurrency(member.taxesPayable)?.toString() || '',
       amountOwing: cleanCurrency(member.amountOwing)?.toString() || '',
       installmentAttachment: member.installmentAttachment,
+      // NEW: Individual fields per family member
+      hstDraftOrFinal: member.hstDraftOrFinal || 'N/A',
+      hstInstallmentsRequired: member.hstInstallmentsRequired || false,
+      paymentRequired: member.paymentRequired || false,
+      otherNotes: member.otherNotes || '',
+      // NEW: Individual Personal Tax Summary fields per family member
+      priorPeriodsBalance: member.priorPeriodsBalance || '0',
+      installmentsDuringYear: member.installmentsDuringYear || '0',
+      installmentsAfterYear: member.installmentsAfterYear || '0',
+      taxPaymentDueDate: member.taxPaymentDueDate || '',
+      returnFilingDueDate: member.returnFilingDueDate || 'April 30',
+      // NEW: Individual HST fields per family member
+      hstPayable: member.hstPayable || '0',
+      hstDueDate: member.hstDueDate || 'April 30',
+      hstPriorBalance: member.hstPriorBalance || '0',
+      hstInstallmentsDuring: member.hstInstallmentsDuring || '0',
+      hstInstallmentsAfter: member.hstInstallmentsAfter || '0',
+      hstPaymentDue: member.hstPaymentDue || '0'
     })),
   };
 };
