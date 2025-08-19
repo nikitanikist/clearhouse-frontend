@@ -786,10 +786,11 @@ const CloseoutFormTable = ({
                 <div className="col-span-2">
                   <Label className="text-xs font-medium text-gray-600">Final Bill Detail</Label>
                   <Textarea
-                    value={formData.familyMembers[0]?.isT1 ? 'T1' : formData.familyMembers[0]?.isS216 ? 'S216' : formData.familyMembers[0]?.isS116 ? 'S116' : 'T1'}
+                    value={formData.billDetail}
                     onChange={(e) => updateFormField('billDetail', e.target.value)}
                     className="text-sm"
                     rows={2}
+                    placeholder="Enter bill details (e.g., T1, S216, S116, or custom description)"
                   />
                 </div>
                 <div>
@@ -1399,28 +1400,30 @@ const CloseoutFormTable = ({
                   tSlips: false,
                   quebecReturn: false,
                   albertaReturn: false,
-                  t2091PrincipalResidence: formData.t2091PrincipalResidence,
-                  t1135ForeignProperty: formData.t1135ForeignProperty,
-                  t1032PensionSplit: formData.t1032PensionSplit,
-                  hstDraftOrFinal: formData.hstDraftOrFinal,
+                  t2091PrincipalResidence: formData.familyMembers[0]?.isT2091 || false,
+                  t1135ForeignProperty: formData.familyMembers[0]?.isT1135 || false,
+                  t1032PensionSplit: formData.familyMembers[0]?.isT1032 || false,
+                  hstDraftOrFinal: formData.familyMembers[0]?.hstDraftOrFinal || 'N/A',
                   otherNotes: formData.familyMembers[0]?.otherNotes || '',
                   otherDocuments: formData.otherDocuments,
                   corporateInstallmentsRequired: false,
                   fedScheduleAttached: false,
                   hstInstallmentRequired: formData.hstInstallmentsRequired,
                   hstTabCompleted: false,
-                  priorPeriodsBalance: formData.priorPeriodsBalance,
-                  taxesPayable: formData.taxesPayable,
-                  installmentsDuringYear: formData.installmentsDuringYear,
-                  installmentsAfterYear: formData.installmentsAfterYear,
-                  amountOwing: formData.amountOwing,
+                  // Section 6: Personal Tax Summary - These will be displayed per member in the preview
+                  priorPeriodsBalance: '0', // Will be displayed per member
+                  taxesPayable: '0', // Will be displayed per member
+                  installmentsDuringYear: '0', // Will be displayed per member
+                  installmentsAfterYear: '0', // Will be displayed per member
+                  amountOwing: '0', // Will be displayed per member
                   dueDate: formData.taxPaymentDueDate,
-                  hstPriorBalance: formData.hstPriorBalance,
-                  hstPayable: formData.hstPayable,
-                  hstInstallmentsDuring: formData.hstInstallmentsDuring,
-                  hstInstallmentsAfter: formData.hstInstallmentsAfter,
-                  hstPaymentDue: formData.hstPaymentDue,
-                  hstDueDate: formData.hstDueDate,
+                  // Section 8: HST Summary - These will be displayed per member in the preview
+                  hstPriorBalance: '0', // Will be displayed per member
+                  hstPayable: '0', // Will be displayed per member
+                  hstInstallmentsDuring: '0', // Will be displayed per member
+                  hstInstallmentsAfter: '0', // Will be displayed per member
+                  hstPaymentDue: '0', // Will be displayed per member
+                  hstDueDate: 'April 30', // Will be displayed per member
                   installmentAttachment: formData.familyMembers[0]?.installmentAttachment || null,
                   familyMembers: formData.familyMembers,
                   status: 'pending',

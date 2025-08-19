@@ -96,6 +96,31 @@ export interface CloseoutForm {
       fileUrl: string;
       uploadedAt: string;
     } | null;
+    // NEW: Individual filing detail fields per family member
+    isT1135?: boolean;
+    isT2091?: boolean;
+    isT1032?: boolean;
+    // NEW: Individual fields per family member
+    hstDraftOrFinal?: string;
+    hstInstallmentsRequired?: boolean;
+    paymentRequired?: boolean;
+    otherNotes?: string;
+    // NEW: Individual Personal Tax Summary fields per family member
+    priorPeriodsBalance?: string;
+    installmentsDuringYear?: string;
+    installmentsAfterYear?: string;
+    taxPaymentDueDate?: string;
+    returnFilingDueDate?: 'April 30' | 'June 15';
+    // NEW: Individual HST fields per family member
+    hstPayable?: string;
+    hstDueDate?: string;
+    hstPriorBalance?: string;
+    hstInstallmentsDuring?: string;
+    hstInstallmentsAfter?: string;
+    hstPaymentDue?: string;
+    // Additional fields for calculations
+    taxesPayable?: string;
+    amountOwing?: string;
   }[];
   status: FormStatus;
   createdBy: {
@@ -1517,6 +1542,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           comments: form.comments || [],
           history: form.history || [],
           rejectionReason: form.rejection_reason || '',
+          // Map family members data from backend
+          familyMembers: form.familyMembers || [],
         })));
       })
       .catch((err) => {
@@ -1620,6 +1647,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         comments: form.comments || [],
         history: form.history || [],
         rejectionReason: form.rejection_reason || '',
+        // Map family members data from backend
+        familyMembers: form.familyMembers || [],
       })));
       
       toast.success(`Form reassigned to ${result.assignedToName} successfully!`);

@@ -316,54 +316,109 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
         </CardContent>
       </Card>
 
-      {/* Tax Installments */}
+      {/* Tax Installments - Individual Member Data */}
       <Card>
         <CardHeader>
           <CardTitle>3. Tax Installments</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableBody>
-              <TableRow>
-                <TableCell className="font-medium w-1/4 bg-gray-50">Corporate Installments Required</TableCell>
-                <TableCell className="w-1/4">
-                  <div className="flex items-center space-x-2">
-                    {form.corporateInstallmentsRequired ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
-                    <span>{form.corporateInstallmentsRequired ? "Yes" : "No"}</span>
+          {form.familyMembers && form.familyMembers.length > 0 ? (
+            <div className="space-y-4">
+              {form.familyMembers.map((member, index) => (
+                <div key={member.id} className="border rounded-lg overflow-hidden">
+                  <div className="bg-gray-100 px-4 py-2 border-b">
+                    <h4 className="font-medium">{member.clientName || `Family Member ${index + 1}`}</h4>
                   </div>
-                </TableCell>
-                <TableCell className="font-medium w-1/4 bg-gray-50">FED Schedule Attached</TableCell>
-                <TableCell className="w-1/4">
-                  <div className="flex items-center space-x-2">
-                    {form.fedScheduleAttached ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
-                    <span>{form.fedScheduleAttached ? "Yes" : "No"}</span>
-                  </div>
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium bg-gray-50">HST Installment Required</TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    {form.hstInstallmentRequired ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
-                    <span>{form.hstInstallmentRequired ? "Yes" : "No"}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="font-medium bg-gray-50">HST Tab Completed</TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    {form.hstTabCompleted ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
-                    <span>{form.hstTabCompleted ? "Yes" : "No"}</span>
-                  </div>
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium bg-gray-50">HST Draft/Final</TableCell>
-                <TableCell>{form.hstDraftOrFinal}</TableCell>
-                <TableCell className="font-medium bg-gray-50"></TableCell>
-                <TableCell></TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+                  <Table>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell className="font-medium w-1/4 bg-gray-50">Corporate Installments Required</TableCell>
+                        <TableCell className="w-1/4">
+                          <div className="flex items-center space-x-2">
+                            {form.corporateInstallmentsRequired ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                            <span>{form.corporateInstallmentsRequired ? "Yes" : "No"}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium w-1/4 bg-gray-50">FED Schedule Attached</TableCell>
+                        <TableCell className="w-1/4">
+                          <div className="flex items-center space-x-2">
+                            {form.fedScheduleAttached ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                            <span>{form.fedScheduleAttached ? "Yes" : "No"}</span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-medium bg-gray-50">HST Installment Required</TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            {member.hstInstallmentsRequired ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                            <span>{member.hstInstallmentsRequired ? "Yes" : "No"}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="font-medium bg-gray-50">HST Tab Completed</TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            {form.hstTabCompleted ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                            <span>{form.hstTabCompleted ? "Yes" : "No"}</span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-medium bg-gray-50">HST Draft/Final</TableCell>
+                        <TableCell>{member.hstDraftOrFinal || 'N/A'}</TableCell>
+                        <TableCell className="font-medium bg-gray-50"></TableCell>
+                        <TableCell></TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              ))}
+            </div>
+          ) : (
+            // Fallback to legacy single member display
+            <Table>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-medium w-1/4 bg-gray-50">Corporate Installments Required</TableCell>
+                  <TableCell className="w-1/4">
+                    <div className="flex items-center space-x-2">
+                      {form.corporateInstallmentsRequired ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                      <span>{form.corporateInstallmentsRequired ? "Yes" : "No"}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-medium w-1/4 bg-gray-50">FED Schedule Attached</TableCell>
+                  <TableCell className="w-1/4">
+                    <div className="flex items-center space-x-2">
+                      {form.fedScheduleAttached ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                      <span>{form.fedScheduleAttached ? "Yes" : "No"}</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium bg-gray-50">HST Installment Required</TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      {form.hstInstallmentRequired ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                      <span>{form.hstInstallmentRequired ? "Yes" : "No"}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-medium bg-gray-50">HST Tab Completed</TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      {form.hstTabCompleted ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                      <span>{form.hstTabCompleted ? "Yes" : "No"}</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium bg-gray-50">HST Draft/Final</TableCell>
+                  <TableCell>{form.hstDraftOrFinal}</TableCell>
+                  <TableCell className="font-medium bg-gray-50"></TableCell>
+                  <TableCell></TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
@@ -397,69 +452,143 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
         </CardContent>
       </Card>
 
-      {/* T1 Summary */}
+      {/* T1 Summary - Individual Member Data */}
       <Card>
         <CardHeader>
           <CardTitle>7. T1 Summary</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableBody>
-              <TableRow>
-                <TableCell className="font-medium w-1/4 bg-gray-50">Prior Periods Balance</TableCell>
-                <TableCell className="w-1/4">${form.priorPeriodsBalance}</TableCell>
-                <TableCell className="font-medium w-1/4 bg-gray-50">Taxes Payable</TableCell>
-                <TableCell className="w-1/4">{formatCurrency(form.taxesPayable)}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium bg-gray-50">Installments During Year</TableCell>
-                <TableCell>${form.installmentsDuringYear}</TableCell>
-                <TableCell className="font-medium bg-gray-50">Installments After Year</TableCell>
-                <TableCell>${form.installmentsAfterYear}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium bg-gray-50">Amount Owing</TableCell>
-                <TableCell>{formatCurrency(form.amountOwing)}</TableCell>
-                <TableCell className="font-medium bg-gray-50">Tax Payment Due Date</TableCell>
-                <TableCell>{formatDate(form.taxPaymentDueDate || form.dueDate)}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium bg-gray-50">Return Filing Due Date</TableCell>
-                <TableCell colSpan={3}>{formatDate(form.returnFilingDueDate || form.dueDate)}</TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+          {form.familyMembers && form.familyMembers.length > 0 ? (
+            <div className="space-y-4">
+              {form.familyMembers.map((member, index) => (
+                <div key={member.id} className="border rounded-lg overflow-hidden">
+                  <div className="bg-gray-100 px-4 py-2 border-b">
+                    <h4 className="font-medium">{member.clientName || `Family Member ${index + 1}`}</h4>
+                  </div>
+                  <Table>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell className="font-medium w-1/4 bg-gray-50">Prior Periods Balance</TableCell>
+                        <TableCell className="w-1/4">${member.priorPeriodsBalance || '0'}</TableCell>
+                        <TableCell className="font-medium w-1/4 bg-gray-50">Taxes Payable</TableCell>
+                        <TableCell className="w-1/4">{formatCurrency(member.taxesPayable || '0')}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-medium bg-gray-50">Installments During Year</TableCell>
+                        <TableCell>${member.installmentsDuringYear || '0'}</TableCell>
+                        <TableCell className="font-medium bg-gray-50">Installments After Year</TableCell>
+                        <TableCell>${member.installmentsAfterYear || '0'}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-medium bg-gray-50">Amount Owing</TableCell>
+                        <TableCell>{formatCurrency(member.amountOwing || '0')}</TableCell>
+                        <TableCell className="font-medium bg-gray-50">Tax Payment Due Date</TableCell>
+                        <TableCell>{formatDate(member.taxPaymentDueDate || 'N/A')}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-medium bg-gray-50">Return Filing Due Date</TableCell>
+                        <TableCell colSpan={3}>{member.returnFilingDueDate || 'April 30'}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              ))}
+            </div>
+          ) : (
+            // Fallback to legacy single member display
+            <Table>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-medium w-1/4 bg-gray-50">Prior Periods Balance</TableCell>
+                  <TableCell className="w-1/4">${form.priorPeriodsBalance}</TableCell>
+                  <TableCell className="font-medium w-1/4 bg-gray-50">Taxes Payable</TableCell>
+                  <TableCell className="w-1/4">{formatCurrency(form.taxesPayable)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium bg-gray-50">Installments During Year</TableCell>
+                  <TableCell>${form.installmentsDuringYear}</TableCell>
+                  <TableCell className="font-medium bg-gray-50">Installments After Year</TableCell>
+                  <TableCell>${form.installmentsAfterYear}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium bg-gray-50">Amount Owing</TableCell>
+                  <TableCell>{formatCurrency(form.amountOwing)}</TableCell>
+                  <TableCell className="font-medium bg-gray-50">Tax Payment Due Date</TableCell>
+                  <TableCell>{formatDate(form.taxPaymentDueDate || form.dueDate)}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium bg-gray-50">Return Filing Due Date</TableCell>
+                  <TableCell colSpan={3}>{formatDate(form.returnFilingDueDate || form.dueDate)}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
-      {/* HST Summary */}
+      {/* HST Summary - Individual Member Data */}
       <Card>
         <CardHeader>
           <CardTitle>8. HST Summary</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableBody>
-              <TableRow>
-                <TableCell className="font-medium w-1/4 bg-gray-50">HST Prior Balance</TableCell>
-                <TableCell className="w-1/4">${form.hstPriorBalance}</TableCell>
-                <TableCell className="font-medium w-1/4 bg-gray-50">HST Payable</TableCell>
-                <TableCell className="w-1/4">${form.hstPayable}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium bg-gray-50">HST Installments During</TableCell>
-                <TableCell>${form.hstInstallmentsDuring}</TableCell>
-                <TableCell className="font-medium bg-gray-50">HST Installments After</TableCell>
-                <TableCell>${form.hstInstallmentsAfter}</TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell className="font-medium bg-gray-50">HST Payment Due</TableCell>
-                <TableCell>${form.hstPaymentDue}</TableCell>
-                <TableCell className="font-medium bg-gray-50">HST Due Date</TableCell>
-                <TableCell>{formatDate(form.hstDueDate)}</TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+          {form.familyMembers && form.familyMembers.length > 0 ? (
+            <div className="space-y-4">
+              {form.familyMembers.map((member, index) => (
+                <div key={member.id} className="border rounded-lg overflow-hidden">
+                  <div className="bg-gray-100 px-4 py-2 border-b">
+                    <h4 className="font-medium">{member.clientName || `Family Member ${index + 1}`}</h4>
+                  </div>
+                  <Table>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell className="font-medium w-1/4 bg-gray-50">HST Prior Balance</TableCell>
+                        <TableCell className="w-1/4">${member.hstPriorBalance || '0'}</TableCell>
+                        <TableCell className="font-medium w-1/4 bg-gray-50">HST Payable</TableCell>
+                        <TableCell className="w-1/4">${member.hstPayable || '0'}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-medium bg-gray-50">HST Installments During</TableCell>
+                        <TableCell>${member.hstInstallmentsDuring || '0'}</TableCell>
+                        <TableCell className="font-medium bg-gray-50">HST Installments After</TableCell>
+                        <TableCell>${member.hstInstallmentsAfter || '0'}</TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-medium bg-gray-50">HST Payment Due</TableCell>
+                        <TableCell>${member.hstPaymentDue || '0'}</TableCell>
+                        <TableCell className="font-medium bg-gray-50">HST Due Date</TableCell>
+                        <TableCell>{member.hstDueDate || 'April 30'}</TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              ))}
+            </div>
+          ) : (
+            // Fallback to legacy single member display
+            <Table>
+              <TableBody>
+                <TableRow>
+                  <TableCell className="font-medium w-1/4 bg-gray-50">HST Prior Balance</TableCell>
+                  <TableCell className="w-1/4">${form.hstPriorBalance}</TableCell>
+                  <TableCell className="font-medium w-1/4 bg-gray-50">HST Payable</TableCell>
+                  <TableCell className="w-1/4">${form.hstPayable}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium bg-gray-50">HST Installments During</TableCell>
+                  <TableCell>${form.hstInstallmentsDuring}</TableCell>
+                  <TableCell className="font-medium bg-gray-50">HST Installments After</TableCell>
+                  <TableCell>${form.hstInstallmentsAfter}</TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell className="font-medium bg-gray-50">HST Payment Due</TableCell>
+                  <TableCell>${form.hstPaymentDue}</TableCell>
+                  <TableCell className="font-medium bg-gray-50">HST Due Date</TableCell>
+                  <TableCell>{formatDate(form.hstDueDate)}</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
@@ -528,6 +657,31 @@ const CloseoutFormView = ({ form }: CloseoutFormViewProps) => {
                             </div>
                           </div>
                         </TableCell>
+                      </TableRow>
+                      {/* NEW: Individual Filing Details for each member */}
+                      <TableRow>
+                        <TableCell className="font-medium bg-gray-50">Filing Details</TableCell>
+                        <TableCell colSpan={3}>
+                          <div className="grid grid-cols-3 gap-4">
+                            <div className="flex items-center space-x-2">
+                              {member.isT1135 ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                              <span className="text-sm">T1135 Foreign Property</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              {member.isT2091 ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                              <span className="text-sm">T2091 Principal Residence</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              {member.isT1032 ? <Check className="h-4 w-4 text-green-600" /> : <X className="h-4 w-4 text-gray-400" />}
+                              <span className="text-sm">T1032 Pension Split</span>
+                            </div>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      {/* NEW: Individual HST Draft/Final for each member */}
+                      <TableRow>
+                        <TableCell className="font-medium bg-gray-50">HST Draft/Final</TableCell>
+                        <TableCell colSpan={3}>{member.hstDraftOrFinal || 'N/A'}</TableCell>
                       </TableRow>
                       {member.installmentsRequired && (
                         <TableRow>
