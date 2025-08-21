@@ -336,7 +336,7 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                   <th className="border border-gray-300 px-4 py-2 font-semibold bg-blue-50 text-center min-w-[180px]">
                     {form.clientName}
                   </th>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <th key={index} className="border border-gray-300 px-4 py-2 font-semibold bg-blue-50 text-center min-w-[180px]">
                       {member.clientName}
                     </th>
@@ -347,7 +347,7 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                 {/* File Path - shared for all */}
                 <tr>
                   <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">File Path</td>
-                  <td className="border border-gray-300 px-4 py-2 text-xs font-mono" colSpan={1 + form.familyMembers.length}>
+                  <td className="border border-gray-300 px-4 py-2 text-xs font-mono" colSpan={1 + form.familyMembers.filter(member => !member.isPrimary).length}>
                     {form.filePath}
                   </td>
                 </tr>
@@ -358,7 +358,7 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                   <td className="border border-gray-300 px-4 py-2 text-center">
                     {form.signingPerson || '-'}
                   </td>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <td key={index} className="border border-gray-300 px-4 py-2 text-center">
                       {member.signingPerson || '-'}
                     </td>
@@ -375,7 +375,7 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                       </a>
                     ) : '-'}
                   </td>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <td key={index} className="border border-gray-300 px-4 py-2 text-center">
                       {member.signingEmail ? (
                         <a href={`mailto:${member.signingEmail}`} className="text-blue-600 underline text-sm">
@@ -392,7 +392,7 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                   <td className="border border-gray-300 px-4 py-2 text-center">
                     <CheckboxDisplay checked={form.isT1 || false} label="" />
                   </td>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <td key={index} className="border border-gray-300 px-4 py-2 text-center">
                       <CheckboxDisplay checked={member.isT1 || false} label="" />
                     </td>
@@ -405,7 +405,7 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                   <td className="border border-gray-300 px-4 py-2 text-center">
                     <CheckboxDisplay checked={form.isS216 || false} label="" />
                   </td>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <td key={index} className="border border-gray-300 px-4 py-2 text-center">
                       <CheckboxDisplay checked={member.isS216 || false} label="" />
                     </td>
@@ -418,7 +418,7 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                   <td className="border border-gray-300 px-4 py-2 text-center">
                     <CheckboxDisplay checked={form.isS116 || false} label="" />
                   </td>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <td key={index} className="border border-gray-300 px-4 py-2 text-center">
                       <CheckboxDisplay checked={member.isS116 || false} label="" />
                     </td>
@@ -431,7 +431,7 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                   <td className="border border-gray-300 px-4 py-2 text-center">
                     <CheckboxDisplay checked={form.isPaperFiled || false} label="" />
                   </td>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <td key={index} className="border border-gray-300 px-4 py-2 text-center">
                       <CheckboxDisplay checked={member.isPaperFiled || false} label="" />
                     </td>
@@ -444,7 +444,7 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                   <td className="border border-gray-300 px-4 py-2 text-center">
                     {form.installmentsRequired ? 'Yes' : 'No'}
                   </td>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <td key={index} className="border border-gray-300 px-4 py-2 text-center">
                       {member.installmentsRequired ? 'Yes' : 'No'}
                     </td>
@@ -454,7 +454,7 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                 {/* Installment Attachment */}
                 <tr>
                   <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">Installment Attachment</td>
-                  <td className="border border-gray-300 px-4 py-2 text-center" colSpan={1 + form.familyMembers.length}>
+                  <td className="border border-gray-300 px-4 py-2 text-center" colSpan={1 + form.familyMembers.filter(member => !member.isPrimary).length}>
                     {form.installmentAttachment ? 'Uploaded' : 'No attachment uploaded'}
                   </td>
                 </tr>
@@ -525,7 +525,7 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                   <th className="border border-gray-300 px-4 py-2 font-semibold bg-blue-50 text-center min-w-[180px]">
                     {form.clientName}
                   </th>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <th key={index} className="border border-gray-300 px-4 py-2 font-semibold bg-blue-50 text-center min-w-[180px]">
                       {member.clientName}
                     </th>
@@ -537,9 +537,9 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                 <tr>
                   <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">Prior Periods Balance</td>
                   <td className="border border-gray-300 px-4 py-2 text-center">
-                    ${form.priorPeriodsBalance || '0'}
+                    ${form.familyMembers.find(m => m.isPrimary)?.priorPeriodsBalance || '0'}
                   </td>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <td key={index} className="border border-gray-300 px-4 py-2 text-center">
                       ${member.priorPeriodsBalance || '0'}
                     </td>
@@ -550,9 +550,9 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                 <tr>
                   <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">Taxes Payable</td>
                   <td className="border border-gray-300 px-4 py-2 text-center">
-                    ${form.taxesPayable || '0'}
+                    ${form.familyMembers.find(m => m.isPrimary)?.taxesPayable || '0'}
                   </td>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <td key={index} className="border border-gray-300 px-4 py-2 text-center">
                       ${member.taxesPayable || '0'}
                     </td>
@@ -563,9 +563,9 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                 <tr>
                   <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">Installments During Year</td>
                   <td className="border border-gray-300 px-4 py-2 text-center">
-                    ${form.installmentsDuringYear || '0'}
+                    ${form.familyMembers.find(m => m.isPrimary)?.installmentsDuringYear || '0'}
                   </td>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <td key={index} className="border border-gray-300 px-4 py-2 text-center">
                       ${member.installmentsDuringYear || '0'}
                     </td>
@@ -576,9 +576,9 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                 <tr>
                   <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">Installments After Year</td>
                   <td className="border border-gray-300 px-4 py-2 text-center">
-                    ${form.installmentsAfterYear || '0'}
+                    ${form.familyMembers.find(m => m.isPrimary)?.installmentsAfterYear || '0'}
                   </td>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <td key={index} className="border border-gray-300 px-4 py-2 text-center">
                       ${member.installmentsAfterYear || '0'}
                     </td>
@@ -589,9 +589,9 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                 <tr>
                   <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">Amount Owing</td>
                   <td className="border border-gray-300 px-4 py-2 text-center">
-                    ${form.amountOwing || '0'}
+                    ${form.familyMembers.find(m => m.isPrimary)?.amountOwing || '0'}
                   </td>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <td key={index} className="border border-gray-300 px-4 py-2 text-center">
                       ${member.amountOwing || '0'}
                     </td>
@@ -602,9 +602,9 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                 <tr>
                   <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">Tax Payment Due Date</td>
                   <td className="border border-gray-300 px-4 py-2 text-center">
-                    {form.taxPaymentDueDate || 'N/A'}
+                    {form.familyMembers.find(m => m.isPrimary)?.taxPaymentDueDate || 'N/A'}
                   </td>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <td key={index} className="border border-gray-300 px-4 py-2 text-center">
                       {member.taxPaymentDueDate || 'N/A'}
                     </td>
@@ -615,9 +615,9 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                 <tr>
                   <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">Return Filing Due Date</td>
                   <td className="border border-gray-300 px-4 py-2 text-center">
-                    {form.returnFilingDueDate || 'April 30'}
+                    {form.familyMembers.find(m => m.isPrimary)?.returnFilingDueDate || 'April 30'}
                   </td>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <td key={index} className="border border-gray-300 px-4 py-2 text-center">
                       {member.returnFilingDueDate || 'April 30'}
                     </td>
@@ -630,151 +630,19 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
           /* Single member - original vertical layout */
           <table className="w-full border-collapse">
             <tbody>
-              <TableRow label="Prior Periods Balance" value={`$${form.priorPeriodsBalance || '0'}`} />
-              <TableRow label="Taxes Payable" value={`$${form.taxesPayable || '0'}`} />
-              <TableRow label="Installments During Year" value={`$${form.installmentsDuringYear || '0'}`} />
-              <TableRow label="Installments After Year" value={`$${form.installmentsAfterYear || '0'}`} />
-              <TableRow label="Amount Owing" value={`$${form.amountOwing || '0'}`} />
-              <TableRow label="Tax Payment Due Date" value={form.taxPaymentDueDate || 'N/A'} />
-              <TableRow label="Return Filing Due Date" value={form.returnFilingDueDate || 'April 30'} />
+              <TableRow label="Prior Periods Balance" value={`$${form.familyMembers.find(m => m.isPrimary)?.priorPeriodsBalance || '0'}`} />
+              <TableRow label="Taxes Payable" value={`$${form.familyMembers.find(m => m.isPrimary)?.taxesPayable || '0'}`} />
+              <TableRow label="Installments During Year" value={`$${form.familyMembers.find(m => m.isPrimary)?.installmentsDuringYear || '0'}`} />
+              <TableRow label="Installments After Year" value={`$${form.familyMembers.find(m => m.isPrimary)?.installmentsAfterYear || '0'}`} />
+              <TableRow label="Amount Owing" value={`$${form.familyMembers.find(m => m.isPrimary)?.amountOwing || '0'}`} />
+              <TableRow label="Tax Payment Due Date" value={form.familyMembers.find(m => m.isPrimary)?.taxPaymentDueDate || 'N/A'} />
+              <TableRow label="Return Filing Due Date" value={form.familyMembers.find(m => m.isPrimary)?.returnFilingDueDate || 'April 30'} />
             </tbody>
           </table>
         )}
       </div>
 
-      {/* 12. T1 Summary Section */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-bold border-b border-gray-300 pb-2">T1 SUMMARY</h2>
-        
-        {/* Check if there are multiple family members */}
-        {form.familyMembers && form.familyMembers.length > 0 ? (
-          /* Multiple family members - horizontal layout like Excel */
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse min-w-max">
-              <thead>
-                <tr>
-                  <th className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50 text-left min-w-[200px]">
-                    Field
-                  </th>
-                  <th className="border border-gray-300 px-4 py-2 font-semibold bg-blue-50 text-center min-w-[180px]">
-                    {form.clientName}
-                  </th>
-                  {form.familyMembers.map((member, index) => (
-                    <th key={index} className="border border-gray-300 px-4 py-2 font-semibold bg-blue-50 text-center min-w-[180px]">
-                      {member.clientName}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {/* Prior Periods Balance */}
-                <tr>
-                  <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">Prior Periods Balance</td>
-                  <td className="border border-gray-300 px-4 py-2 text-center">
-                    ${form.priorPeriodsBalance || '0'}
-                  </td>
-                  {form.familyMembers.map((member, index) => (
-                    <td key={index} className="border border-gray-300 px-4 py-2 text-center">
-                      ${member.priorPeriodsBalance || '0'}
-                    </td>
-                  ))}
-                </tr>
-                
-                {/* Taxes Payable */}
-                <tr>
-                  <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">Taxes Payable</td>
-                  <td className="border border-gray-300 px-4 py-2 text-center">
-                    ${form.taxesPayable || '0'}
-                  </td>
-                  {form.familyMembers.map((member, index) => (
-                    <td key={index} className="border border-gray-300 px-4 py-2 text-center">
-                      ${member.taxesPayable || '0'}
-                    </td>
-                  ))}
-                </tr>
-                
-                {/* Installments During Year */}
-                <tr>
-                  <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">Installments During Year</td>
-                  <td className="border border-gray-300 px-4 py-2 text-center">
-                    ${form.installmentsDuringYear || '0'}
-                  </td>
-                  {form.familyMembers.map((member, index) => (
-                    <td key={index} className="border border-gray-300 px-4 py-2 text-center">
-                      ${member.installmentsDuringYear || '0'}
-                    </td>
-                  ))}
-                </tr>
-                
-                {/* Installments After Year */}
-                <tr>
-                  <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">Installments After Year</td>
-                  <td className="border border-gray-300 px-4 py-2 text-center">
-                    ${form.installmentsAfterYear || '0'}
-                  </td>
-                  {form.familyMembers.map((member, index) => (
-                    <td key={index} className="border border-gray-300 px-4 py-2 text-center">
-                      ${member.installmentsAfterYear || '0'}
-                    </td>
-                  ))}
-                </tr>
-                
-                {/* Amount Owing */}
-                <tr>
-                  <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">Amount Owing</td>
-                  <td className="border border-gray-300 px-4 py-2 text-center">
-                    ${form.amountOwing || '0'}
-                  </td>
-                  {form.familyMembers.map((member, index) => (
-                    <td key={index} className="border border-gray-300 px-4 py-2 text-center">
-                      ${member.amountOwing || '0'}
-                    </td>
-                  ))}
-                </tr>
-                
-                {/* Tax Payment Due Date */}
-                <tr>
-                  <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">Tax Payment Due Date</td>
-                  <td className="border border-gray-300 px-4 py-2 text-center">
-                    {form.taxPaymentDueDate || 'N/A'}
-                  </td>
-                  {form.familyMembers.map((member, index) => (
-                    <td key={index} className="border border-gray-300 px-4 py-2 text-center">
-                      {member.taxPaymentDueDate || 'N/A'}
-                    </td>
-                  ))}
-                </tr>
-                
-                {/* Return Filing Due Date */}
-                <tr>
-                  <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">Return Filing Due Date</td>
-                  <td className="border border-gray-300 px-4 py-2 text-center">
-                    {form.returnFilingDueDate || 'April 30'}
-                  </td>
-                  {form.familyMembers.map((member, index) => (
-                    <td key={index} className="border border-gray-300 px-4 py-2 text-center">
-                      {member.returnFilingDueDate || 'April 30'}
-                    </td>
-                  ))}
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          /* Single member - original vertical layout */
-          <table className="w-full border-collapse">
-            <tbody>
-              <TableRow label="Prior Periods Balance" value={`$${form.priorPeriodsBalance || '0'}`} />
-              <TableRow label="Taxes Payable" value={`$${form.taxesPayable || '0'}`} />
-              <TableRow label="Installments During Year" value={`$${form.installmentsDuringYear || '0'}`} />
-              <TableRow label="Installments After Year" value={`$${form.installmentsAfterYear || '0'}`} />
-              <TableRow label="Amount Owing" value={`$${form.amountOwing || '0'}`} />
-              <TableRow label="Tax Payment Due Date" value={form.taxPaymentDueDate || 'N/A'} />
-              <TableRow label="Return Filing Due Date" value={form.returnFilingDueDate || 'April 30'} />
-            </tbody>
-          </table>
-        )}
-      </div>
+
 
       {/* 13. HST Summary Section */}
       <div className="space-y-4">
@@ -793,7 +661,7 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                   <th className="border border-gray-300 px-4 py-2 font-semibold bg-blue-50 text-center min-w-[180px]">
                     {form.clientName}
                   </th>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <th key={index} className="border border-gray-300 px-4 py-2 font-semibold bg-blue-50 text-center min-w-[180px]">
                       {member.clientName}
                     </th>
@@ -805,9 +673,9 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                 <tr>
                   <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">HST Prior Balance</td>
                   <td className="border border-gray-300 px-4 py-2 text-center">
-                    ${form.hstPriorBalance || '0'}
+                    ${form.familyMembers.find(m => m.isPrimary)?.hstPriorBalance || '0'}
                   </td>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <td key={index} className="border border-gray-300 px-4 py-2 text-center">
                       ${member.hstPriorBalance || '0'}
                     </td>
@@ -818,9 +686,9 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                 <tr>
                   <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">HST Payable</td>
                   <td className="border border-gray-300 px-4 py-2 text-center">
-                    ${form.hstPayable || '0'}
+                    ${form.familyMembers.find(m => m.isPrimary)?.hstPayable || '0'}
                   </td>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <td key={index} className="border border-gray-300 px-4 py-2 text-center">
                       ${member.hstPayable || '0'}
                     </td>
@@ -831,9 +699,9 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                 <tr>
                   <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">HST Installments During</td>
                   <td className="border border-gray-300 px-4 py-2 text-center">
-                    ${form.hstInstallmentsDuring || '0'}
+                    ${form.familyMembers.find(m => m.isPrimary)?.hstInstallmentsDuring || '0'}
                   </td>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <td key={index} className="border border-gray-300 px-4 py-2 text-center">
                       ${member.hstInstallmentsDuring || '0'}
                     </td>
@@ -844,9 +712,9 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                 <tr>
                   <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">HST Installments After</td>
                   <td className="border border-gray-300 px-4 py-2 text-center">
-                    ${form.hstInstallmentsAfter || '0'}
+                    ${form.familyMembers.find(m => m.isPrimary)?.hstInstallmentsAfter || '0'}
                   </td>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <td key={index} className="border border-gray-300 px-4 py-2 text-center">
                       ${member.hstInstallmentsAfter || '0'}
                     </td>
@@ -857,9 +725,9 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                 <tr>
                   <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">HST Payment Due</td>
                   <td className="border border-gray-300 px-4 py-2 text-center">
-                    ${form.hstPaymentDue || '0'}
+                    ${form.familyMembers.find(m => m.isPrimary)?.hstPaymentDue || '0'}
                   </td>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <td key={index} className="border border-gray-300 px-4 py-2 text-center">
                       ${member.hstPaymentDue || '0'}
                     </td>
@@ -870,9 +738,9 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
                 <tr>
                   <td className="border border-gray-300 px-4 py-2 font-semibold bg-gray-50">HST Due Date</td>
                   <td className="border border-gray-300 px-4 py-2 text-center">
-                    {form.hstDueDate || 'April 30'}
+                    {form.familyMembers.find(m => m.isPrimary)?.hstDueDate || 'April 30'}
                   </td>
-                  {form.familyMembers.map((member, index) => (
+                  {form.familyMembers.filter(member => !member.isPrimary).map((member, index) => (
                     <td key={index} className="border border-gray-300 px-4 py-2 text-center">
                       {member.hstDueDate || 'April 30'}
                     </td>
@@ -885,12 +753,12 @@ const CloseoutFormAdminView = ({ form }: CloseoutFormAdminViewProps) => {
           /* Single member - original vertical layout */
           <table className="w-full border-collapse">
             <tbody>
-              <TableRow label="HST Prior Balance" value={`$${form.hstPriorBalance || '0'}`} />
-              <TableRow label="HST Payable" value={`$${form.hstPayable || '0'}`} />
-              <TableRow label="HST Installments During" value={`$${form.hstInstallmentsDuring || '0'}`} />
-              <TableRow label="HST Installments After" value={`$${form.hstInstallmentsAfter || '0'}`} />
-              <TableRow label="HST Payment Due" value={`$${form.hstPaymentDue || '0'}`} />
-              <TableRow label="HST Due Date" value={form.hstDueDate || 'April 30'} />
+              <TableRow label="HST Prior Balance" value={`$${form.familyMembers.find(m => m.isPrimary)?.hstPriorBalance || '0'}`} />
+              <TableRow label="HST Payable" value={`$${form.familyMembers.find(m => m.isPrimary)?.hstPayable || '0'}`} />
+              <TableRow label="HST Installments During" value={`$${form.familyMembers.find(m => m.isPrimary)?.hstInstallmentsDuring || '0'}`} />
+              <TableRow label="HST Installments After" value={`$${form.familyMembers.find(m => m.isPrimary)?.hstInstallmentsAfter || '0'}`} />
+              <TableRow label="HST Payment Due" value={`$${form.familyMembers.find(m => m.isPrimary)?.hstPaymentDue || '0'}`} />
+              <TableRow label="HST Due Date" value={form.familyMembers.find(m => m.isPrimary)?.hstDueDate || 'April 30'} />
             </tbody>
           </table>
         )}

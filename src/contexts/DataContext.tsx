@@ -85,6 +85,7 @@ export interface CloseoutForm {
     signingPerson: string;
     signingEmail: string;
     additionalEmails: string[];
+    isPrimary?: boolean; // Add the isPrimary property from backend
     isT1: boolean;
     isS216: boolean;
     isS116: boolean;
